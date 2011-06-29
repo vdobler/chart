@@ -137,7 +137,7 @@ func (r *Range) Setup(numberOfTics, sWidth, sOffset int, revert bool) {
 	delta := (r.DataMax - r.DataMin) / float64(numberOfTics-1)
 	if delta == 0 { delta = 1 }
 	de := math.Floor(math.Log10(delta))
-	fmt.Printf(":: %f, %f, %d \n", delta, de, int(de))
+	// fmt.Printf(":: %f, %f, %d \n", delta, de, int(de))
 	f := delta / math.Pow10(int(de))
 	switch {
 	case f < 2:
@@ -151,7 +151,7 @@ func (r *Range) Setup(numberOfTics, sWidth, sOffset int, revert bool) {
 		de += 1
 	}
 	delta = f * math.Pow10(int(de))
-	fmt.Printf("delta = %f,  f = %f\n", delta, f)
+	// fmt.Printf("delta = %f,  f = %f\n", delta, f)
 
 	r.Min = Bound(r.MinMode, r.DataMin, delta, false)
 	r.Max = Bound(r.MaxMode, r.DataMax, delta, true)
@@ -159,8 +159,8 @@ func (r *Range) Setup(numberOfTics, sWidth, sOffset int, revert bool) {
 	r.Tics.Last = delta * math.Floor(r.Max/delta /* + 0.001*delta */ )
 	r.Tics.Delta = delta
 	//	if first == last { last += delta } // TODO
-	fmt.Printf("Range: (%g,%g) --> (%g,%g), Tic-Delta %g\n",
-		r.DataMin, r.DataMax, r.Min, r.Max, delta)
+	//fmt.Printf("Range: (%g,%g) --> (%g,%g), Tic-Delta %g\n",
+	//	r.DataMin, r.DataMax, r.Min, r.Max, delta)
 
 	if !revert {
 		r.Data2Screen = func(x float64) int {
@@ -173,8 +173,9 @@ func (r *Range) Setup(numberOfTics, sWidth, sOffset int, revert bool) {
 		r.Data2Screen = func(x float64) int {
 			return sWidth-int(math.Floor(float64(sWidth)*(x-r.Min)/(r.Max-r.Min))) + sOffset
 		}
-		r.Screen2Data = func(x int) float64 { // TODO!
-			return (r.Max-r.Min)*float64(x-sOffset)/float64(sWidth) + r.Min
+		r.Screen2Data = func(x int) float64 {
+			fmt.Printf("AAAA\n")
+			return (r.Max-r.Min)*float64(-x+sOffset+sWidth)/float64(sWidth) + r.Min
 		}
 
 	}

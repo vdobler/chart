@@ -29,11 +29,11 @@ func NewTextBuf(w, h int) (tb *TextBuf) {
 }
 
 func (tb *TextBuf) Put(x, y, c int) {
-	xx, yy := x%tb.W, y%tb.H
-	i := (tb.W+1)*yy + xx
-	if tb.Buf[i] == '\n' {
-		fmt.Printf("Falsch: %d, %d  (%c) \n", x, y, c)
+	if x<0 || y<0 || x>=tb.W || y>=tb.H {
+		fmt.Printf("Falsch: %d, %d  '%c' \n", x, y, c)
+		x, y = 0, 0
 	}
+	i := (tb.W+1)*y + x
 	tb.Buf[i] = c
 }
 
