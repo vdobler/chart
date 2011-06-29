@@ -1,0 +1,11 @@
+Charts for Go
+=============
+
+Basic charts in go.
+
+Targeted are the usefull R charts:
+- Strip Chart
+- Histogram
+- Scatter Plot
+- QQ Plots
+
