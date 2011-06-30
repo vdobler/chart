@@ -28,12 +28,6 @@ func (sc *StripChart) AddData(name string, data []float64) {
 		pd[i].Y = float64(n)
 	}
 	sc.ScatterChart.AddData(name, pd)
-	for s, data := range sc.ScatterChart.Data {
-		fmt.Printf("Set: %d\n", s)
-		for i, _ := range data.Data {
-			fmt.Printf("%f ,%f\n", data.Data[i].X,data.Data[i].Y)
-		}
-	}
 }
 
 
@@ -47,16 +41,16 @@ func (sc *StripChart) PlotTxt(w, h int) string {
 
 	if sc.Jitter {
 		sc.LayoutTxt(w,h) // Set up ranging
-		one, two := sc.YRange.Screen2Data(1), sc.YRange.Screen2Data(2)
-		fmt.Printf("one: %f   two: %f\n", one, two)
-		yj := math.Fabs(two-one)
-		fmt.Printf("yj = %f\n", yj)
+		yj := math.Fabs(sc.YRange.Screen2Data(1) - sc.YRange.Screen2Data(2))
 		for s, data := range sc.ScatterChart.Data {
+			if data.Samples == nil {
+				continue // should not happen
+			}
 			fmt.Printf("Set %d\n", s)
 			for i, p := range data.Data {
 				r := float64(rand.Intn(3)-1)
 				fmt.Printf("r=%f, delta=%f orig=%g,%g\n", r, r *yj, p.X,p.Y)
-				data.Data[i].Y += r * yj
+				data.Samples[i].Y += r * yj
 			}
 		}
 	}
@@ -64,7 +58,10 @@ func (sc *StripChart) PlotTxt(w, h int) string {
 
 	// Revert Jitter
 	for s, data := range sc.ScatterChart.Data {
-		for i, _ := range data.Data {
+		if data.Samples == nil {
+			continue // should not happen
+		}
+		for i, _ := range data.Samples {
 			data.Data[i].Y = float64(s+1)
 		}
 	}

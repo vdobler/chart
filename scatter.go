@@ -10,7 +10,8 @@ import (
 type ScatterChartData struct {
 	Name string
 	Style DataStyle
-	Data []Point
+	Samples []Point
+	Funcs []func(float64)float64
 }
 
 
@@ -22,11 +23,18 @@ type ScatterChart struct {
 	Data          []ScatterChartData
 }
 
+func (sc *ScatterChart) AddFunc(name string, f func(float64)float64) {
+	if sc.Data == nil {
+		sc.Data = make([]ScatterChartData, 0, 1)
+	}
+	sc.Data = append(sc.Data, ScatterChartData{name, DataStyle{}, nil, f})
+}
+
 func (sc *ScatterChart) AddData(name string, data []Point) {
 	if sc.Data == nil {
 		sc.Data = make([]ScatterChartData, 0, 1)
 	}
-	sc.Data = append(sc.Data, ScatterChartData{name, DataStyle{}, data})
+	sc.Data = append(sc.Data, ScatterChartData{name, DataStyle{}, data, nil})
 	if sc.XRange.DataMin == 0 && sc.XRange.DataMax == 0 && sc.YRange.DataMin == 0 && sc.YRange.DataMax == 0 {
 		sc.XRange.DataMin = data[0].X
 		sc.XRange.DataMax = data[0].X
@@ -246,10 +254,14 @@ func (sc *ScatterChart) PlotTxt(w, h int) string {
 
 	// Plot Data
 	for s, data := range sc.Data {
-		for _, d := range data.Data {
-			x := sc.XRange.Data2Screen(d.X)
-			y := sc.YRange.Data2Screen(d.Y)
-			tb.Put(x, y, Symbol[s%len(Symbol)])
+		if data.Samples != nil {
+			for _, d := range data.Samples {
+				x := sc.XRange.Data2Screen(d.X)
+				y := sc.YRange.Data2Screen(d.Y)
+				tb.Put(x, y, Symbol[s%len(Symbol)])
+			}
+		} else if data.Func != nil {
+
 		}
 	}
 
