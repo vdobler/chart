@@ -29,7 +29,7 @@ func NewTextBuf(w, h int) (tb *TextBuf) {
 }
 
 func (tb *TextBuf) Put(x, y, c int) {
-	if x<0 || y<0 || x>=tb.W || y>=tb.H {
+	if x < 0 || y < 0 || x >= tb.W || y >= tb.H {
 		fmt.Printf("Falsch: %d, %d  '%c' \n", x, y, c)
 		x, y = 0, 0
 	}
@@ -94,14 +94,14 @@ func (tb *TextBuf) Text(x, y int, txt string, align int) {
 			tb.Put(x, y+i, rune)
 			i++
 		}
-	}	
+	}
 }
 
 
 func (tb *TextBuf) Paste(x, y int, buf *TextBuf) {
 	s := buf.W + 1
-	for i:=0; i<buf.W; i++ {
-		for j:=0; j<buf.H; j++ {
+	for i := 0; i < buf.W; i++ {
+		for j := 0; j < buf.H; j++ {
 			tb.Put(x+i, y+j, buf.Buf[i+s*j])
 		}
 	}

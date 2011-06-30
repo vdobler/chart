@@ -134,9 +134,13 @@ func Bound(mode RangeMode, val, ticDelta float64, upper bool) float64 {
 // ticdistances: 1 2 or 5 * 10^n to have min (2) few (3, 4), 
 // some (5,6), several (7,8,9) or many (10) 
 func (r *Range) Setup(numberOfTics, sWidth, sOffset int, revert bool) {
-	if numberOfTics <= 1 { numberOfTics = 2 }
+	if numberOfTics <= 1 {
+		numberOfTics = 2
+	}
 	delta := (r.DataMax - r.DataMin) / float64(numberOfTics-1)
-	if delta == 0 { delta = 1 }
+	if delta == 0 {
+		delta = 1
+	}
 	de := math.Floor(math.Log10(delta))
 	// fmt.Printf(":: %f, %f, %d \n", delta, de, int(de))
 	f := delta / math.Pow10(int(de))
@@ -171,7 +175,7 @@ func (r *Range) Setup(numberOfTics, sWidth, sOffset int, revert bool) {
 		}
 	} else {
 		r.Data2Screen = func(x float64) int {
-			return sWidth-int(math.Floor(float64(sWidth)*(x-r.Min)/(r.Max-r.Min))) + sOffset
+			return sWidth - int(math.Floor(float64(sWidth)*(x-r.Min)/(r.Max-r.Min))) + sOffset
 		}
 		r.Screen2Data = func(x int) float64 {
 			return (r.Max-r.Min)*float64(-x+sOffset+sWidth)/float64(sWidth) + r.Min
@@ -183,14 +187,14 @@ func (r *Range) Setup(numberOfTics, sWidth, sOffset int, revert bool) {
 
 type KeyEntry struct {
 	Symbol int
-	Text string
+	Text   string
 }
 
 type DataStyle struct {
-	Symbol int   // -1: no symbol, 0: auto, 1... fixed
-	Line int     // 0: no line, 1, solid, 2 dashed, 3 dotted
-	Size float64 // 0: auto (1)
-	Color int    // index into palette
+	Symbol int     // -1: no symbol, 0: auto, 1... fixed
+	Line   int     // 0: no line, 1, solid, 2 dashed, 3 dotted
+	Size   float64 // 0: auto (1)
+	Color  int     // index into palette
 }
 
 type Point struct {
@@ -211,28 +215,28 @@ type Key struct {
 	Layout struct {
 		Cols, Rows int // 0,0 means 1,1
 	}
-	Border        int    // -1: off, 0: std, 1...:other styles
-	Pos           string // "": itr
+	Border int    // -1: off, 0: std, 1...:other styles
+	Pos    string // "": itr
 	// Width, Height int    // 0,0: auto
 	X, Y int
 }
 
 
-func min(a, b int) int { 
-	if a<b { 
-		return a 
+func min(a, b int) int {
+	if a < b {
+		return a
 	}
 	return b
 }
 
-func max(a, b int) int { 
-	if a>b { 
-		return a 
+func max(a, b int) int {
+	if a > b {
+		return a
 	}
 	return b
 }
 
-func abs(a int) int { 
+func abs(a int) int {
 	if a < 0 {
 		return -a
 	}
@@ -240,7 +244,11 @@ func abs(a int) int {
 }
 
 func clip(x, l, u int) int {
-	if x < min(l,u) { return l }
-	if x > max(l,u) { return u }
+	if x < min(l, u) {
+		return l
+	}
+	if x > max(l, u) {
+		return u
+	}
 	return x
 }

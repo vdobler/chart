@@ -1,29 +1,29 @@
 package chart
 
 import (
-	// "fmt"
-	//	"os"
-	//	"strings"
+// "fmt"
+//	"os"
+//	"strings"
 )
 
 
 type ScatterChartData struct {
-	Name string
-	Style DataStyle
+	Name    string
+	Style   DataStyle
 	Samples []Point
-	Func func(float64)float64
+	Func    func(float64) float64
 }
 
 
 type ScatterChart struct {
-	XRange, YRange   Range
-	Title  string
+	XRange, YRange Range
+	Title          string
 	Xlabel, Ylabel string
-	Key           Key
-	Data          []ScatterChartData
+	Key            Key
+	Data           []ScatterChartData
 }
 
-func (sc *ScatterChart) AddFunc(name string, f func(float64)float64) {
+func (sc *ScatterChart) AddFunc(name string, f func(float64) float64) {
 	if sc.Data == nil {
 		sc.Data = make([]ScatterChartData, 0, 1)
 	}
@@ -31,7 +31,7 @@ func (sc *ScatterChart) AddFunc(name string, f func(float64)float64) {
 }
 
 func (sc *ScatterChart) AddLinear(name string, ax, ay, bx, by float64) {
-	sc.AddFunc(name, func(x float64)float64 {
+	sc.AddFunc(name, func(x float64) float64 {
 		return ay + (x-ax)*(by-ay)/(bx-ax)
 	})
 }
@@ -68,9 +68,9 @@ func (sc *ScatterChart) AddData(name string, data []Point) {
 }
 
 func (sc *ScatterChart) AddDataPair(name string, x, y []float64) {
-	n := min(len(x),len(y))
+	n := min(len(x), len(y))
 	data := make([]Point, n)
-	for i:=0; i<n; i++ {
+	for i := 0; i < n; i++ {
 		data[i].X = x[i]
 		data[i].Y = y[i]
 	}
@@ -86,8 +86,8 @@ func (sc *ScatterChart) LayoutTxt(w, h int) (width, leftm, height, topm int, kb 
 	if h < 5 {
 		h = 5
 	}
-	if w<10 {
-		w=10
+	if w < 10 {
+		w = 10
 	}
 
 	width, leftm, height, topm = w-4, 2, h-1, 0
@@ -113,16 +113,15 @@ func (sc *ScatterChart) LayoutTxt(w, h int) (width, leftm, height, topm int, kb 
 		ylabsep += 6
 	}
 
-
 	if !sc.Key.Hide {
 		maxlen := 0
 		entries := make([]KeyEntry, 0)
 		for s, data := range sc.Data {
 			text := data.Name
 			if text != "" {
-				text = text[:min(len(text),w/2-7)]
+				text = text[:min(len(text), w/2-7)]
 				symbol := Symbol[s%len(Symbol)]
-				entries = append(entries, KeyEntry{symbol,text})
+				entries = append(entries, KeyEntry{symbol, text})
 				if len(text) > maxlen {
 					maxlen = len(text)
 				}
@@ -139,18 +138,18 @@ func (sc *ScatterChart) LayoutTxt(w, h int) (width, leftm, height, topm int, kb 
 				kb.Text(5, i+1, e.Text, -1)
 			}
 
-			switch sc.Key.Pos[:2]{
-			case "ol": 
+			switch sc.Key.Pos[:2] {
+			case "ol":
 				width, leftm = width-maxlen-9, leftm+kw
 				sc.Key.X = 0
-			case "or": 
-				width = width-maxlen-9
+			case "or":
+				width = width - maxlen - 9
 				sc.Key.X = w - kw
-			case "ot": 
-				height, topm = height-kh-2, topm +kh
+			case "ot":
+				height, topm = height-kh-2, topm+kh
 				sc.Key.Y = 1
-			case "ob": 
-				height = height-kh-2
+			case "ob":
+				height = height - kh - 2
 				sc.Key.Y = topm + height + 4
 			case "it":
 				sc.Key.Y = topm + 1
@@ -161,25 +160,34 @@ func (sc *ScatterChart) LayoutTxt(w, h int) (width, leftm, height, topm int, kb 
 
 			}
 
-			switch sc.Key.Pos[:2]{
-			case "ol", "or": 
+			switch sc.Key.Pos[:2] {
+			case "ol", "or":
 				switch sc.Key.Pos[2] {
-				case 't': sc.Key.Y = topm
-				case 'c': sc.Key.Y = topm + (height-kh)/2
-				case 'b': sc.Key.Y = topm + height - kh + 1
+				case 't':
+					sc.Key.Y = topm
+				case 'c':
+					sc.Key.Y = topm + (height-kh)/2
+				case 'b':
+					sc.Key.Y = topm + height - kh + 1
 				}
-			case "ot", "ob": 
+			case "ot", "ob":
 				switch sc.Key.Pos[2] {
-				case 'l': sc.Key.X = leftm
-				case 'c': sc.Key.X = leftm + (width-kw)/2
-				case 'r': sc.Key.X = w - kw -2
+				case 'l':
+					sc.Key.X = leftm
+				case 'c':
+					sc.Key.X = leftm + (width-kw)/2
+				case 'r':
+					sc.Key.X = w - kw - 2
 				}
 			}
 			if sc.Key.Pos[0] == 'i' {
 				switch sc.Key.Pos[2] {
-				case 'l': sc.Key.X = leftm + 1
-				case 'c': sc.Key.X = leftm + (width-kw)/2
-				case 'r': sc.Key.X = leftm + width - kw -1
+				case 'l':
+					sc.Key.X = leftm + 2
+				case 'c':
+					sc.Key.X = leftm + (width-kw)/2
+				case 'r':
+					sc.Key.X = leftm + width - kw - 2
 				}
 
 			}
@@ -207,13 +215,13 @@ func (sc *ScatterChart) LayoutTxt(w, h int) (width, leftm, height, topm int, kb 
 
 	sc.XRange.Setup(ntics, width, leftm, false)
 	sc.YRange.Setup(height/3, height, topm, true)
-	
+
 	return
-} 
+}
 
 
 func (sc *ScatterChart) PlotTxt(w, h int) string {
-	width, leftm, height, topm, kb := sc.LayoutTxt(w,h)
+	width, leftm, height, topm, kb := sc.LayoutTxt(w, h)
 
 	xlabsep, ylabsep := 1, 3
 	if !sc.XRange.Tics.Hide {
@@ -223,20 +231,23 @@ func (sc *ScatterChart) PlotTxt(w, h int) string {
 		ylabsep += 6
 	}
 
-
 	tb := NewTextBuf(w, h)
 	tb.Rect(leftm, topm, width, height, 0, ' ')
 	if sc.Title != "" {
 		tb.Text(width/2+leftm, 0, sc.Title, 0)
 	}
 	if sc.Xlabel != "" {
-		y :=  topm + height + 1
-		if !sc.XRange.Tics.Hide { y++ }
+		y := topm + height + 1
+		if !sc.XRange.Tics.Hide {
+			y++
+		}
 		tb.Text(width/2+leftm, y, sc.Xlabel, 0)
 	}
 	if sc.Ylabel != "" {
 		x := leftm - 3
-		if !sc.YRange.Tics.Hide { x -= 6 }
+		if !sc.YRange.Tics.Hide {
+			x -= 6
+		}
 		tb.Text(x, topm+height/2, sc.Ylabel, 3)
 	}
 
@@ -246,7 +257,7 @@ func (sc *ScatterChart) PlotTxt(w, h int) string {
 			x := sc.XRange.Data2Screen(tic)
 			lab := FmtFloat(tic)
 			tb.Put(x, topm+height, '+')
-			tb.Text(x,topm+height+1, lab, 0)
+			tb.Text(x, topm+height+1, lab, 0)
 		}
 	}
 
@@ -256,7 +267,7 @@ func (sc *ScatterChart) PlotTxt(w, h int) string {
 			y := sc.YRange.Data2Screen(tic)
 			lab := FmtFloat(tic)
 			tb.Put(leftm, y, '+')
-			tb.Text(leftm-1 ,y , lab, 1)
+			tb.Text(leftm-1, y, lab, 1)
 		}
 	}
 
@@ -273,35 +284,37 @@ func (sc *ScatterChart) PlotTxt(w, h int) string {
 			// Functions
 			var lastsy, lastsx int
 			symbol := Symbol[s%len(Symbol)]
-			for sx:=leftm; sx<leftm+width; sx++ {
+			for sx := leftm; sx < leftm+width; sx++ {
 				x := sc.XRange.Screen2Data(sx)
 				y := data.Func(x)
 				sy := sc.YRange.Data2Screen(y)
-				if y>=sc.YRange.Min && y<=sc.YRange.Max {
+				if y >= sc.YRange.Min && y <= sc.YRange.Max {
 					tb.Put(sx, sy, symbol)
 				}
-				d := abs(lastsy-sy)
+				d := abs(lastsy - sy)
 				// fmt.Printf("Point (%.2f, %.2f) : sx=%d, sy=%d\n", x, y, sx, sy)
-				if sx > leftm && d>2 {
+				if sx > leftm && d > 2 {
 					// Oversampling
 					f := 1
-					if sy < lastsy { f = -1 }
+					if sy < lastsy {
+						f = -1
+					}
 					osx := lastsx
 					// fmt.Printf("Oversampling: d=%d, f=%d, from %d to %d\n", d, f, lastsy+f, sy-f)
 					var done bool
-					for osy:=clip(lastsy+f,0,h); osy!=clip(sy-f,0,h); osy+=f {
+					for osy := clip(lastsy+f, 0, h); osy != clip(sy-f, 0, h); osy += f {
 						// fmt.Printf("  osx=%d, osy=%d\n", osx, osy)
-						if sc.YRange.Screen2Data(osy) >= sc.YRange.Min && sc.YRange.Screen2Data(osy)<=sc.YRange.Max {
+						if sc.YRange.Screen2Data(osy) >= sc.YRange.Min && sc.YRange.Screen2Data(osy) <= sc.YRange.Max {
 							tb.Put(osx, osy, symbol)
 						}
 						if !done && osy > (sy+lastsy)/2 {
 							osx++
-							done = true 
+							done = true
 						}
 					}
 				}
-				
-				lastsx, lastsy  = sx, sy
+
+				lastsx, lastsy = sx, sy
 			}
 		}
 	}
