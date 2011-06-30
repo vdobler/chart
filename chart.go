@@ -59,24 +59,25 @@ var Units = []string{" y", " z", " a", " f", " p", " n", " µ", "m",
 	" k", " M", " G", " T", " P", " E", " Z", " Y"}
 
 func FmtFloat(f float64) string {
+	af := math.Fabs(f)
 	if f == 0 {
 		return "0"
-	} else if 0.1 <= f && f < 10 {
+	} else if 0.1 <= af && af < 10 {
 		return fmt.Sprintf("%.1f", f)
-	} else if 10 <= f && f <= 1000 {
+	} else if 10 <= af && af <= 1000 {
 		return fmt.Sprintf("%.0f", f)
 	}
 
-	if f < 1 {
+	if af < 1 {
 		var p = 8
-		for f < 1 && p >= 0 {
+		for math.Fabs(f) < 1 && p >= 0 {
 			f *= 1000
 			p--
 		}
 		return FmtFloat(f) + Units[p]
 	} else {
 		var p = 7
-		for f > 1000 && p < 16 {
+		for math.Fabs(f) > 1000 && p < 16 {
 			f /= 1000
 			p++
 		}
@@ -159,8 +160,7 @@ func (r *Range) Setup(numberOfTics, sWidth, sOffset int, revert bool) {
 	r.Tics.Last = delta * math.Floor(r.Max/delta /* + 0.001*delta */ )
 	r.Tics.Delta = delta
 	//	if first == last { last += delta } // TODO
-	//fmt.Printf("Range: (%g,%g) --> (%g,%g), Tic-Delta %g\n",
-	//	r.DataMin, r.DataMax, r.Min, r.Max, delta)
+	fmt.Printf("Range: (%g,%g) --> (%g,%g), Tic-Delta %g from %g to %g\n", r.DataMin, r.DataMax, r.Min, r.Max, delta, r.Tics.First, r.Tics.Last)
 
 	if !revert {
 		r.Data2Screen = func(x float64) int {
@@ -174,7 +174,6 @@ func (r *Range) Setup(numberOfTics, sWidth, sOffset int, revert bool) {
 			return sWidth-int(math.Floor(float64(sWidth)*(x-r.Min)/(r.Max-r.Min))) + sOffset
 		}
 		r.Screen2Data = func(x int) float64 {
-			fmt.Printf("AAAA\n")
 			return (r.Max-r.Min)*float64(-x+sOffset+sWidth)/float64(sWidth) + r.Min
 		}
 
@@ -224,4 +223,24 @@ func min(a, b int) int {
 		return a 
 	}
 	return b
+}
+
+func max(a, b int) int { 
+	if a>b { 
+		return a 
+	}
+	return b
+}
+
+func abs(a int) int { 
+	if a < 0 {
+		return -a
+	}
+	return a
+}
+
+func clip(x, l, u int) int {
+	if x < min(l,u) { return l }
+	if x > max(l,u) { return u }
+	return x
 }

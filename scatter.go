@@ -11,7 +11,7 @@ type ScatterChartData struct {
 	Name string
 	Style DataStyle
 	Samples []Point
-	Funcs []func(float64)float64
+	Func func(float64)float64
 }
 
 
@@ -29,6 +29,13 @@ func (sc *ScatterChart) AddFunc(name string, f func(float64)float64) {
 	}
 	sc.Data = append(sc.Data, ScatterChartData{name, DataStyle{}, nil, f})
 }
+
+func (sc *ScatterChart) AddLinear(name string, ax, ay, bx, by float64) {
+	sc.AddFunc(name, func(x float64)float64 {
+		return ay + (x-ax)*(by-ay)/(bx-ax)
+	})
+}
+
 
 func (sc *ScatterChart) AddData(name string, data []Point) {
 	if sc.Data == nil {
@@ -216,6 +223,7 @@ func (sc *ScatterChart) PlotTxt(w, h int) string {
 		ylabsep += 6
 	}
 
+
 	tb := NewTextBuf(w, h)
 	tb.Rect(leftm, topm, width, height, 0, ' ')
 	if sc.Title != "" {
@@ -255,13 +263,46 @@ func (sc *ScatterChart) PlotTxt(w, h int) string {
 	// Plot Data
 	for s, data := range sc.Data {
 		if data.Samples != nil {
+			// Samples
 			for _, d := range data.Samples {
 				x := sc.XRange.Data2Screen(d.X)
 				y := sc.YRange.Data2Screen(d.Y)
 				tb.Put(x, y, Symbol[s%len(Symbol)])
 			}
 		} else if data.Func != nil {
-
+			// Functions
+			var lastsy, lastsx int
+			symbol := Symbol[s%len(Symbol)]
+			for sx:=leftm; sx<leftm+width; sx++ {
+				x := sc.XRange.Screen2Data(sx)
+				y := data.Func(x)
+				sy := sc.YRange.Data2Screen(y)
+				if y>=sc.YRange.Min && y<=sc.YRange.Max {
+					tb.Put(sx, sy, symbol)
+				}
+				d := abs(lastsy-sy)
+				// fmt.Printf("Point (%.2f, %.2f) : sx=%d, sy=%d\n", x, y, sx, sy)
+				if sx > leftm && d>2 {
+					// Oversampling
+					f := 1
+					if sy < lastsy { f = -1 }
+					osx := lastsx
+					// fmt.Printf("Oversampling: d=%d, f=%d, from %d to %d\n", d, f, lastsy+f, sy-f)
+					var done bool
+					for osy:=clip(lastsy+f,0,h); osy!=clip(sy-f,0,h); osy+=f {
+						// fmt.Printf("  osx=%d, osy=%d\n", osx, osy)
+						if sc.YRange.Screen2Data(osy) >= sc.YRange.Min && sc.YRange.Screen2Data(osy)<=sc.YRange.Max {
+							tb.Put(osx, osy, symbol)
+						}
+						if !done && osy > (sy+lastsy)/2 {
+							osx++
+							done = true 
+						}
+					}
+				}
+				
+				lastsx, lastsy  = sx, sy
+			}
 		}
 	}
 
