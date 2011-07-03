@@ -3,6 +3,7 @@ package chart
 import (
 	"fmt"
 	"math"
+	"time"
 	//	"os"
 	//	"strings"
 )
@@ -11,47 +12,115 @@ import (
 type RangeExpansion int
 
 const (
-	ExpandNextTic = iota
-	ExpandToTic
-	ExpandTight
-	ExpandABit
+	ExpandNextTic = iota // Set min/max to next tic really below/above data-min/max data
+	ExpandToTic // Set to next tic below/above or equal to data-min/max data
+	ExpandTight // Use data min/max as limit 
+	ExpandABit // Like ExpandToTic and add/subtract half a tic distance.
 )
 
 type RangeMode struct {
-	// false: autoscaling; true: use Value as fixed setting
+	// If false: autoscaling. If true: use Value as fixed setting
 	Fixed bool
-	// false: unconstrained autoscaling; true: use Lower and Upper as limits
+	// If false: unconstrained autoscaling. If rue: use Lower and Upper as limits
 	Constrained bool
-	// one if ExpandNextTic, ExpandTight, ExpandABit
+	// One of ExpandNextTic, ExpandTight, ExpandABit
 	Expand int
 	// see above
 	Value, Lower, Upper float64
+	TValue, TLower, TUpper *time.Time
+}
+
+type TimeDelta int
+const (
+	Minute  = 60
+	Hour    = Minute * 60
+	Day     = Hour * 24
+	Week    = Day * 7
+	Year    = 365.25 * Day
+	Month   = Year / 12
+	Quarter = Year / 4
+	Half    = Year / 2
+	TenYear = Year * 10
+)
+func (td TimeDelta) String() string {
+	switch td {
+	case Minute: return "minute"
+	case Hour: return "hour"
+	case Day: return "day"
+	case Week: return "week"
+	case Month: return "month"
+	case Quarter: return "year/4"
+	case Half: return "year/2"
+	case Year: return "year"
+	case TenYear: return "10*year"
+	}
+	return "???"
 }
 
 
-type Tics struct {
-	Hide               bool    // dont show
-	First, Last, Delta float64 // Delta is factor for log axis
-	Minor              int     // 0: off, 1: clever, >1: number of intervalls
+type TicSetting struct {
+	Hide   bool      // Dont show tics if true
+	Minor  int       // 0: off, 1: clever, >1: number of intervalls
+	Delta  float64   // Wanted step. 0 means auto 
+	TDelta TimeDelta
+	Fmt    string // special format string
+	
+}
+
+type Tic struct {
+	Pos, LabelPos float64
+	Label string
 }
 
 
 type Range struct {
-	// logarithmic axis?
-	Log bool
-	// date axis
-	Date bool
-	// how to handel min and max
-	MinMode, MaxMode RangeMode
-	// actual values from data. if both zero: not calculated
-	DataMin, DataMax float64
-	// the min an d max of the xais
-	Min, Max float64
-	Tics     Tics
-	// Convert data coordnate to screen
+	Log bool // logarithmic axis?
+	Time bool // Time axis
+	MinMode, MaxMode RangeMode // how to handel min and max
+	TicSetting     TicSetting
+	DataMin, DataMax float64 // actual values from data. if both zero: not calculated
+	Min, Max float64 // the min an d max of the xais
+	TMin, TMax *time.Time
+	Tics []Tic
+	Norm func(float64) float64  // map [Min:Max] to [0:1]
+	InvNorm func(float64) float64 // inverse of Norm()
 	Data2Screen func(float64) int
-	// Convert screen coordinate to data
 	Screen2Data func(int) float64
+}
+
+var wochentage = []string{"So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"}
+
+func calendarWeek(t *time.Time) int {
+	jan01 := *t
+	jan01.Month, jan01.Day, jan01.Hour, jan01.Minute, jan01.Second = 1, 1, 0, 0, 0
+	diff := t.Seconds() - jan01.Seconds()
+	week := int(float64(diff)/float64(Week) + 0.5)
+	if week == 0 {
+		week++
+	}
+	return week
+}
+
+func FmtTime(sec int64, step TimeDelta) string {
+	t := time.SecondsToLocalTime(sec)
+	var s string
+	switch step {
+	case TenYear, Year: 
+		s = fmt.Sprintf("%d", t.Year)
+	case Quarter: 
+		s = fmt.Sprintf("%dQ%d", t.Year%100, t.Month/3+1)
+	case Month: 
+		s = fmt.Sprintf("%d.%d", t.Month, t.Year%100)
+	case Week:
+		s = fmt.Sprintf("KW %d", calendarWeek(t))
+	case Day:
+		s = wochentage[t.Weekday]
+	case Hour:
+		s = fmt.Sprintf("%02d:00h", t.Hour)
+	case Minute:
+		s = fmt.Sprintf("%02d:%02d", t.Hour, t.Minute)
+	}
+	return s
 }
 
 
@@ -87,10 +156,6 @@ func FmtFloat(f float64) string {
 	return "xxx"
 }
 
-func almostEqual(a, b float64) bool {
-	rd := math.Fabs((a - b) / (a + b))
-	return rd < 1e-5
-}
 
 // Return val constrained by mode.
 func Bound(mode RangeMode, val, ticDelta float64, upper bool) float64 {
@@ -131,40 +196,258 @@ func Bound(mode RangeMode, val, ticDelta float64, upper bool) float64 {
 	return val
 }
 
-// ticdistances: 1 2 or 5 * 10^n to have min (2) few (3, 4), 
-// some (5,6), several (7,8,9) or many (10) 
-func (r *Range) Setup(numberOfTics, sWidth, sOffset int, revert bool) {
-	if numberOfTics <= 1 {
-		numberOfTics = 2
-	}
-	delta := (r.DataMax - r.DataMin) / float64(numberOfTics-1)
-	if delta == 0 {
-		delta = 1
-	}
-	de := math.Floor(math.Log10(delta))
-	// fmt.Printf(":: %f, %f, %d \n", delta, de, int(de))
-	f := delta / math.Pow10(int(de))
-	switch {
-	case f < 2:
-		f = 1
-	case f < 4:
-		f = 2
-	case f < 9:
-		f = 5
-	default:
-		f = 1
-		de += 1
-	}
-	delta = f * math.Pow10(int(de))
-	// fmt.Printf("delta = %f,  f = %f\n", delta, f)
+func RoundUp(t *time.Time, d TimeDelta) *time.Time {
+	// works only because all TimeDeltas are more than 3 times as large as the next lower
+	t = RoundDown(t, d)
+	shift := int64(d)
+	shift += shift/2
+	t = time.SecondsToLocalTime(t.Seconds() + shift)
+	return RoundDown(t, d)
+}
 
-	r.Min = Bound(r.MinMode, r.DataMin, delta, false)
-	r.Max = Bound(r.MaxMode, r.DataMax, delta, true)
-	r.Tics.First = delta * math.Ceil(r.Min/delta /* - 0.001*delta */ )
-	r.Tics.Last = delta * math.Floor(r.Max/delta /* + 0.001*delta */ )
-	r.Tics.Delta = delta
-	//	if first == last { last += delta } // TODO
-	fmt.Printf("Range: (%g,%g) --> (%g,%g), Tic-Delta %g from %g to %g\n", r.DataMin, r.DataMax, r.Min, r.Max, delta, r.Tics.First, r.Tics.Last)
+// Simple rounddown
+func rounddown(t *time.Time, d TimeDelta) {
+	// fmt.Printf("rounddown from  %s\n", t.Format("2006-01-02 15:04:05 (Mon)"))
+	switch d {
+	case Minute:
+		t.Second = 0
+	case Hour: 
+		t.Minute, t.Second = 0, 0
+	case Day: 
+		t.Hour, t.Minute, t.Second = 0, 0, 0
+	case Week: 
+		shift := int64(Day * (time.Monday - t.Weekday))
+		t.Hour, t.Minute, t.Second = 12, 0, 0 // Safeguard shift below againts daylightsavings and that like
+		t = time.SecondsToLocalTime(t.Seconds() - shift)
+		t.Hour, t.Minute, t.Second = 0, 0, 0
+	case Month:
+		t.Day, t.Hour, t.Minute, t.Second = 1, 0, 0, 0
+	case Quarter: 
+		switch {
+		case t.Month <= 3: t.Month = 1 
+		case t.Month <= 6: t.Month = 4 
+		case t.Month <= 9: t.Month = 7 
+		default: t.Month = 10
+		}
+		t.Day, t.Hour, t.Minute, t.Second = 1, 0, 0, 0
+	case Half:
+		switch {
+		case t.Month <= 5: t.Month = 1 
+		default: t.Month = 6
+		}
+		t.Day, t.Hour, t.Minute, t.Second = 1, 0, 0, 0
+	case Year:
+		t.Month, t.Day, t.Hour, t.Minute, t.Second = 1, 1, 0, 0, 0
+	case TenYear:
+		t.Year -= t.Year%10
+		t.Month, t.Day, t.Hour, t.Minute, t.Second = 1, 1, 0, 0, 0
+	}
+	// fmt.Printf("          to  %s\n", t.Format("2006-01-02 15:04:05 (Mon)"))
+}
+
+func RoundDown(tp *time.Time, d TimeDelta) *time.Time {
+	tc := *tp
+	t := &tc
+	rounddown(t,d)
+	// recode zone
+	t = time.SecondsToLocalTime(t.Seconds() + int64(d)/5)
+	rounddown(t,d)
+	return t
+}
+
+// Return val constrained by mode.
+func TimeBound(mode RangeMode, val *time.Time, step TimeDelta, upper bool) (bound *time.Time, tic *time.Time) {
+	if mode.Fixed {
+		bound = mode.TValue
+		if upper {
+			tic = RoundDown(val, step)
+		} else {
+			tic = RoundUp(val, step)
+		}
+		return
+	}
+	if mode.Constrained { // TODO(vodo) use T...
+		sval := val.Seconds()
+		if sval < int64(mode.Lower) {
+			sval = int64(mode.Lower)
+		} else if sval > int64(mode.Upper) {
+			sval = int64(mode.Upper)
+		}
+		val = time.SecondsToLocalTime(sval)
+	}
+
+	switch mode.Expand {
+	case ExpandToTic:
+		if upper {
+			val = RoundUp(val, step)
+		} else {
+			val = RoundDown(val, step)
+		}
+		return val, val
+	case ExpandNextTic:
+		if upper {
+			tic = RoundUp(val, step)
+		} else {
+			tic = RoundDown(val, step)
+		}
+		// fmt.Printf("ExpandNextTic: upper=%t  pos=%s  tic=%s\n", upper, val.Format("2006-01-02 15:04:05 (Mon)"), tic.Format("2006-01-02 15:04:05 (Mon)"))
+		s := tic.Seconds()
+		if math.Fabs(float64(s-val.Seconds())/float64(step)) < 0.15 {
+			// fmt.Printf("  s=%d, v=%d, step=%d,  relSep = %.3f %%\n",s, val.Seconds(), int64(step),
+			//	100*math.Fabs(float64(s-val.Seconds())/float64(s)))
+			if upper {
+				val = RoundUp(time.SecondsToLocalTime(s + int64(step)/2), step)
+			} else {
+				val = RoundDown(time.SecondsToLocalTime(s - int64(step)/2), step)
+			}
+			// fmt.Printf("Expanded to %s \n", val.Format("2006-01-02 15:04:05 (Mon)"))
+		} else {
+			val = tic
+		}
+		return val, val
+	case ExpandABit:
+		if upper {
+			tic = RoundDown(val, step)
+			val = time.SecondsToLocalTime(tic.Seconds() + int64(step)/2)
+		} else {
+			tic = RoundUp(val, step)
+			val = time.SecondsToLocalTime(tic.Seconds() - int64(step)/2)
+		}
+		return
+
+	}
+
+	return val, val
+}
+
+func f2d(x float64) string {
+	s := int64(x)
+	t := time.SecondsToLocalTime(s)
+	return t.Format("2006-01-02 15:04:05 (Mon)")
+}
+
+// Set up Range according to RangeModes and TicSettings.
+// DataMin and DataMax should be present.
+func (r *Range) Setup(desiredNumberOfTics, maxNumberOfTics, sWidth, sOffset int, revert bool) {
+	if desiredNumberOfTics <= 1 {
+		desiredNumberOfTics = 2
+	}
+	if maxNumberOfTics < desiredNumberOfTics {
+		maxNumberOfTics = desiredNumberOfTics
+	}
+	if r.DataMax == r.DataMin {
+		r.DataMax = r.DataMin + 1
+	}
+	delta := (r.DataMax - r.DataMin) / float64(desiredNumberOfTics-1)
+	mindelta := (r.DataMax - r.DataMin) / float64(maxNumberOfTics-1)
+	
+	if r.Time {
+		var td TimeDelta
+		switch {
+		case delta < 45:
+			td = Minute
+		case delta < 3000:
+			td = Hour
+		case delta < 5*Day:
+			td = Day
+		case delta < 3*Week:
+			td = Week
+		case delta < 2.5*Month:
+			td = Month
+		case delta < 2*Month: //  2629800 seconds on average per monts
+			td = Quarter
+		case delta < 7*Month:
+			td = Year
+		case delta < 6*Year: // 31557600 seconds is one year
+			td = TenYear
+		default:
+			td = TenYear
+		}
+
+		mint := time.SecondsToLocalTime(int64(r.DataMin))
+		maxt := time.SecondsToLocalTime(int64(r.DataMax))
+		
+		var ftic, ltic *time.Time
+		r.TMin, ftic = TimeBound(r.MinMode, mint, td, false)
+		r.TMax, ltic = TimeBound(r.MaxMode, maxt, td, true)
+		r.TicSetting.Delta, r.TicSetting.TDelta = float64(td), td
+		r.Min, r.Max = float64(r.TMin.Seconds()), float64(r.TMax.Seconds())
+
+		ftd := float64(td)
+		actNumTics := int((r.Max - r.Min) / ftd)
+		if actNumTics > maxNumberOfTics {
+			switch td {
+			case Minute: td = Hour
+			case Hour: td = Day
+			case Day: td = Week
+			case Week: td = Month
+			case Month: td = Quarter
+			case Quarter: td = Half
+			case Half: td = Year
+			case Year: td = TenYear
+			}
+			r.TMin, ftic = TimeBound(r.MinMode, mint, td, false)
+			r.TMax, ltic = TimeBound(r.MaxMode, maxt, td, true)
+			r.TicSetting.Delta, r.TicSetting.TDelta = float64(td), td
+			r.Min, r.Max = float64(r.TMin.Seconds()), float64(r.TMax.Seconds())
+			
+		}
+		
+		
+		fmt.Printf("Range:\n  Data:  %s  to  %s\n  --->   %s  to  %s\n  Tic-Delta: %s\n  Tics:  %s  to  %s\n", 
+			f2d(r.DataMin), f2d(r.DataMax), f2d(r.Min), f2d(r.Max), td, 
+			ftic.Format("2006-01-02 15:04:05 (Mon)"), ltic.Format("2006-01-02 15:04:05 (Mon)"))
+
+		r.Tics = make([]Tic, 0)
+		step := int64(td)
+		for i:=0; ftic.Seconds() <= ltic.Seconds(); i++ {
+			x := float64(ftic.Seconds())
+			t := Tic{Pos: x, LabelPos: x + float64(step)/2, Label: FmtTime(ftic.Seconds(), td)}
+			r.Tics = append(r.Tics, t)
+			// fmt.Printf("    Made Tic %s\n", t.Label)
+			ftic = RoundDown(time.SecondsToLocalTime(ftic.Seconds() + step + step/2), td)
+			if i>maxNumberOfTics { break }
+		}
+
+
+	} else { // simple, not a date range 
+		de := math.Pow10(int(math.Floor(math.Log10(delta))))
+		// fmt.Printf(":: %f, %f, %d \n", delta, de, int(de))
+		f := delta / de
+		switch {
+		case f < 2:
+			f = 1
+		case f < 4:
+			f = 2
+		case f < 9:
+			f = 5
+		default:
+			f = 1
+			de *= 10
+		}
+		delta = f * de
+		if delta < mindelta {
+			switch f {
+			case 1, 5: delta *= 2
+			case 2: delta *= 2.5
+			default: fmt.Printf("Oooops. Strange f: %g\n", f)
+			}
+		} 
+
+		r.Min = Bound(r.MinMode, r.DataMin, delta, false)
+		r.Max = Bound(r.MaxMode, r.DataMax, delta, true)
+		r.TicSetting.Delta = delta
+		first := delta * math.Ceil(r.Min/delta)
+		num := int(-first/delta + math.Floor(r.Max/delta) + 1.5)
+		fmt.Printf("Range: (%g,%g) --> (%g,%g), Tic-Delta: %g, %d tics from %g\n", r.DataMin, r.DataMax, r.Min, r.Max, delta, num, first)
+
+		r.Tics = make([]Tic, num)
+		for i, x:= 0, first; i<num; i, x = i+1, x+delta {
+			r.Tics[i].Pos, r.Tics[i].LabelPos = x, x
+			r.Tics[i].Label = FmtFloat(x)
+		}
+
+	}
 
 	if !revert {
 		r.Data2Screen = func(x float64) int {
@@ -197,9 +480,6 @@ type DataStyle struct {
 	Color  int     // index into palette
 }
 
-type Point struct {
-	X, Y float64
-}
 
 //        otl  otc  otr      
 //       +--------------+ 
@@ -221,34 +501,68 @@ type Key struct {
 	X, Y int
 }
 
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
+type ChartValue interface {
+	// center
+	CX() float64
+	CY() float64
+	// bounding box
+	MinX() float64
+	MinY() float64
+	MaxX() float64
+	MaxY() float64
 }
 
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
+// Simple Point
+type Point struct{ X, Y float64 }
+
+func (p Point) CX() float64   { return p.X }
+func (p Point) CY() float64   { return p.Y }
+func (p Point) MinX() float64 { return p.X }
+func (p Point) MinY() float64 { return p.Y }
+func (p Point) MaxX() float64 { return p.X }
+func (p Point) MaxY() float64 { return p.Y }
+
+// Box in Boxplot
+type Box struct {
+	X, Avg, Med, Q1, Q3, Low, High float64
+	Outliers                       []float64
 }
 
-func abs(a int) int {
-	if a < 0 {
-		return -a
+func (p Box) CX() float64   { return p.X }
+func (p Box) CY() float64   { return p.Med }
+func (p Box) MinX() float64 { return p.X }
+func (p Box) MinY() float64 {
+	x := minimum(p.Outliers)
+	if x != math.NaN() {
+		return x
 	}
-	return a
+	return p.Low
+}
+func (p Box) MaxX() float64 { return p.X }
+func (p Box) MaxY() float64 {
+	x := maximum(p.Outliers)
+	if x != math.NaN() {
+		return x
+	}
+	return p.High
 }
 
-func clip(x, l, u int) int {
-	if x < min(l, u) {
-		return l
-	}
-	if x > max(l, u) {
-		return u
-	}
-	return x
+// Bin in Histograms
+type Bin struct {
+	X, Width float64
+	Count    int
+}
+
+func (p Bin) CX() float64   { return p.X }
+func (p Bin) CY() float64   { return float64(p.Count) / 2 }
+func (p Bin) MinX() float64 { return p.X - p.Width/2 }
+func (p Bin) MinY() float64 { return 0 }
+func (p Bin) MaxX() float64 { return p.X + p.Width/2 }
+func (p Bin) MaxY() float64 { return float64(p.Count) }
+
+
+type ChartData struct {
+	Name   string
+	Style  DataStyle
+	Values []ChartValue
 }

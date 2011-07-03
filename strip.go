@@ -33,7 +33,7 @@ func (sc *StripChart) AddData(name string, data []float64) {
 
 func (sc *StripChart) PlotTxt(w, h int) string {
 	sc.ScatterChart.Ylabel = ""
-	sc.ScatterChart.YRange.Tics.Hide = true
+	sc.ScatterChart.YRange.TicSetting.Hide = true
 	sc.ScatterChart.YRange.MinMode.Fixed = true
 	sc.ScatterChart.YRange.MinMode.Value = 0.5
 	sc.ScatterChart.YRange.MaxMode.Fixed = true

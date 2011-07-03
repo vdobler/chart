@@ -99,7 +99,7 @@ func (sc *ScatterChart) LayoutTxt(w, h int) (width, leftm, height, topm int, kb 
 	if sc.Xlabel != "" {
 		height--
 	}
-	if !sc.XRange.Tics.Hide {
+	if !sc.XRange.TicSetting.Hide {
 		height--
 		xlabsep++
 	}
@@ -107,7 +107,7 @@ func (sc *ScatterChart) LayoutTxt(w, h int) (width, leftm, height, topm int, kb 
 		leftm += 2
 		width -= 2
 	}
-	if !sc.YRange.Tics.Hide {
+	if !sc.YRange.TicSetting.Hide {
 		leftm += 6
 		width -= 6
 		ylabsep += 6
@@ -213,8 +213,8 @@ func (sc *ScatterChart) LayoutTxt(w, h int) (width, leftm, height, topm int, kb 
 	}
 	// fmt.Printf("Requesting %d,%d tics.\n", ntics,height/3)
 
-	sc.XRange.Setup(ntics, width, leftm, false)
-	sc.YRange.Setup(height/3, height, topm, true)
+	sc.XRange.Setup(ntics, ntics+2, width, leftm, false)
+	sc.YRange.Setup(height/4, height/4-1, height, topm, true)
 
 	return
 }
@@ -224,10 +224,10 @@ func (sc *ScatterChart) PlotTxt(w, h int) string {
 	width, leftm, height, topm, kb := sc.LayoutTxt(w, h)
 
 	xlabsep, ylabsep := 1, 3
-	if !sc.XRange.Tics.Hide {
+	if !sc.XRange.TicSetting.Hide {
 		xlabsep++
 	}
-	if !sc.YRange.Tics.Hide {
+	if !sc.YRange.TicSetting.Hide {
 		ylabsep += 6
 	}
 
@@ -238,38 +238,35 @@ func (sc *ScatterChart) PlotTxt(w, h int) string {
 	}
 	if sc.Xlabel != "" {
 		y := topm + height + 1
-		if !sc.XRange.Tics.Hide {
+		if !sc.XRange.TicSetting.Hide {
 			y++
 		}
 		tb.Text(width/2+leftm, y, sc.Xlabel, 0)
 	}
 	if sc.Ylabel != "" {
 		x := leftm - 3
-		if !sc.YRange.Tics.Hide {
+		if !sc.YRange.TicSetting.Hide {
 			x -= 6
 		}
 		tb.Text(x, topm+height/2, sc.Ylabel, 3)
 	}
 
-	tics := sc.XRange.Tics
-	if !tics.Hide {
-		for tic := tics.First; tic < tics.Last+tics.Delta/2; tic += tics.Delta {
-			x := sc.XRange.Data2Screen(tic)
-			lab := FmtFloat(tic)
-			tb.Put(x, topm+height, '+')
-			tb.Text(x, topm+height+1, lab, 0)
-		}
+	for _, tic := range sc.XRange.Tics {
+		x := sc.XRange.Data2Screen(tic.Pos)
+		lx := sc.XRange.Data2Screen(tic.LabelPos)
+		tb.Put(x, topm+height, '|')
+		tb.Put(x, topm+height+1, '|')
+		tb.Text(lx, topm+height+1, tic.Label, 0)
+	}
+	
+
+	for _, tic := range sc.YRange.Tics {
+		y := sc.YRange.Data2Screen(tic.Pos)
+		ly := sc.YRange.Data2Screen(tic.LabelPos)
+		tb.Put(leftm, y, '+')
+		tb.Text(leftm-1, ly, tic.Label, 1)
 	}
 
-	tics = sc.YRange.Tics
-	if !tics.Hide {
-		for tic := tics.First; tic < tics.Last+tics.Delta/2; tic += tics.Delta {
-			y := sc.YRange.Data2Screen(tic)
-			lab := FmtFloat(tic)
-			tb.Put(leftm, y, '+')
-			tb.Text(leftm-1, y, lab, 1)
-		}
-	}
 
 	// Plot Data
 	for s, data := range sc.Data {

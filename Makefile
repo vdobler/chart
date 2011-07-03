@@ -3,13 +3,15 @@ include $(GOROOT)/src/Make.inc
 TARG=github.com/vdobler/chart
 GOFILES=\
 	chart.go\
+	util.go\
 	text.go\
 	strip.go\
-	scatter.go
+	scatter.go\
+	hist.go
 
 include $(GOROOT)/src/Make.pkg
 
-chart.$(O): chart.go text.go strip.go scatter.go
+chart.$(O): $(GOFILES)
 	$(GC) -o chart.$(O) $^
 
 samplechart: samplecharts.go chart.$(O)

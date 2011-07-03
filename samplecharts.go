@@ -3,6 +3,8 @@ package main
 import (
 	"chart"
 	"fmt"
+	"rand"
+	"time"
 )
 
 func main() {
@@ -59,4 +61,21 @@ func main() {
 	pl.AddLinear("Line", -4, 0, 10, 60)
 	fmt.Printf("%s\n", pl.PlotTxt(100, 28))
 
+	steps := []int64{50000, 70000, 100000, 200000, 400000, 800000, 1200000, 1800000, 2000000, 2200000, 2500000, 3000000, 5000000, 9000000, 2*9000000, 4*9000000}
+	for _, step := range steps {
+		fmt.Printf("\nStep %d seconds\n", step) 
+		t, v := make([]float64,20), make([]float64,20)
+		now := time.Seconds()
+		for i:=0; i<20; i++ {
+			t[i] = float64(now + int64(i) * step)
+			v[i] = rand.NormFloat64() * 3
+		}
+		tl := chart.ScatterChart{Title: "Date and Time", Xlabel: "X-Value", Ylabel: "Y-Value"}
+		tl.Key.Hide = true
+		tl.XRange.Time = true
+		tl.Key.Pos = "itl"
+		tl.AddDataPair("Sample", t, v)
+		fmt.Printf("%s\n", tl.PlotTxt(100, 15))
+	}
 }
+
