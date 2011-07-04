@@ -213,7 +213,7 @@ func (sc *ScatterChart) LayoutTxt(w, h int) (width, leftm, height, topm int, kb 
 	}
 	// fmt.Printf("Requesting %d,%d tics.\n", ntics,height/3)
 
-	sc.XRange.Setup(ntics, ntics+2, width, leftm, false)
+	sc.XRange.Setup(ntics, ntics+1, width, leftm, false)
 	sc.YRange.Setup(height/4, height/4-1, height, topm, true)
 
 	return
@@ -258,7 +258,6 @@ func (sc *ScatterChart) PlotTxt(w, h int) string {
 		tb.Put(x, topm+height+1, '|')
 		tb.Text(lx, topm+height+1, tic.Label, 0)
 	}
-	
 
 	for _, tic := range sc.YRange.Tics {
 		y := sc.YRange.Data2Screen(tic.Pos)
@@ -266,7 +265,6 @@ func (sc *ScatterChart) PlotTxt(w, h int) string {
 		tb.Put(leftm, y, '+')
 		tb.Text(leftm-1, ly, tic.Label, 1)
 	}
-
 
 	// Plot Data
 	for s, data := range sc.Data {
