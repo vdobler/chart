@@ -93,11 +93,11 @@ func (hc *HistChart) PlotTxt(w, h int) string {
 
 	tb := NewTextBuf(w, h)
 	// tb.Rect(leftm, topm, width, height, 0, ' ')
-	for i=0; i<width; i++ {
-		kb.Put(leftm+i, topm+height+1, '-')
+	for i:=0; i<width; i++ {
+		tb.Put(leftm+i, topm+height+1, '-')
 	}
-	for i=0; i<height; i++ {
-		kb.Put(leftm-1, topm+i, '|')
+	for i:=0; i<height; i++ {
+		tb.Put(leftm-1, topm+i, '|')
 	}
 
 	if hc.Title != "" {
