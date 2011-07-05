@@ -52,7 +52,6 @@ func (tb *TextBuf) Rect(x, y, w, h int, style int, fill int) {
 	for i := 1; i < h; i++ {
 		tb.Put(x+w, y+i, '|')
 		tb.Put(x, y+i, '|')
-		continue
 		if fill > 0 {
 			for j := x + 1; j < x+w; j++ {
 				tb.Put(j, y+i, fill)
@@ -60,6 +59,16 @@ func (tb *TextBuf) Rect(x, y, w, h int, style int, fill int) {
 		}
 	}
 }
+
+func (tb *TextBuf) Block(x, y, w, h int, fill int) {
+	for i := 0; i <w; i++ {
+		for j := 0; j <= h; j++ {
+			tb.Put(x+i, y+j, fill)
+		}
+	}
+}
+
+
 
 func StrLen(s string) (n int) {
 	for _, _ = range s {

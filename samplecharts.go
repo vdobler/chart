@@ -91,6 +91,30 @@ func main() {
 		points[i] = x
 	}
 	hc.AddData("Sample 1", points)
+	fmt.Printf("%s\n", hc.PlotTxt(120,20))
+	points = points[0:80]
+	for i:=0; i<len(points); i++ {
+		x := rand.NormFloat64() * 4 + 37
+		if x < 0 { 
+			x=0
+		} else if x > 50 {
+			x = 50
+		}
+		points[i] = x
+	}
+	hc.AddData("Sample 2", points)
+	fmt.Printf("%s\n", hc.PlotTxt(120,20))
+	points = points[0:40]
+	for i:=0; i<len(points); i++ {
+		x := rand.NormFloat64() * 15
+		if x < 0 { 
+			x=0
+		} else if x > 50 {
+			x = 50
+		}
+		points[i] = x
+	}
+	hc.AddData("Sample 3", points)
+	fmt.Printf("%s\n", hc.PlotTxt(120,20))
 	
-	fmt.Printf("%s\n", hc.PlotTxt(100,20))
 }

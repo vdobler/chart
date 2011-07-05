@@ -51,22 +51,27 @@ func (c *HistChart) AddData(name string, data []float64) {
 
 
 func (hc *HistChart) PlotTxt(w, h int) string {
-	width, height, leftm, topm := w - 10, h - 10, 5, 5
-	ntics := 10
-	hc.XRange.Setup(ntics, ntics+5, width, leftm, false)
+	width, height, leftm, topm := w - 10, h - 4, 5, 2
+	ntics := 5
+	hc.XRange.Setup(ntics, ntics+1, width, leftm, false)
 	hc.BinWidth = hc.XRange.TicSetting.Delta
 	binCnt := int((hc.XRange.Max - hc.XRange.Min) / hc.BinWidth  + 0.5)
 	hc.FirstBin = hc.XRange.Min + hc.BinWidth/2
 
-	count := make([]int, binCnt)
+	counts := make([][]int, len(hc.Data))
 	hc.YRange.DataMin = 0
 	max := 0
-	for _, x := range hc.Data[0].Samples {
-		bin := int((x - hc.XRange.Min)/hc.BinWidth)
-		count[bin] = count[bin] + 1
-		if count[bin] > max {
-			max = count[bin]
+	for i, data := range hc.Data {
+		count := make([]int, binCnt)
+		for _, x := range data.Samples {
+			bin := int((x - hc.XRange.Min)/hc.BinWidth)
+			count[bin] = count[bin] + 1
+			if count[bin] > max {
+				max = count[bin]
+			}
 		}
+		counts[i] = count
+		fmt.Printf("Count: %v\n", count)
 	}
 	hc.YRange.DataMax = float64(max)
 	hc.YRange.Setup(height/5, height/5+3, height, topm, true)
@@ -77,27 +82,42 @@ func (hc *HistChart) PlotTxt(w, h int) string {
 		tb.Text(width/2+leftm, 0, hc.Title, 0)
 	}
 
+	numSets := len(hc.Data)
 	for i, tic := range hc.XRange.Tics {
-		x := hc.XRange.Data2Screen(tic.Pos)
+		xs := hc.XRange.Data2Screen(tic.Pos)
 		lx := hc.XRange.Data2Screen(tic.LabelPos)
-		tb.Put(x, topm+height, '+')
+		tb.Put(xs, topm+height, '+')
 		tb.Text(lx, topm+height+1, tic.Label, 0)
 
 		y0 := hc.YRange.Data2Screen(0)
-		if i > 0 {
-			last := hc.XRange.Tics[i-1]
-			center := (tic.Pos + last.Pos)/2
-			bin := int((center - hc.XRange.Min) / hc.BinWidth)
-			cnt := count[bin]
+
+		if i == 0 { continue }
+
+		last := hc.XRange.Tics[i-1]
+		lasts := hc.XRange.Data2Screen(last.Pos)
+
+		blockW := int(float64(xs-lasts-numSets)/float64(numSets))
+		fmt.Printf("blockW= %d\n", blockW)
+
+		center := (tic.Pos + last.Pos)/2
+		bin := int((center - hc.XRange.Min) / hc.BinWidth)
+		xs = lasts
+		for d, _ := range hc.Data {
+			fill := Symbol[(d+3)%len(Symbol)]
+			cnt := counts[d][bin]
 			y := hc.YRange.Data2Screen(float64(cnt))
-			x0 := hc.XRange.Data2Screen(last.Pos)
-			// fmt.Printf("Bin x=%d, y=%d, w=%d, h=%d\n",x0, y, x-x0, y-y0)
-			tb.Rect(x0, y, x-x0, y0-y, 0, '#')
+
+			tb.Block(xs+1, y, blockW, y0-y, fill)
+
 			lab := fmt.Sprintf("%d", cnt)
-			xlab := hc.XRange.Data2Screen(center)
+			xlab := xs + blockW/2  // hc.XRange.Data2Screen(center)
+			if blockW % 2 == 1 {
+				xlab ++
+			}
 			y--
 			tb.Text(xlab, y, lab, 0 )
 			
+			xs += blockW + 1
 		}
 	}
 
