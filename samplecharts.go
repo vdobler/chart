@@ -122,8 +122,8 @@ func main() {
 		points3[i] = x
 	}
 	hc.AddData("Sample 3", points3)
-	fmt.Printf("%s\n", hc.PlotTxt(120,40))
+	fmt.Printf("%s\n", hc.PlotTxt(120,30))
 	hc.Stacked = false
-	fmt.Printf("%s\n", hc.PlotTxt(120,40))
+	fmt.Printf("%s\n", hc.PlotTxt(120,30))
 
 }
