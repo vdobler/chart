@@ -51,6 +51,10 @@ func (c *HistChart) AddData(name string, data []float64) {
 func (hc *HistChart) PlotTxt(w, h int) string {
 	width, leftm, height, topm, kb, numxtics, numytics := LayoutTxt(w, h, hc.Title, hc.Xlabel, hc.Ylabel, hc.XRange.TicSetting.Hide, hc.YRange.TicSetting.Hide, &hc.Key)
 
+	// Outside bound ranges for histograms are nicer
+	leftm, width = leftm+1, width -1
+	topm, height = topm, height -1 
+
 	hc.XRange.Setup(numxtics, numxtics+1, width, leftm, false)
 	hc.BinWidth = hc.XRange.TicSetting.Delta
 	binCnt := int((hc.XRange.Max - hc.XRange.Min) / hc.BinWidth  + 0.5)
@@ -69,7 +73,7 @@ func (hc *HistChart) PlotTxt(w, h int) string {
 			}
 		}
 		counts[i] = count
-		fmt.Printf("Count: %v\n", count)
+		// fmt.Printf("Count: %v\n", count)
 	}
 	if hc.Stacked { // recalculate max
 		max = 0
@@ -78,7 +82,7 @@ func (hc *HistChart) PlotTxt(w, h int) string {
 			for i := range counts {
 				sum += counts[i][bin]
 			}
-			fmt.Printf("sum of bin %d = %d\n", bin, sum)
+			// fmt.Printf("sum of bin %d = %d\n", bin, sum)
 			if sum > max {
 				max = sum
 			}
@@ -88,7 +92,14 @@ func (hc *HistChart) PlotTxt(w, h int) string {
 	hc.YRange.Setup(numytics, numytics+2, height, topm, true)
 
 	tb := NewTextBuf(w, h)
-	tb.Rect(leftm, topm, width, height, 0, ' ')
+	// tb.Rect(leftm, topm, width, height, 0, ' ')
+	for i=0; i<width; i++ {
+		kb.Put(leftm+i, topm+height+1, '-')
+	}
+	for i=0; i<height; i++ {
+		kb.Put(leftm-1, topm+i, '|')
+	}
+
 	if hc.Title != "" {
 		tb.Text(width/2+leftm, 0, hc.Title, 0)
 	}
@@ -97,8 +108,8 @@ func (hc *HistChart) PlotTxt(w, h int) string {
 	for i, tic := range hc.XRange.Tics {
 		xs := hc.XRange.Data2Screen(tic.Pos)
 		lx := hc.XRange.Data2Screen(tic.LabelPos)
-		tb.Put(xs, topm+height, '+')
-		tb.Text(lx, topm+height+1, tic.Label, 0)
+		tb.Put(xs, topm+height+1, '+')
+		tb.Text(lx, topm+height+2, tic.Label, 0)
 
 		if i == 0 { continue }
 
@@ -151,8 +162,8 @@ func (hc *HistChart) PlotTxt(w, h int) string {
 	for _, tic := range hc.YRange.Tics {
 		y := hc.YRange.Data2Screen(tic.Pos)
 		ly := hc.YRange.Data2Screen(tic.LabelPos)
-		tb.Put(leftm, y, '+')
-		tb.Text(leftm-1, ly, tic.Label, 1)
+		tb.Put(leftm-1, y, '+')
+		tb.Text(leftm-2, ly, tic.Label, 1)
 	}
 
 	if kb != nil {
