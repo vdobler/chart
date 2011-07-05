@@ -95,34 +95,35 @@ func main() {
 	hc.AddData("Sample 1", points)
 	fmt.Printf("%s\n", hc.PlotTxt(120,20))
 
-	points = points[0:80]
-	for i:=0; i<len(points); i++ {
+	points2 := make([]float64, 80)
+	for i:=0; i<len(points2); i++ {
 		x := rand.NormFloat64() * 4 + 37
 		if x < 0 { 
 			x=0
 		} else if x > 50 {
 			x = 50
 		}
-		points[i] = x
+		points2[i] = x
 	}
-	hc.AddData("Sample 2", points)
+	hc.AddData("Sample 2", points2)
 	fmt.Printf("%s\n", hc.PlotTxt(120,20))
 
 	hc.Stacked = true
 	fmt.Printf("%s\n", hc.PlotTxt(120,20))
 
-	/*
-	points = points[0:40]
-	for i:=0; i<len(points); i++ {
+	points3 := make([]float64, 60)
+	for i:=0; i<len(points3); i++ {
 		x := rand.NormFloat64() * 15
 		if x < 0 { 
 			x=0
 		} else if x > 50 {
 			x = 50
 		}
-		points[i] = x
+		points3[i] = x
 	}
-	hc.AddData("Sample 3", points)
-	fmt.Printf("%s\n", hc.PlotTxt(120,20))
-	*/
+	hc.AddData("Sample 3", points3)
+	fmt.Printf("%s\n", hc.PlotTxt(120,40))
+	hc.Stacked = false
+	fmt.Printf("%s\n", hc.PlotTxt(120,40))
+
 }

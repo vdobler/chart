@@ -73,11 +73,12 @@ func (hc *HistChart) PlotTxt(w, h int) string {
 	}
 	if hc.Stacked { // recalculate max
 		max = 0
-		for bin:=0; bin<binCnt; i++ {
+		for bin:=0; bin<binCnt; bin++ {
 			sum := 0
-			for i := range count {
-				sum += count[i][bin]
+			for i := range counts {
+				sum += counts[i][bin]
 			}
+			fmt.Printf("sum of bin %d = %d\n", bin, sum)
 			if sum > max {
 				max = sum
 			}
@@ -106,11 +107,11 @@ func (hc *HistChart) PlotTxt(w, h int) string {
 
 		var blockW int
 		if hc.Stacked {
-			blockW = xs-lasts
+			blockW = xs-lasts -1 
 		} else {
 			blockW = int(float64(xs-lasts-numSets)/float64(numSets))
 		}
-		fmt.Printf("blockW= %d\n", blockW)
+		// fmt.Printf("blockW= %d\n", blockW)
 
 		center := (tic.Pos + last.Pos)/2
 		bin := int((center - hc.XRange.Min) / hc.BinWidth)
@@ -119,8 +120,11 @@ func (hc *HistChart) PlotTxt(w, h int) string {
 		y0 := hc.YRange.Data2Screen(0)
 
 		for d, _ := range hc.Data {
-			fill := Symbol[(d+3)%len(Symbol)]
+			fill := Symbol[d%len(Symbol)]
 			cnt := counts[d][bin]
+			if i == 1 {
+				fmt.Printf("cnt=%d, lastCnt=%d\n", cnt,lastCnt)
+			}
 			y := hc.YRange.Data2Screen(float64(lastCnt+cnt))
 
 			tb.Block(xs+1, y, blockW, y0-y, fill)
@@ -138,7 +142,7 @@ func (hc *HistChart) PlotTxt(w, h int) string {
 			if !hc.Stacked {
 				xs += blockW + 1
 			} else {
-				lastCnt = cnt
+				lastCnt += cnt
 				y0 = y
 			}
 		}
