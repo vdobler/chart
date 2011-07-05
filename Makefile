@@ -4,6 +4,7 @@ TARG=github.com/vdobler/chart
 GOFILES=\
 	chart.go\
 	util.go\
+	time.go\
 	text.go\
 	strip.go\
 	scatter.go\

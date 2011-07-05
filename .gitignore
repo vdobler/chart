@@ -2,3 +2,8 @@
 *~
 *.8
 _obj/*
+_test/*
+_test*
+8.out
+samplecharts
+
