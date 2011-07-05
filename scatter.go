@@ -24,10 +24,9 @@ type ScatterChart struct {
 }
 
 func (sc *ScatterChart) AddFunc(name string, f func(float64) float64) {
-	if sc.Data == nil {
-		sc.Data = make([]ScatterChartData, 0, 1)
-	}
+	s := Symbol[ len(sc.Data) % len(Symbol) ]
 	sc.Data = append(sc.Data, ScatterChartData{name, DataStyle{}, nil, f})
+	sc.Key.Entries = append(sc.Key.Entries, KeyEntry{s, name})
 }
 
 func (sc *ScatterChart) AddLinear(name string, ax, ay, bx, by float64) {
@@ -38,10 +37,9 @@ func (sc *ScatterChart) AddLinear(name string, ax, ay, bx, by float64) {
 
 
 func (sc *ScatterChart) AddData(name string, data []Point) {
-	if sc.Data == nil {
-		sc.Data = make([]ScatterChartData, 0, 1)
-	}
+	s := Symbol[ len(sc.Data) % len(Symbol) ]
 	sc.Data = append(sc.Data, ScatterChartData{name, DataStyle{}, data, nil})
+	sc.Key.Entries = append(sc.Key.Entries, KeyEntry{s, name})
 	if sc.XRange.DataMin == 0 && sc.XRange.DataMax == 0 && sc.YRange.DataMin == 0 && sc.YRange.DataMax == 0 {
 		sc.XRange.DataMin = data[0].X
 		sc.XRange.DataMax = data[0].X
@@ -78,150 +76,14 @@ func (sc *ScatterChart) AddDataPair(name string, x, y []float64) {
 }
 
 
-func (sc *ScatterChart) LayoutTxt(w, h int) (width, leftm, height, topm int, kb *TextBuf) {
-	if sc.Key.Pos == "" {
-		sc.Key.Pos = "itr"
-	}
 
-	if h < 5 {
-		h = 5
-	}
-	if w < 10 {
-		w = 10
-	}
-
-	width, leftm, height, topm = w-4, 2, h-1, 0
-	xlabsep, ylabsep := 1, 3
-	if sc.Title != "" {
-		topm++
-		height--
-	}
-	if sc.Xlabel != "" {
-		height--
-	}
-	if !sc.XRange.TicSetting.Hide {
-		height--
-		xlabsep++
-	}
-	if sc.Ylabel != "" {
-		leftm += 2
-		width -= 2
-	}
-	if !sc.YRange.TicSetting.Hide {
-		leftm += 6
-		width -= 6
-		ylabsep += 6
-	}
-
-	if !sc.Key.Hide {
-		maxlen := 0
-		entries := make([]KeyEntry, 0)
-		for s, data := range sc.Data {
-			text := data.Name
-			if text != "" {
-				text = text[:min(len(text), w/2-7)]
-				symbol := Symbol[s%len(Symbol)]
-				entries = append(entries, KeyEntry{symbol, text})
-				if len(text) > maxlen {
-					maxlen = len(text)
-				}
-			}
-		}
-		if len(entries) > 0 {
-			kh, kw := len(entries)+2, maxlen+7
-			kb = NewTextBuf(kw, kh)
-			if sc.Key.Border != -1 {
-				kb.Rect(0, 0, kw-1, kh-1, sc.Key.Border+1, ' ')
-			}
-			for i, e := range entries {
-				kb.Put(2, i+1, e.Symbol)
-				kb.Text(5, i+1, e.Text, -1)
-			}
-
-			switch sc.Key.Pos[:2] {
-			case "ol":
-				width, leftm = width-maxlen-9, leftm+kw
-				sc.Key.X = 0
-			case "or":
-				width = width - maxlen - 9
-				sc.Key.X = w - kw
-			case "ot":
-				height, topm = height-kh-2, topm+kh
-				sc.Key.Y = 1
-			case "ob":
-				height = height - kh - 2
-				sc.Key.Y = topm + height + 4
-			case "it":
-				sc.Key.Y = topm + 1
-			case "ic":
-				sc.Key.Y = topm + (height-kh)/2
-			case "ib":
-				sc.Key.Y = topm + height - kh
-
-			}
-
-			switch sc.Key.Pos[:2] {
-			case "ol", "or":
-				switch sc.Key.Pos[2] {
-				case 't':
-					sc.Key.Y = topm
-				case 'c':
-					sc.Key.Y = topm + (height-kh)/2
-				case 'b':
-					sc.Key.Y = topm + height - kh + 1
-				}
-			case "ot", "ob":
-				switch sc.Key.Pos[2] {
-				case 'l':
-					sc.Key.X = leftm
-				case 'c':
-					sc.Key.X = leftm + (width-kw)/2
-				case 'r':
-					sc.Key.X = w - kw - 2
-				}
-			}
-			if sc.Key.Pos[0] == 'i' {
-				switch sc.Key.Pos[2] {
-				case 'l':
-					sc.Key.X = leftm + 2
-				case 'c':
-					sc.Key.X = leftm + (width-kw)/2
-				case 'r':
-					sc.Key.X = leftm + width - kw - 2
-				}
-
-			}
-		}
-	}
-
-	// fmt.Printf("width=%d, height=%d, leftm=%d, topm=%d\n", width, height, leftm, topm)
-
-	var ntics int
-	switch {
-	case width < 20:
-		ntics = 2
-	case width < 30:
-		ntics = 3
-	case width < 60:
-		ntics = 4
-	case width < 80:
-		ntics = 5
-	case width < 100:
-		ntics = 7
-	default:
-		ntics = 10
-	}
-	// fmt.Printf("Requesting %d,%d tics.\n", ntics,height/3)
-
-	sc.XRange.Setup(ntics, ntics+2, width, leftm, false)
-	sc.YRange.Setup(height/4, height/4+1, height, topm, true)
-
-	return
-}
 
 
 func (sc *ScatterChart) PlotTxt(w, h int) string {
-	width, leftm, height, topm, kb := sc.LayoutTxt(w, h)
+	width, leftm, height, topm, kb, numxtics, numytics := LayoutTxt(w, h, sc.Title, sc.Xlabel, sc.Ylabel, sc.XRange.TicSetting.Hide, sc.YRange.TicSetting.Hide, &sc.Key)
+
+	sc.XRange.Setup(numxtics, numxtics+2, width, leftm, false)
+	sc.YRange.Setup(numytics, numytics+1, height, topm, true)
 
 	xlabsep, ylabsep := 1, 3
 	if !sc.XRange.TicSetting.Hide {
@@ -330,8 +192,6 @@ func (sc *ScatterChart) PlotTxt(w, h int) string {
 	}
 
 	if kb != nil {
-		//fmt.Printf("width=%d, height=%d, leftm=%d, topm=%d, x=%d, y=%d\n", width, 
-		//	height, leftm, topm, sc.Key.X, sc.Key.Y)
 		tb.Paste(sc.Key.X, sc.Key.Y, kb)
 	}
 

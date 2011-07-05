@@ -28,10 +28,10 @@ type HistChart struct {
 }
 
 func (c *HistChart) AddData(name string, data []float64) {
-	if c.Data == nil {
-		c.Data = make([]HistChartData, 0, 1)
-	}
+	s := Symbol[ len(c.Data) % len(Symbol) ]
 	c.Data = append(c.Data, HistChartData{name, DataStyle{}, data})
+	c.Key.Entries = append(c.Key.Entries, KeyEntry{s, name})
+
 	if c.XRange.DataMin == 0 && c.XRange.DataMax == 0  {
 		c.XRange.DataMin = data[0]
 		c.XRange.DataMax = data[0]
@@ -45,15 +45,13 @@ func (c *HistChart) AddData(name string, data []float64) {
 	}
 	c.XRange.Min = c.XRange.DataMin
 	c.XRange.Max = c.XRange.DataMax
-	// fmt.Printf("New Limits: x %f %f; y %f %f\n", 
-	// 	c.XRange.DataMin, c.XRange.DataMax, c.YRange.DataMin, c.YRange.DataMax) 
 }
 
 
 func (hc *HistChart) PlotTxt(w, h int) string {
-	width, height, leftm, topm := w - 10, h - 4, 5, 2
-	ntics := 5
-	hc.XRange.Setup(ntics, ntics+1, width, leftm, false)
+	width, leftm, height, topm, kb, numxtics, numytics := LayoutTxt(w, h, hc.Title, hc.Xlabel, hc.Ylabel, hc.XRange.TicSetting.Hide, hc.YRange.TicSetting.Hide, &hc.Key)
+
+	hc.XRange.Setup(numxtics, numxtics+1, width, leftm, false)
 	hc.BinWidth = hc.XRange.TicSetting.Delta
 	binCnt := int((hc.XRange.Max - hc.XRange.Min) / hc.BinWidth  + 0.5)
 	hc.FirstBin = hc.XRange.Min + hc.BinWidth/2
@@ -74,7 +72,7 @@ func (hc *HistChart) PlotTxt(w, h int) string {
 		fmt.Printf("Count: %v\n", count)
 	}
 	hc.YRange.DataMax = float64(max)
-	hc.YRange.Setup(height/5, height/5+3, height, topm, true)
+	hc.YRange.Setup(numytics, numytics+2, height, topm, true)
 
 	tb := NewTextBuf(w, h)
 	tb.Rect(leftm, topm, width, height, 0, ' ')
@@ -128,6 +126,9 @@ func (hc *HistChart) PlotTxt(w, h int) string {
 		tb.Text(leftm-1, ly, tic.Label, 1)
 	}
 
+	if kb != nil {
+		tb.Paste(hc.Key.X, hc.Key.Y, kb)
+	}
 
 	return tb.String()
 }

@@ -40,7 +40,10 @@ func (sc *StripChart) PlotTxt(w, h int) string {
 	sc.ScatterChart.YRange.MaxMode.Value = float64(len(sc.ScatterChart.Data)) + 0.5
 
 	if sc.Jitter {
-		sc.LayoutTxt(w, h) // Set up ranging
+		// Set up ranging
+		_, _, height, topm, _, _, numytics := LayoutTxt(w, h, sc.Title, sc.Xlabel, sc.Ylabel, sc.XRange.TicSetting.Hide, sc.YRange.TicSetting.Hide, &sc.Key)
+		sc.YRange.Setup(numytics, numytics+1, height, topm, true)
+
 		yj := math.Fabs(sc.YRange.Screen2Data(1) - sc.YRange.Screen2Data(2))
 		for s, data := range sc.ScatterChart.Data {
 			if data.Samples == nil {

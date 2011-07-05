@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	/*
+	
 		data1 := []float64{15e-7, 30e-7, 35e-7, 50e-7, 70e-7, 75e-7, 80e-7, 32e-7, 35e-7, 70e-7, 65e-7}
 		data2 := []float64{10e-7, 11e-7, 12e-7, 22e-7, 25e-7, 33e-7}
 		data3 := []float64{50e-7, 55e-7, 55e-7, 60e-7, 50e-7, 65e-7, 60e-7, 65e-7, 55e-7, 50e-7}
@@ -34,14 +34,15 @@ func main() {
 		p.AddDataPair("Sample A", data10, data1)
 		fmt.Printf("%s\n", p.PlotTxt(80, 20))
 
-		p.XRange.Tics.Hide, p.YRange.Tics.Hide = true, true
+		p.XRange.TicSetting.Hide, p.YRange.TicSetting.Hide = true, true
 		fmt.Printf("%s\n", p.PlotTxt(80, 20))
 
 		p.Xlabel, p.Ylabel = "", ""
 		fmt.Printf("%s\n", p.PlotTxt(80, 20))
 
-		p.XRange.Tics.Hide, p.YRange.Tics.Hide = false, false
+		p.XRange.TicSetting.Hide, p.YRange.TicSetting.Hide = false, false
 		fmt.Printf("%s\n", p.PlotTxt(80, 20))
+
 
 	pl := chart.ScatterChart{Title: "Scatter + Lines", Xlabel: "X-Value", Ylabel: "Y-Value"}
 	pl.Key.Pos = "itl"
@@ -60,6 +61,7 @@ func main() {
 	pl.AddLinear("Line", -4, 0, 10, 60)
 	fmt.Printf("%s\n", pl.PlotTxt(100, 28))
 
+	 /***
 	steps := []int64{ 100, 150, 300, 500, 800, 1000, 1500, 3000, 5000,8000, 10000, 15000, 20000, 30000, 50000, 70000, 100000, 200000, 400000, 800000, 1200000, 1800000, 2000000, 2200000, 2500000, 3000000, 5000000, 9000000, 2 * 9000000, 4 * 9000000 }
 	for _, step := range steps {
 		fmt.Printf("\nStep %d seconds\n", step)
@@ -92,6 +94,7 @@ func main() {
 	}
 	hc.AddData("Sample 1", points)
 	fmt.Printf("%s\n", hc.PlotTxt(120,20))
+	/*
 	points = points[0:80]
 	for i:=0; i<len(points); i++ {
 		x := rand.NormFloat64() * 4 + 37
@@ -116,5 +119,5 @@ func main() {
 	}
 	hc.AddData("Sample 3", points)
 	fmt.Printf("%s\n", hc.PlotTxt(120,20))
-	
+	*/
 }

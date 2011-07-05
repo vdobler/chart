@@ -5,7 +5,7 @@ import (
 	"math"
 	"time"
 	//	"os"
-	//	"strings"
+	"strings"
 )
 
 
@@ -365,11 +365,6 @@ func (r *Range) Setup(desiredNumberOfTics, maxNumberOfTics, sWidth, sOffset int,
 
 }
 
-type KeyEntry struct {
-	Symbol int
-	Text   string
-}
-
 type DataStyle struct {
 	Symbol int     // -1: no symbol, 0: auto, 1... fixed
 	Line   int     // 0: no line, 1, solid, 2 dashed, 3 dotted
@@ -396,7 +391,48 @@ type Key struct {
 	Pos    string // "": itr
 	// Width, Height int    // 0,0: auto
 	X, Y int
+	Entries []KeyEntry
 }
+
+type KeyEntry struct {
+	Symbol int
+	Text   string
+}
+
+func (key *Key) LayoutKeyTxt() (kb *TextBuf) {
+	if key.Hide { return }
+	var w, h, ml int
+	var have bool
+	for _, e := range key.Entries {
+		if e.Text == "" { continue }
+		have = true
+		for _, t := range strings.Split(e.Text, "\n", -1) {
+			if len(t) > ml { // TODO(vodo) use utf8.CountRuneInString
+				ml = len(t)
+			}
+			h++
+		}
+	}
+	if !have { return }
+	w = ml + 7
+	h += 2
+	kb = NewTextBuf(w, h)
+	if key.Border != -1 {
+		kb.Rect(0, 0, w-1, h-1, key.Border+1, ' ')
+	}
+	y := 1
+	for _, e := range key.Entries {
+		if e.Text == "" { continue }
+		kb.Put(2, y, e.Symbol)
+		for _, t := range strings.Split(e.Text, "\n", -1) {
+			kb.Text(5, y, t, -1)
+			y++
+		}
+	}
+	return
+}
+
+
 
 type ChartValue interface {
 	// center
@@ -464,4 +500,124 @@ type ChartData struct {
 	Name   string
 	Style  DataStyle
 	Values []ChartValue
+}
+
+
+
+func LayoutTxt(w, h int, title, xlabel, ylabel string, hidextics, hideytics bool, key *Key) (width, leftm, height, topm int, kb *TextBuf, numxtics, numytics int) {
+	if key.Pos == "" {
+		key.Pos = "itr"
+	}
+
+	if h < 5 {
+		h = 5
+	}
+	if w < 10 {
+		w = 10
+	}
+
+	width, leftm, height, topm = w-4, 2, h-1, 0
+	xlabsep, ylabsep := 1, 3
+	if title != "" {
+		topm++
+		height--
+	}
+	if xlabel != "" {
+		height--
+	}
+	if !hidextics {
+		height--
+		xlabsep++
+	}
+	if ylabel != "" {
+		leftm += 2
+		width -= 2
+	}
+	if !hideytics {
+		leftm += 6
+		width -= 6
+		ylabsep += 6
+	}
+
+	if !key.Hide {
+		kb = key.LayoutKeyTxt()
+		if kb != nil {
+			kw, kh := kb.W, kb.H
+			switch key.Pos[:2] {
+			case "ol":
+				width, leftm = width-kw-2, leftm+kw
+				key.X = 0
+			case "or":
+				width = width - kw - 2
+				key.X = w - kw
+			case "ot":
+				height, topm = height-kh-2, topm+kh
+				key.Y = 1
+			case "ob":
+				height = height - kh - 2
+				key.Y = topm + height + 4
+			case "it":
+				key.Y = topm + 1
+			case "ic":
+				key.Y = topm + (height-kh)/2
+			case "ib":
+				key.Y = topm + height - kh
+
+			}
+
+			switch key.Pos[:2] {
+			case "ol", "or":
+				switch key.Pos[2] {
+				case 't':
+					key.Y = topm
+				case 'c':
+					key.Y = topm + (height-kh)/2
+				case 'b':
+					key.Y = topm + height - kh + 1
+				}
+			case "ot", "ob":
+				switch key.Pos[2] {
+				case 'l':
+					key.X = leftm
+				case 'c':
+					key.X = leftm + (width-kw)/2
+				case 'r':
+					key.X = w - kw - 2
+				}
+			}
+			if key.Pos[0] == 'i' {
+				switch key.Pos[2] {
+				case 'l':
+					key.X = leftm + 2
+				case 'c':
+					key.X = leftm + (width-kw)/2
+				case 'r':
+					key.X = leftm + width - kw - 2
+				}
+
+			}
+		}
+	}
+
+	// fmt.Printf("width=%d, height=%d, leftm=%d, topm=%d\n", width, height, leftm, topm)
+
+	switch {
+	case width < 20:
+		numxtics = 2
+	case width < 30:
+		numxtics = 3
+	case width < 60:
+		numxtics = 4
+	case width < 80:
+		numxtics = 5
+	case width < 100:
+		numxtics = 7
+	default:
+		numxtics = 10
+	}
+	// fmt.Printf("Requesting %d,%d tics.\n", ntics,height/3)
+
+	numytics = h/4
+
+	return
 }
