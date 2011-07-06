@@ -2,6 +2,7 @@ package chart
 
 import (
 	"fmt"
+	"math"
 //	"os"
 //	"strings"
 )
@@ -21,6 +22,7 @@ type HistChart struct {
 	Key            Key
 	Horizontal     bool  // Display is horizontal bars
 	Stacked        bool  // Display different data sets ontop of each other
+	ShowVal        bool
 	Data           []HistChartData
 	FirstBin       float64  // center of the first (lowest bin)
 	BinWidth       float64
@@ -103,18 +105,36 @@ func (hc *HistChart) PlotTxt(w, h int) string {
 	if hc.Title != "" {
 		tb.Text(width/2+leftm, 0, hc.Title, 0)
 	}
+	if hc.Xlabel != "" {
+		y := topm + height + 2
+		if !hc.XRange.TicSetting.Hide {
+			y++
+		}
+		tb.Text(width/2+leftm, y, hc.Xlabel, 0)
+	}
+	if hc.Ylabel != "" {
+		x := leftm - 3
+		if !hc.YRange.TicSetting.Hide {
+			x -= 6
+		}
+		tb.Text(x, topm+height/2, hc.Ylabel, 3)
+	}
+
+
+	xf := hc.XRange.Data2Screen
+	yf := hc.YRange.Data2Screen
 
 	numSets := len(hc.Data)
 	for i, tic := range hc.XRange.Tics {
-		xs := hc.XRange.Data2Screen(tic.Pos)
-		lx := hc.XRange.Data2Screen(tic.LabelPos)
+		xs := xf(tic.Pos)
+		lx := xf(tic.LabelPos)
 		tb.Put(xs, topm+height+1, '+')
 		tb.Text(lx, topm+height+2, tic.Label, 0)
 
 		if i == 0 { continue }
 
 		last := hc.XRange.Tics[i-1]
-		lasts := hc.XRange.Data2Screen(last.Pos)
+		lasts := xf(last.Pos)
 
 		var blockW int
 		if hc.Stacked {
@@ -128,28 +148,34 @@ func (hc *HistChart) PlotTxt(w, h int) string {
 		bin := int((center - hc.XRange.Min) / hc.BinWidth)
 		xs = lasts
 		lastCnt := 0
-		y0 := hc.YRange.Data2Screen(0)
+		y0 := yf(0)
+
+		minCnt := int(math.Fabs(hc.YRange.Screen2Data(0) - hc.YRange.Screen2Data(1)) / 2)
 
 		for d, _ := range hc.Data {
-			fill := Symbol[d%len(Symbol)]
 			cnt := counts[d][bin]
-			if i == 1 {
-				fmt.Printf("cnt=%d, lastCnt=%d\n", cnt,lastCnt)
-			}
-			y := hc.YRange.Data2Screen(float64(lastCnt+cnt))
+			if cnt <=minCnt { continue }
+			fill := Symbol[d%len(Symbol)]
+			y := yf(float64(lastCnt+cnt))
 
 			tb.Block(xs+1, y, blockW, y0-y, fill)
 
-			/*
-			 lab := fmt.Sprintf("%d", cnt)
-			 xlab := xs + blockW/2  // hc.XRange.Data2Screen(center)
-			 if blockW % 2 == 1 {
-			 xlab ++
-			 }
-			 y--
-			 tb.Text(xlab, y, lab, 0 )
-			*/
-
+			if hc.ShowVal {
+				lab := fmt.Sprintf("%d", cnt)
+				if blockW - len(lab) >= 4 {
+					lab = " " + lab + " "
+				}
+				xlab := xs + blockW/2 + 1  // hc.XRange.Data2Screen(center)
+				if blockW % 2 == 1 {
+					xlab ++
+				}
+				ylab := y - 1 
+				if numSets > 1 {
+					ylab = yf(float64(lastCnt) + float64(cnt)/2)
+				}
+				tb.Text(xlab, ylab, lab, 0 )
+				// fmt.Printf("Set %d: %s at %d\n", d, lab, ylab)
+			}
 			if !hc.Stacked {
 				xs += blockW + 1
 			} else {

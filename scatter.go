@@ -113,10 +113,10 @@ func (sc *ScatterChart) PlotTxt(w, h int) string {
 		tb.Text(x, topm+height/2, sc.Ylabel, 3)
 	}
 
-	if sc.XRange.Time {
-		for _, tic := range sc.XRange.Tics {
-			x := sc.XRange.Data2Screen(tic.Pos)
-			lx := sc.XRange.Data2Screen(tic.LabelPos)
+	for _, tic := range sc.XRange.Tics {
+		x := sc.XRange.Data2Screen(tic.Pos)
+		lx := sc.XRange.Data2Screen(tic.LabelPos)
+		if sc.XRange.Time {
 			tb.Put(x, topm+height, '|')
 			tb.Put(x, topm+height+1, '|')
 			if tic.Align == -1 {
@@ -124,15 +124,13 @@ func (sc *ScatterChart) PlotTxt(w, h int) string {
 			} else {
 				tb.Text(lx, topm+height+1, tic.Label, 0)
 			}
-		}
-		tb.Text(leftm, topm+height+2, sc.XRange.TMin.Format("2006-01-02 15:04:05"), -1)
-		tb.Text(leftm+width+1, topm+height+2, sc.XRange.TMax.Format("2006-01-02 15:04:05"), 1)
-	} else {
-		for _, tic := range sc.XRange.Tics {
-			x := sc.XRange.Data2Screen(tic.Pos)
-			lx := sc.XRange.Data2Screen(tic.LabelPos)
+		} else {
 			tb.Put(x, topm+height, '+')
 			tb.Text(lx, topm+height+1, tic.Label, 0)
+		}
+		if sc.XRange.Time {
+			tb.Text(leftm, topm+height+2, sc.XRange.TMin.Format("2006-01-02 15:04:05"), -1)
+			tb.Text(leftm+width+1, topm+height+2, sc.XRange.TMax.Format("2006-01-02 15:04:05"), 1)
 		}
 	}
 

@@ -20,7 +20,7 @@ type TimeDelta interface {
 type Second struct {
 	Num int
 }
-func (s Second) Seconds() int64 { return int64(60*s.Num) }
+func (s Second) Seconds() int64 { return int64(s.Num) }
 func (s Second) RoundDown(t *time.Time) { 
 	t.Second = s.Num*(t.Second/s.Num)
 }
@@ -38,7 +38,7 @@ func (m Minute) RoundDown(t *time.Time) {
 	t.Minute = m.Num*(t.Minute/m.Num)
 }
 func (m Minute) String() string { return fmt.Sprintf("%d minute(s)", m.Num) }
-func (m Minute) Format(t *time.Time) string { return fmt.Sprintf(":%02d m", t.Minute) }
+func (m Minute) Format(t *time.Time) string { return fmt.Sprintf(":%02d", t.Minute) }
 func (m Minute) Period() bool { return false }
 
 // Hour
