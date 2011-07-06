@@ -123,8 +123,8 @@ func (hc *HistChart) PlotTxt(w, h int) string {
 	for i, tic := range hc.XRange.Tics {
 		xs := xf(tic.Pos)
 		lx := xf(tic.LabelPos)
-		tb.Put(xs, topm+height+1, '+')
-		tb.Text(lx, topm+height+2, tic.Label, 0)
+		// tb.Put(xs, topm+height+1, '+')
+		// tb.Text(lx, topm+height+2, tic.Label, 0)
 
 		if i == 0 { continue }
 
@@ -149,27 +149,28 @@ func (hc *HistChart) PlotTxt(w, h int) string {
 
 		for d, _ := range hc.Data {
 			cnt := counts[d][bin]
-			if cnt <=minCnt { continue }
-			fill := Symbol[d%len(Symbol)]
-			y := yf(float64(lastCnt+cnt))
+			if cnt > minCnt { 
+				fill := Symbol[d%len(Symbol)]
+				y := yf(float64(lastCnt+cnt))
 
-			tb.Block(xs+1, y, blockW, y0-y, fill)
+				tb.Block(xs+1, y, blockW, y0-y, fill)
 
-			if hc.ShowVal {
-				lab := fmt.Sprintf("%d", cnt)
-				if blockW - len(lab) >= 4 {
-					lab = " " + lab + " "
+				if hc.ShowVal {
+					lab := fmt.Sprintf("%d", cnt)
+					if blockW - len(lab) >= 4 {
+						lab = " " + lab + " "
+					}
+					xlab := xs + blockW/2 + 1  // hc.XRange.Data2Screen(center)
+					if blockW % 2 == 1 {
+						xlab ++
+					}
+					ylab := y - 1 
+					if numSets > 1 {
+						ylab = yf(float64(lastCnt) + float64(cnt)/2)
+					}
+					tb.Text(xlab, ylab, lab, 0 )
+					// fmt.Printf("Set %d: %s at %d\n", d, lab, ylab)
 				}
-				xlab := xs + blockW/2 + 1  // hc.XRange.Data2Screen(center)
-				if blockW % 2 == 1 {
-					xlab ++
-				}
-				ylab := y - 1 
-				if numSets > 1 {
-					ylab = yf(float64(lastCnt) + float64(cnt)/2)
-				}
-				tb.Text(xlab, ylab, lab, 0 )
-				// fmt.Printf("Set %d: %s at %d\n", d, lab, ylab)
 			}
 			if !hc.Stacked {
 				xs += blockW + 1
