@@ -122,7 +122,6 @@ func (hc *HistChart) PlotTxt(w, h int) string {
 	numSets := len(hc.Data)
 	for i, tic := range hc.XRange.Tics {
 		xs := xf(tic.Pos)
-		lx := xf(tic.LabelPos)
 		// tb.Put(xs, topm+height+1, '+')
 		// tb.Text(lx, topm+height+2, tic.Label, 0)
 
@@ -149,9 +148,9 @@ func (hc *HistChart) PlotTxt(w, h int) string {
 
 		for d, _ := range hc.Data {
 			cnt := counts[d][bin]
+			y := yf(float64(lastCnt+cnt))
 			if cnt > minCnt { 
 				fill := Symbol[d%len(Symbol)]
-				y := yf(float64(lastCnt+cnt))
 
 				tb.Block(xs+1, y, blockW, y0-y, fill)
 
