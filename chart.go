@@ -57,6 +57,7 @@ type Range struct {
 	DataMin, DataMax float64 // actual values from data. if both zero: not calculated
 	Min, Max         float64 // the min an d max of the xais
 	TMin, TMax       *time.Time
+	ShowLimits       bool
 	Tics             []Tic
 	Norm             func(float64) float64 // map [Min:Max] to [0:1]
 	InvNorm          func(float64) float64 // inverse of Norm()
@@ -245,6 +246,7 @@ func (r *Range) Setup(desiredNumberOfTics, maxNumberOfTics, sWidth, sOffset int,
 	mindelta := (r.DataMax - r.DataMin) / float64(maxNumberOfTics-1)
 
 	if r.Time {
+		r.ShowLimits = true
 		td := MatchingTimeDelta(delta, 3)
 		mint := time.SecondsToLocalTime(int64(r.DataMin))
 		maxt := time.SecondsToLocalTime(int64(r.DataMax))
@@ -344,6 +346,7 @@ func (r *Range) Setup(desiredNumberOfTics, maxNumberOfTics, sWidth, sOffset int,
 			r.Tics[i].Label = FmtFloat(x)
 		}
 
+		// TODO(vodo) r.ShowLimits = true
 	}
 
 	if !revert {
@@ -620,4 +623,40 @@ func LayoutTxt(w, h int, title, xlabel, ylabel string, hidextics, hideytics bool
 	numytics = h/4
 
 	return
+}
+
+
+
+// Print xrange to tb at vertical position y. place range limits at xa and xe if different.
+func TxtXRange(xrange Range, tb *TextBuf, y int) {
+	xa, xe := xrange.Data2Screen(xrange.Min), xrange.Data2Screen(xrange.Max)
+	for sx := xa; sx <=xe; sx++ {
+		tb.Put(sx, y, '-')
+	}
+
+	for _, tic := range xrange.Tics {
+		x := xrange.Data2Screen(tic.Pos)
+		lx := xrange.Data2Screen(tic.LabelPos)
+		if xrange.Time {
+			tb.Put(x, y, '|')
+			tb.Put(x, y+1, '|')
+			if tic.Align == -1 {
+				tb.Text(lx+1, y+1, tic.Label, -1)
+			} else {
+				tb.Text(lx, y+1, tic.Label, 0)
+			}
+		} else {
+			tb.Put(x, y, '+')
+			tb.Text(lx, y+1, tic.Label, 0)
+		}
+		if xrange.ShowLimits {
+			if xrange.Time {
+				tb.Text(xa, y+2, xrange.TMin.Format("2006-01-02 15:04:05"), -1)
+				tb.Text(xe, y+2, xrange.TMax.Format("2006-01-02 15:04:05"), 1)
+			} else {
+				tb.Text(xa, y+2, fmt.Sprintf("%g", xrange.Min), -1)
+				tb.Text(xe, y+2, fmt.Sprintf("%g", xrange.Max), 1)
+			}
+		}
+	}
 }

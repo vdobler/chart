@@ -94,13 +94,6 @@ func (hc *HistChart) PlotTxt(w, h int) string {
 	hc.YRange.Setup(numytics, numytics+2, height, topm, true)
 
 	tb := NewTextBuf(w, h)
-	// tb.Rect(leftm, topm, width, height, 0, ' ')
-	for i:=0; i<width; i++ {
-		tb.Put(leftm+i, topm+height+1, '-')
-	}
-	for i:=0; i<height; i++ {
-		tb.Put(leftm-1, topm+i, '|')
-	}
 
 	if hc.Title != "" {
 		tb.Text(width/2+leftm, 0, hc.Title, 0)
@@ -120,6 +113,8 @@ func (hc *HistChart) PlotTxt(w, h int) string {
 		tb.Text(x, topm+height/2, hc.Ylabel, 3)
 	}
 
+
+	TxtXRange(hc.XRange, tb, topm+height+1)
 
 	xf := hc.XRange.Data2Screen
 	yf := hc.YRange.Data2Screen
@@ -185,6 +180,9 @@ func (hc *HistChart) PlotTxt(w, h int) string {
 		}
 	}
 
+	for i:=0; i<height; i++ {
+		tb.Put(leftm-1, topm+i, '|')
+	}
 	for _, tic := range hc.YRange.Tics {
 		y := hc.YRange.Data2Screen(tic.Pos)
 		ly := hc.YRange.Data2Screen(tic.LabelPos)
