@@ -730,12 +730,22 @@ func LayoutTxt(w, h int, title, xlabel, ylabel string, hidextics, hideytics bool
 }
 
 
-// Print xrange to tb at vertical position y. place range limits at xa and xe if different.
-func TxtXRange(xrange Range, tb *TextBuf, y int) {
+// Print xrange to tb at vertical position y.
+// Axis, tics, tic labels, axis label and range limits are drawn
+func TxtXRange(xrange Range, tb *TextBuf, y int, label string, showTicLabels bool) {
 	xa, xe := xrange.Data2Screen(xrange.Min), xrange.Data2Screen(xrange.Max)
 	for sx := xa; sx <= xe; sx++ {
 		tb.Put(sx, y, '-')
 	}
+
+	if label != "" {
+		yy := y + 1
+		if !c.XRange.TicSetting.Hide && showTicLabels{
+			yy++
+		}
+		tb.Text((xa+xe)/2, yy, label, 0)
+	}
+
 
 	for _, tic := range xrange.Tics {
 		x := xrange.Data2Screen(tic.Pos)

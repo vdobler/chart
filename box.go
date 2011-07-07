@@ -100,13 +100,6 @@ func (c *BoxChart) PlotTxt(w, h int) string {
 	if c.Title != "" {
 		tb.Text(width/2+leftm, 0, c.Title, 0)
 	}
-	if c.Xlabel != "" {
-		y := topm + height + 1
-		if !c.XRange.TicSetting.Hide {
-			y++
-		}
-		tb.Text(width/2+leftm, y, c.Xlabel, 0)
-	}
 	if c.Ylabel != "" {
 		x := leftm - 3
 		if !c.YRange.TicSetting.Hide {
