@@ -133,11 +133,14 @@ func main() {
 	hc.Key.Pos = "irt"
 	fmt.Printf("%s\n", hc.PlotTxt(124, 30))
 
+
+	//
+	// Box Charts
+	//
 	bc := chart.BoxChart{Title: "Box Chart", Xlabel: "Value", Ylabel: "Count"}
-	bc.AddData("Hallo")
 
 	for x := 10; x <= 50; x += 5 {
-		p := make([]float64, 80)
+		p := make([]float64, 70)
 		a := rand.Float64() * 10
 		v := rand.Float64()*5 + 2
 		for i := 0; i < len(p); i++ {
@@ -147,4 +150,19 @@ func main() {
 		bc.AddSet(float64(x), p, true)
 	}
 	fmt.Printf("%s\n", bc.PlotTxt(100, 25))
+
+	bc.NextDataSet("Hallo")
+	for x := 12; x <= 50; x += 10 {
+		p := make([]float64, 60)
+		a := rand.Float64() * 15 + 30
+		v := rand.Float64() * 5 + 2
+		for i := 0; i < len(p); i++ {
+			x := rand.NormFloat64()*v + a
+			p[i] = x
+		}
+		bc.AddSet(float64(x), p, true)
+	}
+	fmt.Printf("%s\n", bc.PlotTxt(100, 25))
+
+
 }

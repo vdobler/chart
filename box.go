@@ -1,7 +1,7 @@
 package chart
 
 import (
-	"fmt"
+	// "fmt"
 	//	"os"
 	//	"strings"
 )
@@ -22,10 +22,19 @@ type BoxChart struct {
 	Data           []BoxChartData
 }
 
+
+// Will add to last dataset one new box calculated from data.
+// If outlier than outliers (1.5*IQR from 25/75 percentil) are
+// drawn, else the wiskers extend from min to max.
 func (c *BoxChart) AddSet(x float64, data []float64, outlier bool) {
 	min, lq, med, avg, uq, max := SixvalFloat64(data, 25)
 	b := Box{X: x, Avg: avg, Med: med, Q1: lq, Q3: uq, Low: min, High: max}
 
+	if len(c.Data) == 0 {
+		c.Data = make([]BoxChartData, 1)
+		c.Data[0] = BoxChartData{Name: "", Style: DataStyle{}}
+	}
+	
 	if len(c.Data) == 1 && len(c.Data[0].Samples) == 0 {
 		c.XRange.DataMin, c.XRange.DataMax = x, x
 		c.YRange.DataMin, c.YRange.DataMax = min, max
@@ -65,11 +74,10 @@ func (c *BoxChart) AddSet(x float64, data []float64, outlier bool) {
 }
 
 
-func (c *BoxChart) AddData(name string) {
+func (c *BoxChart) NextDataSet(name string) {
 	s := Symbol[len(c.Data)%len(Symbol)]
 	c.Data = append(c.Data, BoxChartData{name, DataStyle{}, nil})
 	c.Key.Entries = append(c.Key.Entries, KeyEntry{s, name})
-
 }
 
 
@@ -117,17 +125,18 @@ func (c *BoxChart) PlotTxt(w, h int) string {
 	}
 
 	// Plot Data
-	for _, data := range c.Data {
+	for s, data := range c.Data {
 		// Samples
 		hbw := 2 // Half Box Width
 		nums := len(data.Samples)
 		mhw := width / (2*nums - 1)
-		fmt.Printf("mhw = %d\n", mhw)
 		if mhw > 7 {
 			hbw = 3
 		} else if mhw < 5 {
 			hbw = 1
 		}
+
+		symbol := Symbol[s%len(Symbol)]
 
 		for _, d := range data.Samples {
 			x := c.XRange.Data2Screen(d.X)
@@ -143,7 +152,7 @@ func (c *BoxChart) PlotTxt(w, h int) string {
 			}
 			tb.Put(x+hbw, med, '+')
 
-			tb.Put(x, avg, '*')
+			tb.Put(x, avg, symbol)
 			for y := high; y < q3; y++ {
 				tb.Put(x, y, '|')
 			}
