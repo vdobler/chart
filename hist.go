@@ -54,7 +54,7 @@ func (hc *HistChart) PlotTxt(w, h int) string {
 	width, leftm, height, topm, kb, numxtics, numytics := LayoutTxt(w, h, hc.Title, hc.Xlabel, hc.Ylabel, hc.XRange.TicSetting.Hide, hc.YRange.TicSetting.Hide, &hc.Key)
 
 	// Outside bound ranges for histograms are nicer
-	leftm, width = leftm+1, width-1
+	leftm, width = leftm+2, width-2
 	topm, height = topm, height-1
 
 	hc.XRange.Setup(numxtics, numxtics+1, width, leftm, false)
@@ -98,22 +98,9 @@ func (hc *HistChart) PlotTxt(w, h int) string {
 	if hc.Title != "" {
 		tb.Text(width/2+leftm, 0, hc.Title, 0)
 	}
-	if hc.Xlabel != "" {
-		y := topm + height + 2
-		if !hc.XRange.TicSetting.Hide {
-			y++
-		}
-		tb.Text(width/2+leftm, y, hc.Xlabel, 0)
-	}
-	if hc.Ylabel != "" {
-		x := leftm - 3
-		if !hc.YRange.TicSetting.Hide {
-			x -= 6
-		}
-		tb.Text(x, topm+height/2, hc.Ylabel, 3)
-	}
 
-	TxtXRange(hc.XRange, tb, topm+height+1)
+	TxtXRange(hc.XRange, tb, topm+height+1, 0, hc.Xlabel, 0)
+	TxtYRange(hc.YRange, tb, leftm-2, 0, hc.Ylabel, 0)
 
 	xf := hc.XRange.Data2Screen
 	yf := hc.YRange.Data2Screen
@@ -179,16 +166,6 @@ func (hc *HistChart) PlotTxt(w, h int) string {
 				y0 = y
 			}
 		}
-	}
-
-	for i := 0; i < height; i++ {
-		tb.Put(leftm-1, topm+i, '|')
-	}
-	for _, tic := range hc.YRange.Tics {
-		y := hc.YRange.Data2Screen(tic.Pos)
-		ly := hc.YRange.Data2Screen(tic.LabelPos)
-		tb.Put(leftm-1, y, '+')
-		tb.Text(leftm-2, ly, tic.Label, 1)
 	}
 
 	if kb != nil {

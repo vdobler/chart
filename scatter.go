@@ -91,33 +91,12 @@ func (sc *ScatterChart) PlotTxt(w, h int) string {
 	}
 
 	tb := NewTextBuf(w, h)
-	tb.Rect(leftm, topm, width, height, 0, ' ')
 	if sc.Title != "" {
 		tb.Text(width/2+leftm, 0, sc.Title, 0)
 	}
-	if sc.Xlabel != "" {
-		y := topm + height + 1
-		if !sc.XRange.TicSetting.Hide {
-			y++
-		}
-		tb.Text(width/2+leftm, y, sc.Xlabel, 0)
-	}
-	if sc.Ylabel != "" {
-		x := leftm - 3
-		if !sc.YRange.TicSetting.Hide {
-			x -= 6
-		}
-		tb.Text(x, topm+height/2, sc.Ylabel, 3)
-	}
 
-	TxtXRange(sc.XRange, tb, topm+height)
-
-	for _, tic := range sc.YRange.Tics {
-		y := sc.YRange.Data2Screen(tic.Pos)
-		ly := sc.YRange.Data2Screen(tic.LabelPos)
-		tb.Put(leftm, y, '+')
-		tb.Text(leftm-1, ly, tic.Label, 1)
-	}
+	TxtXRange(sc.XRange, tb, topm+height, topm, sc.Xlabel, 2)
+	TxtYRange(sc.YRange, tb, leftm, leftm+width, sc.Ylabel, 2)
 
 	// Plot Data
 	for s, data := range sc.Data {

@@ -1,9 +1,9 @@
 package chart
 
 import (
-	// "fmt"
-	//	"os"
-	//	"strings"
+// "fmt"
+//	"os"
+//	"strings"
 )
 
 
@@ -34,7 +34,7 @@ func (c *BoxChart) AddSet(x float64, data []float64, outlier bool) {
 		c.Data = make([]BoxChartData, 1)
 		c.Data[0] = BoxChartData{Name: "", Style: DataStyle{}}
 	}
-	
+
 	if len(c.Data) == 1 && len(c.Data[0].Samples) == 0 {
 		c.XRange.DataMin, c.XRange.DataMax = x, x
 		c.YRange.DataMin, c.YRange.DataMax = min, max
@@ -96,26 +96,13 @@ func (c *BoxChart) PlotTxt(w, h int) string {
 	}
 
 	tb := NewTextBuf(w, h)
-	tb.Rect(leftm, topm, width, height, 0, ' ')
+	// tb.Rect(leftm, topm, width, height, 0, ' ')
 	if c.Title != "" {
 		tb.Text(width/2+leftm, 0, c.Title, 0)
 	}
-	if c.Ylabel != "" {
-		x := leftm - 3
-		if !c.YRange.TicSetting.Hide {
-			x -= 6
-		}
-		tb.Text(x, topm+height/2, c.Ylabel, 3)
-	}
 
-	TxtXRange(c.XRange, tb, topm+height)
-
-	for _, tic := range c.YRange.Tics {
-		y := c.YRange.Data2Screen(tic.Pos)
-		ly := c.YRange.Data2Screen(tic.LabelPos)
-		tb.Put(leftm, y, '+')
-		tb.Text(leftm-1, ly, tic.Label, 1)
-	}
+	TxtXRange(c.XRange, tb, topm+height, topm, c.Xlabel, 2)
+	TxtYRange(c.YRange, tb, leftm, leftm+width, c.Ylabel, 2)
 
 	// Plot Data
 	for s, data := range c.Data {

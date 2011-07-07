@@ -731,27 +731,33 @@ func LayoutTxt(w, h int, title, xlabel, ylabel string, hidextics, hideytics bool
 
 
 // Print xrange to tb at vertical position y.
-// Axis, tics, tic labels, axis label and range limits are drawn
-func TxtXRange(xrange Range, tb *TextBuf, y int, label string, showTicLabels bool) {
+// Axis, tics, tic labels, axis label and range limits are drawn.
+// mirror: 0: no other axis, 1: axis without tics, 2: axis with tics,
+func TxtXRange(xrange Range, tb *TextBuf, y, y1 int, label string, mirror int) {
 	xa, xe := xrange.Data2Screen(xrange.Min), xrange.Data2Screen(xrange.Max)
 	for sx := xa; sx <= xe; sx++ {
 		tb.Put(sx, y, '-')
+		if mirror >= 1 {
+			tb.Put(sx, y1, '-')
+		}
 	}
 
 	if label != "" {
 		yy := y + 1
-		if !c.XRange.TicSetting.Hide && showTicLabels{
+		if !xrange.TicSetting.Hide {
 			yy++
 		}
 		tb.Text((xa+xe)/2, yy, label, 0)
 	}
-
 
 	for _, tic := range xrange.Tics {
 		x := xrange.Data2Screen(tic.Pos)
 		lx := xrange.Data2Screen(tic.LabelPos)
 		if xrange.Time {
 			tb.Put(x, y, '|')
+			if mirror >= 2 {
+				tb.Put(x, y1, '|')
+			}
 			tb.Put(x, y+1, '|')
 			if tic.Align == -1 {
 				tb.Text(lx+1, y+1, tic.Label, -1)
@@ -760,6 +766,9 @@ func TxtXRange(xrange Range, tb *TextBuf, y int, label string, showTicLabels boo
 			}
 		} else {
 			tb.Put(x, y, '+')
+			if mirror >= 2 {
+				tb.Put(x, y1, '+')
+			}
 			tb.Text(lx, y+1, tic.Label, 0)
 		}
 		if xrange.ShowLimits {
@@ -770,6 +779,46 @@ func TxtXRange(xrange Range, tb *TextBuf, y int, label string, showTicLabels boo
 				tb.Text(xa, y+2, fmt.Sprintf("%g", xrange.Min), -1)
 				tb.Text(xe, y+2, fmt.Sprintf("%g", xrange.Max), 1)
 			}
+		}
+	}
+}
+
+
+// Print yrange to tb at horizontal position x.
+// Axis, tics, tic labels, axis label and range limits are drawn.
+// mirror: 0: no other axis, 1: axis without tics, 2: axis with tics,
+func TxtYRange(yrange Range, tb *TextBuf, x, x1 int, label string, mirror int) {
+	ya, ye := yrange.Data2Screen(yrange.Min), yrange.Data2Screen(yrange.Max)
+	for sy := min(ya, ye); sy <= max(ya, ye); sy++ {
+		tb.Put(x, sy, '|')
+		if mirror >= 1 {
+			tb.Put(x1, sy, '|')
+		}
+	}
+
+	if label != "" {
+		tb.Text(1, (ya+ye)/2, label, 3)
+	}
+
+	for _, tic := range yrange.Tics {
+		y := yrange.Data2Screen(tic.Pos)
+		ly := yrange.Data2Screen(tic.LabelPos)
+		if yrange.Time {
+			tb.Put(x, y, '+')
+			if mirror >= 2 {
+				tb.Put(x1, y, '+')
+			}
+			if tic.Align == 0 { // centered tic
+				tb.Put(x-1, y, '-')
+				tb.Put(x-2, y, '-')
+			}
+			tb.Text(x, ly, tic.Label+" ", 1)
+		} else {
+			tb.Put(x, y, '+')
+			if mirror >= 2 {
+				tb.Put(x1, y, '+')
+			}
+			tb.Text(x-2, ly, tic.Label, 1)
 		}
 	}
 }

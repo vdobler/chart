@@ -50,9 +50,8 @@ func (sc *StripChart) PlotTxt(w, h int) string {
 				continue // should not happen
 			}
 			fmt.Printf("Set %d\n", s)
-			for i, p := range data.Samples {
+			for i := range data.Samples {
 				r := float64(rand.Intn(3) - 1)
-				fmt.Printf("r=%f, delta=%f orig=%g,%g\n", r, r*yj, p.X, p.Y)
 				data.Samples[i].Y += r * yj
 			}
 		}
