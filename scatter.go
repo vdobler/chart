@@ -23,19 +23,22 @@ type ScatterChart struct {
 	Data           []ScatterChartData
 }
 
+// Add any function f to this chart.
 func (sc *ScatterChart) AddFunc(name string, f func(float64) float64) {
 	s := Symbol[len(sc.Data)%len(Symbol)]
 	sc.Data = append(sc.Data, ScatterChartData{name, DataStyle{}, nil, f})
 	sc.Key.Entries = append(sc.Key.Entries, KeyEntry{s, name})
 }
 
+
+// Add straight line through points (ax,ay) and (bx,by) tho chart.
 func (sc *ScatterChart) AddLinear(name string, ax, ay, bx, by float64) {
 	sc.AddFunc(name, func(x float64) float64 {
 		return ay + (x-ax)*(by-ay)/(bx-ax)
 	})
 }
 
-
+// Add points in data to chart.
 func (sc *ScatterChart) AddData(name string, data []Point) {
 	s := Symbol[len(sc.Data)%len(Symbol)]
 	sc.Data = append(sc.Data, ScatterChartData{name, DataStyle{}, data, nil})
@@ -65,6 +68,7 @@ func (sc *ScatterChart) AddData(name string, data []Point) {
 	// fmt.Printf("New Limits: x %f %f; y %f %f\n", sc.XRange.DataMin, sc.XRange.DataMax, sc.YRange.DataMin, sc.YRange.DataMax) 
 }
 
+// Make points from x and y and add to chart.
 func (sc *ScatterChart) AddDataPair(name string, x, y []float64) {
 	n := min(len(x), len(y))
 	data := make([]Point, n)
@@ -81,14 +85,6 @@ func (sc *ScatterChart) PlotTxt(w, h int) string {
 
 	sc.XRange.Setup(numxtics, numxtics+2, width, leftm, false)
 	sc.YRange.Setup(numytics, numytics+1, height, topm, true)
-
-	xlabsep, ylabsep := 1, 3
-	if !sc.XRange.TicSetting.Hide {
-		xlabsep++
-	}
-	if !sc.YRange.TicSetting.Hide {
-		ylabsep += 6
-	}
 
 	tb := NewTextBuf(w, h)
 	if sc.Title != "" {

@@ -1,6 +1,7 @@
 package chart
 
 import (
+	"math"
 // "fmt"
 //	"os"
 //	"strings"
@@ -73,11 +74,19 @@ func (c *BoxChart) AddSet(x float64, data []float64, outlier bool) {
 	c.Data[j].Samples = append(c.Data[j].Samples, b)
 }
 
-
+// Add a new (empty) data set to chart. Fill this last data set with AddSet()
 func (c *BoxChart) NextDataSet(name string) {
 	s := Symbol[len(c.Data)%len(Symbol)]
 	c.Data = append(c.Data, BoxChartData{name, DataStyle{}, nil})
 	c.Key.Entries = append(c.Key.Entries, KeyEntry{s, name})
+}
+
+// Add data boxes to chart.
+func (c *BoxChart) AddData(name string, data []Box) {
+	s := Symbol[len(c.Data)%len(Symbol)]
+	c.Data = append(c.Data, BoxChartData{name, DataStyle{}, data})
+	c.Key.Entries = append(c.Key.Entries, KeyEntry{s, name})
+	// TODO(vodo) min, max
 }
 
 
@@ -105,6 +114,7 @@ func (c *BoxChart) PlotTxt(w, h int) string {
 	TxtYRange(c.YRange, tb, leftm, leftm+width, c.Ylabel, 2)
 
 	// Plot Data
+	yf := c.YRange.Data2Screen
 	for s, data := range c.Data {
 		// Samples
 		hbw := 2 // Half Box Width
@@ -120,24 +130,33 @@ func (c *BoxChart) PlotTxt(w, h int) string {
 
 		for _, d := range data.Samples {
 			x := c.XRange.Data2Screen(d.X)
-			low, high := c.YRange.Data2Screen(d.Low), c.YRange.Data2Screen(d.High)
 			q1, q3 := c.YRange.Data2Screen(d.Q1), c.YRange.Data2Screen(d.Q3)
-			avg, med := c.YRange.Data2Screen(d.Avg), c.YRange.Data2Screen(d.Med)
 
 			tb.Rect(x-hbw, q1, 2*hbw, q3-q1, 0, ' ')
-			tb.Put(x-hbw, med, '+')
-			for i := 0; i < hbw; i++ {
-				tb.Put(x-i, med, '-')
-				tb.Put(x+i, med, '-')
+			if ! math.IsNaN(d.Med) {
+				med := yf(d.Med)
+				tb.Put(x-hbw, med, '+')
+				for i := 0; i < hbw; i++ {
+					tb.Put(x-i, med, '-')
+					tb.Put(x+i, med, '-')
+				}
+				tb.Put(x+hbw, med, '+')
 			}
-			tb.Put(x+hbw, med, '+')
 
-			tb.Put(x, avg, symbol)
-			for y := high; y < q3; y++ {
-				tb.Put(x, y, '|')
+			if !math.IsNaN(d.Avg) {
+				tb.Put(x, yf(d.Avg), symbol)
 			}
-			for y := q1 + 1; y <= low; y++ {
-				tb.Put(x, y, '|')
+
+			if !math.IsNaN(d.High) {
+				for y := yf(d.High); y < q3; y++ {
+					tb.Put(x, y, '|')
+				}
+			}
+
+			if !math.IsNaN(d.Low) {
+				for y := yf(d.Low); y > q1; y-- {
+					tb.Put(x, y, '|')
+				}
 			}
 
 			for _, ol := range d.Outliers {
