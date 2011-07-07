@@ -4,7 +4,7 @@ import (
 	"chart"
 	"fmt"
 	"rand"
-	"time"
+	_ "time"
 )
 
 func main() {
@@ -61,7 +61,7 @@ func main() {
 	pl.AddLinear("Line", -4, 0, 10, 60)
 	fmt.Printf("%s\n", pl.PlotTxt(100, 28))
 
-	 
+	 /*
 	steps := []int64{ 1, 5, 7, 8, 10, 30, 50, 100, 150, 300, 500, 800, 1000, 1500, 3000, 5000,8000, 10000, 15000, 20000, 30000, 50000, 70000, 100000, 200000, 400000, 800000, 1200000, 1800000, 2000000, 2200000, 2500000, 3000000, 5000000, 9000000, 2 * 9000000, 4 * 9000000 }
 	for _, step := range steps {
 		fmt.Printf("\nStep %d seconds\n", step)
@@ -78,7 +78,7 @@ func main() {
 		tl.AddDataPair("Sample", t, v)
 		fmt.Printf("%s\n", tl.PlotTxt(100, 15))
 	}
-
+*/
 	
 
 	hc := chart.HistChart{Title: "Histogram", Xlabel: "Value", Ylabel: "Count", ShowVal: true}
@@ -92,7 +92,7 @@ func main() {
 		}
 		points[i] = x
 	}
-	hc.AddData("Sample 1", points)
+	hc.AddData("Sample 1\nfrom today\nand yesterday ", points)
 	fmt.Printf("%s\n", hc.PlotTxt(120,20))
 
 	points2 := make([]float64, 80)
@@ -105,7 +105,7 @@ func main() {
 		}
 		points2[i] = x
 	}
-	hc.AddData("Sample 2", points2)
+	hc.AddData("Sample 2\ntomorrow", points2)
 	fmt.Printf("%s\n", hc.PlotTxt(120,20))
 
 	hc.Stacked = true
@@ -125,5 +125,15 @@ func main() {
 	fmt.Printf("%s\n", hc.PlotTxt(120,30))
 	hc.Stacked = false
 	fmt.Printf("%s\n", hc.PlotTxt(120,30))
+
+	hc.AddData("Sample 4\nhuhu", points3)
+	hc.Stacked = true
+	fmt.Printf("%s\n", hc.PlotTxt(120,30))
+	hc.Key.Cols = 2
+	hc.Key.Pos = "ort"
+	fmt.Printf("%s\n", hc.PlotTxt(120,30))
+	hc.Key.Cols = -3
+	hc.Key.Pos = "irt"
+	fmt.Printf("%s\n", hc.PlotTxt(164,30))
 
 }

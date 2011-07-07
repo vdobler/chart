@@ -45,7 +45,7 @@ type TicSetting struct {
 type Tic struct {
 	Pos, LabelPos float64
 	Label         string
-	Align         int  // -1: left, 0 center, 1 right (unused)
+	Align         int  // -1: left/top, 0 center, 1 right/bottom (unused)
 }
 
 
@@ -269,8 +269,8 @@ func (r *Range) Setup(desiredNumberOfTics, maxNumberOfTics, sWidth, sOffset int,
 			r.TicSetting.Delta, r.TicSetting.TDelta = float64(td.Seconds()), td
 			r.Min, r.Max = float64(r.TMin.Seconds()), float64(r.TMax.Seconds())
 			actNumTics = int((r.Max - r.Min) / ftd)
-			if actNumTics > maxNumberOfTics {
-				fmt.Printf("Switching to next (%d > %d) delta from %s", actNumTics, maxNumberOfTics, td)
+			if actNumTics > maxNumberOfTics {  // TODO(vodo) this should never happen
+				fmt.Printf("Switching to over next (%d > %d) delta from %s", actNumTics, maxNumberOfTics, td)
 				td = NextTimeDelta(td)
 				fmt.Printf("  -->  %s\n", td)
 				r.TMin, ftic = TimeBound(r.MinMode, mint, td, false)
@@ -370,26 +370,25 @@ func (r *Range) Setup(desiredNumberOfTics, maxNumberOfTics, sWidth, sOffset int,
 
 type DataStyle struct {
 	Symbol int     // -1: no symbol, 0: auto, 1... fixed
-	Line   int     // 0: no line, 1, solid, 2 dashed, 3 dotted
+	Line   int     // 0: no line, 1, solid, 2 dashed, 3 dotted, 4 dashdotted
 	Size   float64 // 0: auto (1)
 	Color  int     // index into palette
 }
 
 
-//        otl  otc  otr      
-//       +--------------+ 
-//   olt |itl  itc  itr | ort
-//       |              |
-//   olc |icl  icc  icr | ort
-//       |              |
-//   olb |ibl  ibc  ibr | orb
-//       +--------------+ 
+// Key placement
+//          otl  otc  otr      
+//         +--------------+ 
+//     olt |itl  itc  itr | ort
+//         |              |
+//     olc |icl  icc  icr | ort
+//         |              |
+//     olb |ibl  ibc  ibr | orb
+//         +--------------+ 
 //        obl  obc  obr
 type Key struct {
 	Hide   bool
-	Layout struct {
-		Cols, Rows int // 0,0 means 1,1
-	}
+	Cols   int    // 
 	Border int    // -1: off, 0: std, 1...:other styles
 	Pos    string // "": itr
 	// Width, Height int    // 0,0: auto
@@ -402,36 +401,123 @@ type KeyEntry struct {
 	Text   string
 }
 
+// Margins
+var KL_LRBorder int = 1 // before and after whole key
+var KL_SLSep int = 2 // space between symbol and test
+var KL_ColSep int = 2 // space between columns
+var KL_MLSep int = 1 // extra space between rows if multiline text are present
+
 func (key *Key) LayoutKeyTxt() (kb *TextBuf) {
+	// TODO(vodo) the following is ugly (and stinks)
 	if key.Hide { return }
-	var w, h, ml int
-	var have bool
+
+	// count real entries in num, see if multilines are present in haveml
+	num, haveml := 0, false
 	for _, e := range key.Entries {
 		if e.Text == "" { continue }
-		have = true
-		for _, t := range strings.Split(e.Text, "\n", -1) {
-			if len(t) > ml { // TODO(vodo) use utf8.CountRuneInString
+		num ++
+		lines := strings.Split(e.Text, "\n", -1)
+		if len(lines) > 1 { haveml = true }
+	}
+	if num == 0 { return } // no entries
+
+	rowfirst := false
+	cols := key.Cols
+	if cols < 0 {
+		cols = -cols
+		rowfirst = true
+	}
+	if cols == 0 { cols = 1 }
+	if num < cols { cols = num }
+	rows := (num+cols-1) / cols
+
+	// fmt.Printf("%d entries on %d columns: %d rows\n", num, cols, rows)
+
+	// Arrays with infos
+	width := make([][]int, cols)
+	for i:=0; i<cols; i++ { width[i] = make([]int, rows) }
+	height := make([][]int, cols)
+	for i:=0; i<cols; i++ { height[i] = make([]int, rows) }
+	symbol := make([][]int, cols)
+	for i:=0; i<cols; i++ { symbol[i] = make([]int, rows) }
+	text := make([][][]string, cols)
+	for i:=0; i<cols; i++ { text[i] = make([][]string, rows) }
+	
+	// fill arrays
+	i := 0
+	for _, e := range key.Entries {
+		if e.Text == "" { continue }
+		var r, c int
+		if rowfirst {
+			r, c = i / cols, i % cols
+		} else {
+			c, r = i / rows, i % rows
+		}
+		lines := strings.Split(e.Text, "\n", -1)
+		ml := 0
+		for _, t := range lines {
+			if len(t) > ml { // TODO(vodo) use utf8.CountRuneInString and honour different chars
 				ml = len(t)
 			}
-			h++
 		}
+		symbol[c][r] = e.Symbol  // TODO(vodo) allow line symbols?
+		height[c][r] = len(lines)
+		width[c][r] = ml
+		text[c][r] = lines
+		i++
 	}
-	if !have { return }
-	w = ml + 7
-	h += 2
+	colwidth := make([]int, cols)
+	rowheight := make([]int, rows)
+	totalheight, totalwidth := 0, 0
+	for c:=0; c<cols; c++ {
+		max := 0
+		for r:=0; r<rows; r++ {
+			if width[c][r] > max { max = width[c][r] }
+		}
+		max += 2*KL_LRBorder + 1 + KL_SLSep // formt is " *  Label "
+		colwidth[c] = max 
+		totalwidth += max
+	}
+	for r:=0; r<rows; r++ {
+		max := 0
+		for c:=0; c<cols; c++ {
+			if height[c][r] > max { max = height[c][r] }
+		}
+		rowheight[r] = max
+		totalheight += max
+	}
+
+	// width and height: + 2 for outer border/box
+	w := totalwidth  + KL_ColSep*(cols-1) + 2 
+	h := totalheight  + 2 
+	if haveml {
+		h += KL_MLSep*(rows-1)
+	}
 	kb = NewTextBuf(w, h)
 	if key.Border != -1 {
 		kb.Rect(0, 0, w-1, h-1, key.Border+1, ' ')
 	}
-	y := 1
-	for _, e := range key.Entries {
-		if e.Text == "" { continue }
-		kb.Put(2, y, e.Symbol)
-		for _, t := range strings.Split(e.Text, "\n", -1) {
-			kb.Text(5, y, t, -1)
-			y++
+
+	// Produce box
+	x := 1
+	for c:=0; c<cols; c++ {
+		y := 1
+		for r:=0; r<rows; r++ {
+			if width[c][r]==0 { 
+				continue
+			}
+			kb.Put(x+KL_LRBorder, y, symbol[c][r])
+			for l, t := range text[c][r] {
+				kb.Text(x+KL_LRBorder+1+KL_SLSep, y+l, t, -1)
+			}
+			y += rowheight[r]
+			if haveml {
+				y += KL_MLSep
+			}
 		}
+		x += colwidth[c] + KL_ColSep
 	}
+
 	return
 }
 
