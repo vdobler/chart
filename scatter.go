@@ -24,7 +24,7 @@ type ScatterChart struct {
 }
 
 func (sc *ScatterChart) AddFunc(name string, f func(float64) float64) {
-	s := Symbol[ len(sc.Data) % len(Symbol) ]
+	s := Symbol[len(sc.Data)%len(Symbol)]
 	sc.Data = append(sc.Data, ScatterChartData{name, DataStyle{}, nil, f})
 	sc.Key.Entries = append(sc.Key.Entries, KeyEntry{s, name})
 }
@@ -37,7 +37,7 @@ func (sc *ScatterChart) AddLinear(name string, ax, ay, bx, by float64) {
 
 
 func (sc *ScatterChart) AddData(name string, data []Point) {
-	s := Symbol[ len(sc.Data) % len(Symbol) ]
+	s := Symbol[len(sc.Data)%len(Symbol)]
 	sc.Data = append(sc.Data, ScatterChartData{name, DataStyle{}, data, nil})
 	sc.Key.Entries = append(sc.Key.Entries, KeyEntry{s, name})
 	if sc.XRange.DataMin == 0 && sc.XRange.DataMax == 0 && sc.YRange.DataMin == 0 && sc.YRange.DataMax == 0 {
@@ -74,9 +74,6 @@ func (sc *ScatterChart) AddDataPair(name string, x, y []float64) {
 	}
 	sc.AddData(name, data)
 }
-
-
-
 
 
 func (sc *ScatterChart) PlotTxt(w, h int) string {

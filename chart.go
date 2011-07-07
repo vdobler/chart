@@ -31,8 +31,6 @@ type RangeMode struct {
 }
 
 
-
-
 type TicSetting struct {
 	Hide   bool    // Dont show tics if true
 	Minor  int     // 0: off, 1: clever, >1: number of intervalls
@@ -45,7 +43,7 @@ type TicSetting struct {
 type Tic struct {
 	Pos, LabelPos float64
 	Label         string
-	Align         int  // -1: left/top, 0 center, 1 right/bottom (unused)
+	Align         int // -1: left/top, 0 center, 1 right/bottom (unused)
 }
 
 
@@ -158,9 +156,6 @@ func Bound(mode RangeMode, val, ticDelta float64, upper bool) float64 {
 }
 
 
-
-
-
 // Return val constrained by mode.
 func TimeBound(mode RangeMode, val *time.Time, step TimeDelta, upper bool) (bound *time.Time, tic *time.Time) {
 	if mode.Fixed {
@@ -229,7 +224,6 @@ func f2d(x float64) string {
 }
 
 
-
 // Set up Range according to RangeModes and TicSettings.
 // DataMin and DataMax should be present.
 func (r *Range) Setup(desiredNumberOfTics, maxNumberOfTics, sWidth, sOffset int, revert bool) {
@@ -269,7 +263,7 @@ func (r *Range) Setup(desiredNumberOfTics, maxNumberOfTics, sWidth, sOffset int,
 			r.TicSetting.Delta, r.TicSetting.TDelta = float64(td.Seconds()), td
 			r.Min, r.Max = float64(r.TMin.Seconds()), float64(r.TMax.Seconds())
 			actNumTics = int((r.Max - r.Min) / ftd)
-			if actNumTics > maxNumberOfTics {  // TODO(vodo) this should never happen
+			if actNumTics > maxNumberOfTics { // TODO(vodo) this should never happen
 				fmt.Printf("Switching to over next (%d > %d) delta from %s", actNumTics, maxNumberOfTics, td)
 				td = NextTimeDelta(td)
 				fmt.Printf("  -->  %s\n", td)
@@ -392,7 +386,7 @@ type Key struct {
 	Border int    // -1: off, 0: std, 1...:other styles
 	Pos    string // "": itr
 	// Width, Height int    // 0,0: auto
-	X, Y int
+	X, Y    int
 	Entries []KeyEntry
 }
 
@@ -403,23 +397,31 @@ type KeyEntry struct {
 
 // Margins
 var KL_LRBorder int = 1 // before and after whole key
-var KL_SLSep int = 2 // space between symbol and test
-var KL_ColSep int = 2 // space between columns
-var KL_MLSep int = 1 // extra space between rows if multiline text are present
+var KL_SLSep int = 2    // space between symbol and test
+var KL_ColSep int = 2   // space between columns
+var KL_MLSep int = 1    // extra space between rows if multiline text are present
 
 func (key *Key) LayoutKeyTxt() (kb *TextBuf) {
 	// TODO(vodo) the following is ugly (and stinks)
-	if key.Hide { return }
+	if key.Hide {
+		return
+	}
 
 	// count real entries in num, see if multilines are present in haveml
 	num, haveml := 0, false
 	for _, e := range key.Entries {
-		if e.Text == "" { continue }
-		num ++
+		if e.Text == "" {
+			continue
+		}
+		num++
 		lines := strings.Split(e.Text, "\n", -1)
-		if len(lines) > 1 { haveml = true }
+		if len(lines) > 1 {
+			haveml = true
+		}
 	}
-	if num == 0 { return } // no entries
+	if num == 0 {
+		return
+	} // no entries
 
 	rowfirst := false
 	cols := key.Cols
@@ -427,31 +429,45 @@ func (key *Key) LayoutKeyTxt() (kb *TextBuf) {
 		cols = -cols
 		rowfirst = true
 	}
-	if cols == 0 { cols = 1 }
-	if num < cols { cols = num }
-	rows := (num+cols-1) / cols
+	if cols == 0 {
+		cols = 1
+	}
+	if num < cols {
+		cols = num
+	}
+	rows := (num + cols - 1) / cols
 
 	// fmt.Printf("%d entries on %d columns: %d rows\n", num, cols, rows)
 
 	// Arrays with infos
 	width := make([][]int, cols)
-	for i:=0; i<cols; i++ { width[i] = make([]int, rows) }
+	for i := 0; i < cols; i++ {
+		width[i] = make([]int, rows)
+	}
 	height := make([][]int, cols)
-	for i:=0; i<cols; i++ { height[i] = make([]int, rows) }
+	for i := 0; i < cols; i++ {
+		height[i] = make([]int, rows)
+	}
 	symbol := make([][]int, cols)
-	for i:=0; i<cols; i++ { symbol[i] = make([]int, rows) }
+	for i := 0; i < cols; i++ {
+		symbol[i] = make([]int, rows)
+	}
 	text := make([][][]string, cols)
-	for i:=0; i<cols; i++ { text[i] = make([][]string, rows) }
-	
+	for i := 0; i < cols; i++ {
+		text[i] = make([][]string, rows)
+	}
+
 	// fill arrays
 	i := 0
 	for _, e := range key.Entries {
-		if e.Text == "" { continue }
+		if e.Text == "" {
+			continue
+		}
 		var r, c int
 		if rowfirst {
-			r, c = i / cols, i % cols
+			r, c = i/cols, i%cols
 		} else {
-			c, r = i / rows, i % rows
+			c, r = i/rows, i%rows
 		}
 		lines := strings.Split(e.Text, "\n", -1)
 		ml := 0
@@ -460,7 +476,7 @@ func (key *Key) LayoutKeyTxt() (kb *TextBuf) {
 				ml = len(t)
 			}
 		}
-		symbol[c][r] = e.Symbol  // TODO(vodo) allow line symbols?
+		symbol[c][r] = e.Symbol // TODO(vodo) allow line symbols?
 		height[c][r] = len(lines)
 		width[c][r] = ml
 		text[c][r] = lines
@@ -469,29 +485,33 @@ func (key *Key) LayoutKeyTxt() (kb *TextBuf) {
 	colwidth := make([]int, cols)
 	rowheight := make([]int, rows)
 	totalheight, totalwidth := 0, 0
-	for c:=0; c<cols; c++ {
+	for c := 0; c < cols; c++ {
 		max := 0
-		for r:=0; r<rows; r++ {
-			if width[c][r] > max { max = width[c][r] }
+		for r := 0; r < rows; r++ {
+			if width[c][r] > max {
+				max = width[c][r]
+			}
 		}
 		max += 2*KL_LRBorder + 1 + KL_SLSep // formt is " *  Label "
-		colwidth[c] = max 
+		colwidth[c] = max
 		totalwidth += max
 	}
-	for r:=0; r<rows; r++ {
+	for r := 0; r < rows; r++ {
 		max := 0
-		for c:=0; c<cols; c++ {
-			if height[c][r] > max { max = height[c][r] }
+		for c := 0; c < cols; c++ {
+			if height[c][r] > max {
+				max = height[c][r]
+			}
 		}
 		rowheight[r] = max
 		totalheight += max
 	}
 
 	// width and height: + 2 for outer border/box
-	w := totalwidth  + KL_ColSep*(cols-1) + 2 
-	h := totalheight  + 2 
+	w := totalwidth + KL_ColSep*(cols-1) + 2
+	h := totalheight + 2
 	if haveml {
-		h += KL_MLSep*(rows-1)
+		h += KL_MLSep * (rows - 1)
 	}
 	kb = NewTextBuf(w, h)
 	if key.Border != -1 {
@@ -500,10 +520,10 @@ func (key *Key) LayoutKeyTxt() (kb *TextBuf) {
 
 	// Produce box
 	x := 1
-	for c:=0; c<cols; c++ {
+	for c := 0; c < cols; c++ {
 		y := 1
-		for r:=0; r<rows; r++ {
-			if width[c][r]==0 { 
+		for r := 0; r < rows; r++ {
+			if width[c][r] == 0 {
 				continue
 			}
 			kb.Put(x+KL_LRBorder, y, symbol[c][r])
@@ -520,7 +540,6 @@ func (key *Key) LayoutKeyTxt() (kb *TextBuf) {
 
 	return
 }
-
 
 
 type ChartValue interface {
@@ -590,7 +609,6 @@ type ChartData struct {
 	Style  DataStyle
 	Values []ChartValue
 }
-
 
 
 func LayoutTxt(w, h int, title, xlabel, ylabel string, hidextics, hideytics bool, key *Key) (width, leftm, height, topm int, kb *TextBuf, numxtics, numytics int) {
@@ -706,17 +724,16 @@ func LayoutTxt(w, h int, title, xlabel, ylabel string, hidextics, hideytics bool
 	}
 	// fmt.Printf("Requesting %d,%d tics.\n", ntics,height/3)
 
-	numytics = h/4
+	numytics = h / 4
 
 	return
 }
 
 
-
 // Print xrange to tb at vertical position y. place range limits at xa and xe if different.
 func TxtXRange(xrange Range, tb *TextBuf, y int) {
 	xa, xe := xrange.Data2Screen(xrange.Min), xrange.Data2Screen(xrange.Max)
-	for sx := xa; sx <=xe; sx++ {
+	for sx := xa; sx <= xe; sx++ {
 		tb.Put(sx, y, '-')
 	}
 

@@ -3,15 +3,15 @@ package chart
 import (
 	"fmt"
 	"math"
-//	"os"
-//	"strings"
+	//	"os"
+	//	"strings"
 )
 
 
 type HistChartData struct {
-	Name string
+	Name      string
 	DataStyle DataStyle
-	Samples []float64
+	Samples   []float64
 }
 
 
@@ -20,21 +20,21 @@ type HistChart struct {
 	Title          string
 	Xlabel, Ylabel string
 	Key            Key
-	Horizontal     bool  // Display is horizontal bars
-	Stacked        bool  // Display different data sets ontop of each other
+	Horizontal     bool // Display is horizontal bars
+	Stacked        bool // Display different data sets ontop of each other
 	ShowVal        bool
 	Data           []HistChartData
-	FirstBin       float64  // center of the first (lowest bin)
+	FirstBin       float64 // center of the first (lowest bin)
 	BinWidth       float64
 	TBinWidth      TimeDelta // for time XRange
 }
 
 func (c *HistChart) AddData(name string, data []float64) {
-	s := Symbol[ len(c.Data) % len(Symbol) ]
+	s := Symbol[len(c.Data)%len(Symbol)]
 	c.Data = append(c.Data, HistChartData{name, DataStyle{}, data})
 	c.Key.Entries = append(c.Key.Entries, KeyEntry{s, name})
 
-	if c.XRange.DataMin == 0 && c.XRange.DataMax == 0  {
+	if c.XRange.DataMin == 0 && c.XRange.DataMax == 0 {
 		c.XRange.DataMin = data[0]
 		c.XRange.DataMax = data[0]
 	}
@@ -54,12 +54,12 @@ func (hc *HistChart) PlotTxt(w, h int) string {
 	width, leftm, height, topm, kb, numxtics, numytics := LayoutTxt(w, h, hc.Title, hc.Xlabel, hc.Ylabel, hc.XRange.TicSetting.Hide, hc.YRange.TicSetting.Hide, &hc.Key)
 
 	// Outside bound ranges for histograms are nicer
-	leftm, width = leftm+1, width -1
-	topm, height = topm, height -1 
+	leftm, width = leftm+1, width-1
+	topm, height = topm, height-1
 
 	hc.XRange.Setup(numxtics, numxtics+1, width, leftm, false)
 	hc.BinWidth = hc.XRange.TicSetting.Delta
-	binCnt := int((hc.XRange.Max - hc.XRange.Min) / hc.BinWidth  + 0.5)
+	binCnt := int((hc.XRange.Max-hc.XRange.Min)/hc.BinWidth + 0.5)
 	hc.FirstBin = hc.XRange.Min + hc.BinWidth/2
 
 	counts := make([][]int, len(hc.Data))
@@ -68,7 +68,7 @@ func (hc *HistChart) PlotTxt(w, h int) string {
 	for i, data := range hc.Data {
 		count := make([]int, binCnt)
 		for _, x := range data.Samples {
-			bin := int((x - hc.XRange.Min)/hc.BinWidth)
+			bin := int((x - hc.XRange.Min) / hc.BinWidth)
 			count[bin] = count[bin] + 1
 			if count[bin] > max {
 				max = count[bin]
@@ -79,7 +79,7 @@ func (hc *HistChart) PlotTxt(w, h int) string {
 	}
 	if hc.Stacked { // recalculate max
 		max = 0
-		for bin:=0; bin<binCnt; bin++ {
+		for bin := 0; bin < binCnt; bin++ {
 			sum := 0
 			for i := range counts {
 				sum += counts[i][bin]
@@ -113,7 +113,6 @@ func (hc *HistChart) PlotTxt(w, h int) string {
 		tb.Text(x, topm+height/2, hc.Ylabel, 3)
 	}
 
-
 	TxtXRange(hc.XRange, tb, topm+height+1)
 
 	xf := hc.XRange.Data2Screen
@@ -125,49 +124,51 @@ func (hc *HistChart) PlotTxt(w, h int) string {
 		// tb.Put(xs, topm+height+1, '+')
 		// tb.Text(lx, topm+height+2, tic.Label, 0)
 
-		if i == 0 { continue }
+		if i == 0 {
+			continue
+		}
 
 		last := hc.XRange.Tics[i-1]
 		lasts := xf(last.Pos)
 
 		var blockW int
 		if hc.Stacked {
-			blockW = xs-lasts -1 
+			blockW = xs - lasts - 1
 		} else {
-			blockW = int(float64(xs-lasts-numSets)/float64(numSets))
+			blockW = int(float64(xs-lasts-numSets) / float64(numSets))
 		}
 		// fmt.Printf("blockW= %d\n", blockW)
 
-		center := (tic.Pos + last.Pos)/2
+		center := (tic.Pos + last.Pos) / 2
 		bin := int((center - hc.XRange.Min) / hc.BinWidth)
 		xs = lasts
 		lastCnt := 0
 		y0 := yf(0)
 
-		minCnt := int(math.Fabs(hc.YRange.Screen2Data(0) - hc.YRange.Screen2Data(1)) / 2)
+		minCnt := int(math.Fabs(hc.YRange.Screen2Data(0)-hc.YRange.Screen2Data(1)) / 2)
 
 		for d, _ := range hc.Data {
 			cnt := counts[d][bin]
-			y := yf(float64(lastCnt+cnt))
-			if cnt > minCnt { 
+			y := yf(float64(lastCnt + cnt))
+			if cnt > minCnt {
 				fill := Symbol[d%len(Symbol)]
 
 				tb.Block(xs+1, y, blockW, y0-y, fill)
 
 				if hc.ShowVal {
 					lab := fmt.Sprintf("%d", cnt)
-					if blockW - len(lab) >= 4 {
+					if blockW-len(lab) >= 4 {
 						lab = " " + lab + " "
 					}
-					xlab := xs + blockW/2 + 1  // hc.XRange.Data2Screen(center)
-					if blockW % 2 == 1 {
-						xlab ++
+					xlab := xs + blockW/2 + 1 // hc.XRange.Data2Screen(center)
+					if blockW%2 == 1 {
+						xlab++
 					}
-					ylab := y - 1 
+					ylab := y - 1
 					if numSets > 1 {
 						ylab = yf(float64(lastCnt) + float64(cnt)/2)
 					}
-					tb.Text(xlab, ylab, lab, 0 )
+					tb.Text(xlab, ylab, lab, 0)
 					// fmt.Printf("Set %d: %s at %d\n", d, lab, ylab)
 				}
 			}
@@ -180,7 +181,7 @@ func (hc *HistChart) PlotTxt(w, h int) string {
 		}
 	}
 
-	for i:=0; i<height; i++ {
+	for i := 0; i < height; i++ {
 		tb.Put(leftm-1, topm+i, '|')
 	}
 	for _, tic := range hc.YRange.Tics {

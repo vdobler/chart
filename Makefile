@@ -4,10 +4,12 @@ TARG=github.com/vdobler/chart
 GOFILES=\
 	chart.go\
 	util.go\
+	stat.go\
 	time.go\
 	text.go\
 	strip.go\
 	scatter.go\
+	box.go\
 	hist.go
 
 include $(GOROOT)/src/Make.pkg
