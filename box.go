@@ -2,9 +2,9 @@ package chart
 
 import (
 	"math"
-// "fmt"
-//	"os"
-//	"strings"
+	// "fmt"
+	//	"os"
+	//	"strings"
 )
 
 
@@ -133,7 +133,7 @@ func (c *BoxChart) PlotTxt(w, h int) string {
 			q1, q3 := c.YRange.Data2Screen(d.Q1), c.YRange.Data2Screen(d.Q3)
 
 			tb.Rect(x-hbw, q1, 2*hbw, q3-q1, 0, ' ')
-			if ! math.IsNaN(d.Med) {
+			if !math.IsNaN(d.Med) {
 				med := yf(d.Med)
 				tb.Put(x-hbw, med, '+')
 				for i := 0; i < hbw; i++ {

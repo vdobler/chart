@@ -363,10 +363,13 @@ func (r *Range) Setup(desiredNumberOfTics, maxNumberOfTics, sWidth, sOffset int,
 }
 
 type DataStyle struct {
-	Symbol int     // -1: no symbol, 0: auto, 1... fixed
-	Line   int     // 0: no line, 1, solid, 2 dashed, 3 dotted, 4 dashdotted
-	Size   float64 // 0: auto (1)
-	Color  int     // index into palette
+	Symbol   int     // -1: no symbol, 0: auto, 1... fixed
+	Line     int     // 0: no line, 1, solid, 2 dashed, 3 dotted, 4 dashdotted
+	Size     float64 // 0: auto (1)
+	Color    int     // index into palette
+	Font     string
+	FontSize int
+	Alpha    float64
 }
 
 
@@ -548,6 +551,7 @@ type Value interface {
 }
 
 type Real float64
+
 func (r Real) XVal() float64 { return float64(r) }
 
 
@@ -558,10 +562,11 @@ type XYValue interface {
 }
 
 type Point struct{ X, Y float64 }
-func (p Point) XVal() float64   { return p.X }
-func (p Point) YVal() float64   { return p.Y }
-func (p Point) XErr() (float64, float64)   { return math.NaN(), math.NaN() }
-func (p Point) YErr() (float64, float64)   { return math.NaN(), math.NaN() }
+
+func (p Point) XVal() float64            { return p.X }
+func (p Point) YVal() float64            { return p.Y }
+func (p Point) XErr() (float64, float64) { return math.NaN(), math.NaN() }
+func (p Point) YErr() (float64, float64) { return math.NaN(), math.NaN() }
 
 
 // XY-Value with error bars
@@ -571,20 +576,29 @@ type XYErrValue interface {
 	XErr() (float64, float64)
 	YErr() (float64, float64)
 }
-type EPoint struct { 
-	X, Y float64
+type EPoint struct {
+	X, Y               float64
 	EX1, EX2, EY1, EY2 float64 //  error bars are from X-EX1 to X+EX2, same for Y
 }
-func (p EPoint) XVal() float64   { return p.X }
-func (p EPoint) YVal() float64   { return p.Y }
-func (p EPoint) XErr() (float64, float64)   { return p.EX1, p.EX2 }
-func (p EPoint) YErr() (float64, float64)   { return p.EY1, p.EY2 }
+
+func (p EPoint) XVal() float64                  { return p.X }
+func (p EPoint) YVal() float64                  { return p.Y }
+func (p EPoint) XErr() (float64, float64)       { return p.EX1, p.EX2 }
+func (p EPoint) YErr() (float64, float64)       { return p.EY1, p.EY2 }
 func (p EPoint) bb() (xl, yl, xh, yh float64) { // bounding box
 	xl, xh, yl, yh = p.X, p.X, p.Y, p.Y
-	if !math.IsNaN(p.EX1) { xl -= p.EX1 }
-	if !math.IsNaN(p.EX2) { xh += p.EX1 }
-	if !math.IsNaN(p.EY1) { yl -= p.EY1 }
-	if !math.IsNaN(p.EY1) { yh += p.EY2 }
+	if !math.IsNaN(p.EX1) {
+		xl -= p.EX1
+	}
+	if !math.IsNaN(p.EX2) {
+		xh += p.EX1
+	}
+	if !math.IsNaN(p.EY1) {
+		yl -= p.EY1
+	}
+	if !math.IsNaN(p.EY1) {
+		yh += p.EY2
+	}
 	return
 }
 
@@ -593,13 +607,11 @@ type Box struct {
 	X, Avg, Med, Q1, Q3, Low, High float64
 	Outliers                       []float64
 }
-func (p Box) XVal() float64   { return p.X }
-func (p Box) YVal() float64   { return p.Med }
+
+func (p Box) XVal() float64 { return p.X }
+func (p Box) YVal() float64 { return p.Med }
 func (p Box) XErr() float64 { return p.Med - p.Q1 }
 func (p Box) YErr() float64 { return p.Q3 - p.Med }
-
-
-
 
 
 func LayoutTxt(w, h int, title, xlabel, ylabel string, hidextics, hideytics bool, key *Key) (width, leftm, height, topm int, kb *TextBuf, numxtics, numytics int) {

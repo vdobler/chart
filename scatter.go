@@ -2,9 +2,9 @@ package chart
 
 import (
 	"math"
-// "fmt"
-//	"os"
-//	"strings"
+	// "fmt"
+	//	"os"
+	//	"strings"
 )
 
 
@@ -40,7 +40,6 @@ func (sc *ScatterChart) AddLinear(name string, ax, ay, bx, by float64) {
 }
 
 
-
 // Add points in data to chart.
 func (sc *ScatterChart) AddData(name string, data []EPoint) {
 	s := Symbol[len(sc.Data)%len(Symbol)]
@@ -74,7 +73,7 @@ func (sc *ScatterChart) AddData(name string, data []EPoint) {
 // Add points in data to chart.
 func (sc *ScatterChart) AddDataGeneric(name string, data []XYErrValue) {
 	edata := make([]EPoint, len(data))
-	for i, d := range(data) {
+	for i, d := range data {
 		ex1, ex2 := d.XErr()
 		ey1, ey2 := d.YErr()
 		edata[i] = EPoint{X: d.XVal(), Y: d.YVal(), EX1: ex1, EX2: ex2, EY1: ey1, EY2: ey2}
@@ -110,12 +109,42 @@ func (sc *ScatterChart) PlotTxt(w, h int) string {
 	TxtYRange(sc.YRange, tb, leftm, leftm+width, sc.Ylabel, 2)
 
 	// Plot Data
+	nan := math.NaN()
 	for s, data := range sc.Data {
 		if data.Samples != nil {
 			// Samples
 			for _, d := range data.Samples {
 				x := sc.XRange.Data2Screen(d.X)
 				y := sc.YRange.Data2Screen(d.Y)
+				// TODO: clip
+				if d.EX1 != nan || d.EX2 != nan {
+					xl, xh := d.X, d.X
+					if d.EX1 != nan {
+						xl -= d.EX1
+					}
+					if d.EX2 != nan {
+						xh += d.EX2
+					}
+					xe := sc.XRange.Data2Screen(xh)
+					for xa := sc.XRange.Data2Screen(xl); xa <= xe; xa++ {
+						tb.Put(xa, y, '-')
+					}
+
+				}
+				if d.EY1 != nan || d.EY2 != nan {
+					yl, yh := d.Y, d.Y
+					if d.EY1 != nan {
+						yl -= d.EY1
+					}
+					if d.EX2 != nan {
+						yh += d.EY2
+					}
+					ye := sc.YRange.Data2Screen(yh)
+					for ya := sc.YRange.Data2Screen(yl); ya >= ye; ya-- {
+						tb.Put(x, ya, '|')
+					}
+
+				}
 				tb.Put(x, y, Symbol[s%len(Symbol)])
 			}
 		} else if data.Func != nil {
