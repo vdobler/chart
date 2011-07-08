@@ -48,10 +48,10 @@ func main() {
 	y := []float64{22, 18, -3, 0, 0.5, 2, 45, 12, 16.5, 24, 30, 55, 60, 70}
 	pl.AddDataPair("Measurement", x, y)
 	last := len(pl.Data) - 1
-	pl.Data[last].Samples[6].EX1 = 1
-	pl.Data[last].Samples[6].EX2 = 1.7
-	pl.Data[last].Samples[6].EY1 = 5
-	pl.Data[last].Samples[6].EY2 = 12
+	pl.Data[last].Samples[6].DeltaX = 2.5
+	pl.Data[last].Samples[6].OffX = 0.5
+	pl.Data[last].Samples[6].DeltaY = 16
+	pl.Data[last].Samples[6].OffY = 2
 	pl.AddFunc("Theory", func(x float64) float64 {
 		if x > 5.25 && x < 5.75 {
 			return 75

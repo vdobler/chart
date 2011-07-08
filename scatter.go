@@ -52,7 +52,7 @@ func (sc *ScatterChart) AddData(name string, data []EPoint) {
 		sc.YRange.DataMax = data[0].Y
 	}
 	for _, d := range data {
-		xl, yl, xh, yh := d.bb()
+		xl, yl, xh, yh := d.BoundingBox()
 		if xl < sc.XRange.DataMin {
 			sc.XRange.DataMin = xl
 		} else if xh > sc.XRange.DataMax {
@@ -74,9 +74,12 @@ func (sc *ScatterChart) AddData(name string, data []EPoint) {
 func (sc *ScatterChart) AddDataGeneric(name string, data []XYErrValue) {
 	edata := make([]EPoint, len(data))
 	for i, d := range data {
-		ex1, ex2 := d.XErr()
-		ey1, ey2 := d.YErr()
-		edata[i] = EPoint{X: d.XVal(), Y: d.YVal(), EX1: ex1, EX2: ex2, EY1: ey1, EY2: ey2}
+		x, y := d.XVal(), d.YVal()
+		xl, xh := d.XErr()
+		yl, yh := d.YErr()
+		dx, dy := xh-xl, yh-yl
+		xo, yo := xh-dx/2-x, yh-dy/2-y
+		edata[i] = EPoint{X: x, Y: y, DeltaX: dx, DeltaY: dy, OffX: xo, OffY: yo}
 	}
 	sc.AddData(name, edata)
 }
@@ -88,7 +91,7 @@ func (sc *ScatterChart) AddDataPair(name string, x, y []float64) {
 	data := make([]EPoint, n)
 	nan := math.NaN()
 	for i := 0; i < n; i++ {
-		data[i] = EPoint{X: x[i], Y: y[i], EX1: nan, EX2: nan, EY1: nan, EY2: nan}
+		data[i] = EPoint{X: x[i], Y: y[i], DeltaX: nan, DeltaY: nan}
 	}
 	sc.AddData(name, data)
 }
@@ -117,28 +120,16 @@ func (sc *ScatterChart) PlotTxt(w, h int) string {
 				x := sc.XRange.Data2Screen(d.X)
 				y := sc.YRange.Data2Screen(d.Y)
 				// TODO: clip
-				if d.EX1 != nan || d.EX2 != nan {
-					xl, xh := d.X, d.X
-					if d.EX1 != nan {
-						xl -= d.EX1
-					}
-					if d.EX2 != nan {
-						xh += d.EX2
-					}
+				if d.DeltaX != nan {
+					xl, _, xh, _ := d.BoundingBox()
 					xe := sc.XRange.Data2Screen(xh)
 					for xa := sc.XRange.Data2Screen(xl); xa <= xe; xa++ {
 						tb.Put(xa, y, '-')
 					}
 
 				}
-				if d.EY1 != nan || d.EY2 != nan {
-					yl, yh := d.Y, d.Y
-					if d.EY1 != nan {
-						yl -= d.EY1
-					}
-					if d.EX2 != nan {
-						yh += d.EY2
-					}
+				if d.DeltaY != nan {
+					_, yl, _, yh := d.BoundingBox()
 					ye := sc.YRange.Data2Screen(yh)
 					for ya := sc.YRange.Data2Screen(yl); ya >= ye; ya-- {
 						tb.Put(x, ya, '|')

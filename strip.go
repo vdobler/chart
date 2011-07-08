@@ -21,8 +21,7 @@ func (sc *StripChart) AddData(name string, data []float64) {
 	for i, d := range data {
 		pd[i].X = d
 		pd[i].Y = float64(n)
-		pd[i].EX1, pd[i].EX2 = nan, nan
-		pd[i].EY1, pd[i].EY2 = nan, nan
+		pd[i].DeltaX, pd[i].DeltaY = nan, nan
 	}
 	sc.ScatterChart.AddData(name, pd)
 }
@@ -34,8 +33,7 @@ func (sc *StripChart) AddDataGeneric(name string, data []Value) {
 	for i, d := range data {
 		pd[i].X = d.XVal()
 		pd[i].Y = float64(n)
-		pd[i].EX1, pd[i].EX2 = nan, nan
-		pd[i].EY1, pd[i].EY2 = nan, nan
+		pd[i].DeltaX, pd[i].DeltaY = nan, nan
 	}
 	sc.ScatterChart.AddData(name, pd)
 }

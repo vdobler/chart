@@ -577,27 +577,30 @@ type XYErrValue interface {
 	YErr() (float64, float64)
 }
 type EPoint struct {
-	X, Y               float64
-	EX1, EX2, EY1, EY2 float64 //  error bars are from X-EX1 to X+EX2, same for Y
+	X, Y           float64
+	DeltaX, DeltaY float64 // full range of x and y error, NaN for no errorbar
+	OffX, OffY     float64 // offset of error range (must be < Delta)
 }
 
-func (p EPoint) XVal() float64                  { return p.X }
-func (p EPoint) YVal() float64                  { return p.Y }
-func (p EPoint) XErr() (float64, float64)       { return p.EX1, p.EX2 }
-func (p EPoint) YErr() (float64, float64)       { return p.EY1, p.EY2 }
-func (p EPoint) bb() (xl, yl, xh, yh float64) { // bounding box
+func (p EPoint) XVal() float64 { return p.X }
+func (p EPoint) YVal() float64 { return p.Y }
+func (p EPoint) XErr() (float64, float64) {
+	xl, _, xh, _ := p.BoundingBox()
+	return xl, xh
+}
+func (p EPoint) YErr() (float64, float64) {
+	_, yl, _, yh := p.BoundingBox()
+	return yl, yh
+}
+func (p EPoint) BoundingBox() (xl, yl, xh, yh float64) { // bounding box
 	xl, xh, yl, yh = p.X, p.X, p.Y, p.Y
-	if !math.IsNaN(p.EX1) {
-		xl -= p.EX1
+	if !math.IsNaN(p.DeltaX) {
+		xl -= p.DeltaX/2 - p.OffX
+		xh += p.DeltaX/2 + p.OffX
 	}
-	if !math.IsNaN(p.EX2) {
-		xh += p.EX1
-	}
-	if !math.IsNaN(p.EY1) {
-		yl -= p.EY1
-	}
-	if !math.IsNaN(p.EY1) {
-		yh += p.EY2
+	if !math.IsNaN(p.DeltaY) {
+		yl -= p.DeltaY/2 - p.OffY
+		yh += p.DeltaY/2 + p.OffY
 	}
 	return
 }
