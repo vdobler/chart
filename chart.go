@@ -542,73 +542,64 @@ func (key *Key) LayoutKeyTxt() (kb *TextBuf) {
 }
 
 
-type ChartValue interface {
-	// center
-	CX() float64
-	CY() float64
-	// bounding box
-	MinX() float64
-	MinY() float64
-	MaxX() float64
-	MaxY() float64
+// Values and its std. implementation Real
+type Value interface {
+	XVal() float64
 }
 
-// Simple Point
-type Point struct{ X, Y float64 }
+type Real float64
+func (r Real) XVal() float64 { return float64(r) }
 
-func (p Point) CX() float64   { return p.X }
-func (p Point) CY() float64   { return p.Y }
-func (p Point) MinX() float64 { return p.X }
-func (p Point) MinY() float64 { return p.Y }
-func (p Point) MaxX() float64 { return p.X }
-func (p Point) MaxY() float64 { return p.Y }
+
+// XY-Values and its std. implementation Point
+type XYValue interface {
+	XVal() float64
+	YVal() float64
+}
+
+type Point struct{ X, Y float64 }
+func (p Point) XVal() float64   { return p.X }
+func (p Point) YVal() float64   { return p.Y }
+func (p Point) XErr() (float64, float64)   { return math.NaN(), math.NaN() }
+func (p Point) YErr() (float64, float64)   { return math.NaN(), math.NaN() }
+
+
+// XY-Value with error bars
+type XYErrValue interface {
+	XVal() float64
+	YVal() float64
+	XErr() (float64, float64)
+	YErr() (float64, float64)
+}
+type EPoint struct { 
+	X, Y float64
+	EX1, EX2, EY1, EY2 float64 //  error bars are from X-EX1 to X+EX2, same for Y
+}
+func (p EPoint) XVal() float64   { return p.X }
+func (p EPoint) YVal() float64   { return p.Y }
+func (p EPoint) XErr() (float64, float64)   { return p.EX1, p.EX2 }
+func (p EPoint) YErr() (float64, float64)   { return p.EY1, p.EY2 }
+func (p EPoint) bb() (xl, yl, xh, yh float64) { // bounding box
+	xl, xh, yl, yh = p.X, p.X, p.Y, p.Y
+	if !math.IsNaN(p.EX1) { xl -= p.EX1 }
+	if !math.IsNaN(p.EX2) { xh += p.EX1 }
+	if !math.IsNaN(p.EY1) { yl -= p.EY1 }
+	if !math.IsNaN(p.EY1) { yh += p.EY2 }
+	return
+}
 
 // Box in Boxplot
 type Box struct {
 	X, Avg, Med, Q1, Q3, Low, High float64
 	Outliers                       []float64
 }
-
-func (p Box) CX() float64   { return p.X }
-func (p Box) CY() float64   { return p.Med }
-func (p Box) MinX() float64 { return p.X }
-func (p Box) MinY() float64 {
-	x := minimum(p.Outliers)
-	if x != math.NaN() {
-		return x
-	}
-	return p.Low
-}
-func (p Box) MaxX() float64 { return p.X }
-func (p Box) MaxY() float64 {
-	x := maximum(p.Outliers)
-	if x != math.NaN() {
-		return x
-	}
-	return p.High
-}
+func (p Box) XVal() float64   { return p.X }
+func (p Box) YVal() float64   { return p.Med }
+func (p Box) XErr() float64 { return p.Med - p.Q1 }
+func (p Box) YErr() float64 { return p.Q3 - p.Med }
 
 
-/***** bad idea *******
-// Bin in Histograms
-type Bin struct {
-	X, Width float64
-	Count    int
-}
 
-func (p Bin) CX() float64   { return p.X }
-func (p Bin) CY() float64   { return float64(p.Count) / 2 }
-func (p Bin) MinX() float64 { return p.X - p.Width/2 }
-func (p Bin) MinY() float64 { return 0 }
-func (p Bin) MaxX() float64 { return p.X + p.Width/2 }
-func (p Bin) MaxY() float64 { return float64(p.Count) }
-***********************/
-
-type ChartData struct {
-	Name   string
-	Style  DataStyle
-	Values []ChartValue
-}
 
 
 func LayoutTxt(w, h int, title, xlabel, ylabel string, hidextics, hideytics bool, key *Key) (width, leftm, height, topm int, kb *TextBuf, numxtics, numytics int) {

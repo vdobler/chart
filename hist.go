@@ -34,7 +34,7 @@ func (c *HistChart) AddData(name string, data []float64) {
 	c.Data = append(c.Data, HistChartData{name, DataStyle{}, data})
 	c.Key.Entries = append(c.Key.Entries, KeyEntry{s, name})
 
-	if c.XRange.DataMin == 0 && c.XRange.DataMax == 0 {
+	if len(c.Data) == 1 {  // first data set 
 		c.XRange.DataMin = data[0]
 		c.XRange.DataMax = data[0]
 	}
@@ -49,6 +49,21 @@ func (c *HistChart) AddData(name string, data []float64) {
 	c.XRange.Max = c.XRange.DataMax
 }
 
+func (c *HistChart) AddDataInt(name string, data []int) {
+	fdata := make([]float64, len(data))
+	for i, d:=range data {
+		fdata[i] = float64(d)
+	}
+	c.AddData(name, fdata)
+}
+
+func (c *HistChart) AddDataGeneric(name string, data []Value) {
+	fdata := make([]float64, len(data))
+	for i, d:=range data {
+		fdata[i] = d.XVal()
+	}
+	c.AddData(name, fdata)
+}
 
 func (hc *HistChart) PlotTxt(w, h int) string {
 	width, leftm, height, topm, kb, numxtics, numytics := LayoutTxt(w, h, hc.Title, hc.Xlabel, hc.Ylabel, hc.XRange.TicSetting.Hide, hc.YRange.TicSetting.Hide, &hc.Key)

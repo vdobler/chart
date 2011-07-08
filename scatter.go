@@ -1,6 +1,7 @@
 package chart
 
 import (
+	"math"
 // "fmt"
 //	"os"
 //	"strings"
@@ -10,7 +11,7 @@ import (
 type ScatterChartData struct {
 	Name    string
 	Style   DataStyle
-	Samples []Point
+	Samples []EPoint
 	Func    func(float64) float64
 }
 
@@ -38,8 +39,10 @@ func (sc *ScatterChart) AddLinear(name string, ax, ay, bx, by float64) {
 	})
 }
 
+
+
 // Add points in data to chart.
-func (sc *ScatterChart) AddData(name string, data []Point) {
+func (sc *ScatterChart) AddData(name string, data []EPoint) {
 	s := Symbol[len(sc.Data)%len(Symbol)]
 	sc.Data = append(sc.Data, ScatterChartData{name, DataStyle{}, data, nil})
 	sc.Key.Entries = append(sc.Key.Entries, KeyEntry{s, name})
@@ -50,31 +53,43 @@ func (sc *ScatterChart) AddData(name string, data []Point) {
 		sc.YRange.DataMax = data[0].Y
 	}
 	for _, d := range data {
-		if d.X < sc.XRange.DataMin {
-			sc.XRange.DataMin = d.X
-		} else if d.X > sc.XRange.DataMax {
-			sc.XRange.DataMax = d.X
+		xl, yl, xh, yh := d.bb()
+		if xl < sc.XRange.DataMin {
+			sc.XRange.DataMin = xl
+		} else if xh > sc.XRange.DataMax {
+			sc.XRange.DataMax = xh
 		}
-		if d.Y < sc.YRange.DataMin {
-			sc.YRange.DataMin = d.Y
-		} else if d.Y > sc.YRange.DataMax {
-			sc.YRange.DataMax = d.Y
+		if yl < sc.YRange.DataMin {
+			sc.YRange.DataMin = yl
+		} else if yh > sc.YRange.DataMax {
+			sc.YRange.DataMax = yh
 		}
 	}
 	sc.XRange.Min = sc.XRange.DataMin
 	sc.XRange.Max = sc.XRange.DataMax
 	sc.YRange.Min = sc.YRange.DataMin
 	sc.YRange.Max = sc.YRange.DataMax
-	// fmt.Printf("New Limits: x %f %f; y %f %f\n", sc.XRange.DataMin, sc.XRange.DataMax, sc.YRange.DataMin, sc.YRange.DataMax) 
 }
+
+// Add points in data to chart.
+func (sc *ScatterChart) AddDataGeneric(name string, data []XYErrValue) {
+	edata := make([]EPoint, len(data))
+	for i, d := range(data) {
+		ex1, ex2 := d.XErr()
+		ey1, ey2 := d.YErr()
+		edata[i] = EPoint{X: d.XVal(), Y: d.YVal(), EX1: ex1, EX2: ex2, EY1: ey1, EY2: ey2}
+	}
+	sc.AddData(name, edata)
+}
+
 
 // Make points from x and y and add to chart.
 func (sc *ScatterChart) AddDataPair(name string, x, y []float64) {
 	n := min(len(x), len(y))
-	data := make([]Point, n)
+	data := make([]EPoint, n)
+	nan := math.NaN()
 	for i := 0; i < n; i++ {
-		data[i].X = x[i]
-		data[i].Y = y[i]
+		data[i] = EPoint{X: x[i], Y: y[i], EX1: nan, EX2: nan, EY1: nan, EY2: nan}
 	}
 	sc.AddData(name, data)
 }

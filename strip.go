@@ -9,12 +9,6 @@ import (
 )
 
 
-type StripChartData struct {
-	Name string
-	Data []float64
-}
-
-
 type StripChart struct {
 	Jitter bool
 	ScatterChart
@@ -22,10 +16,26 @@ type StripChart struct {
 
 func (sc *StripChart) AddData(name string, data []float64) {
 	n := len(sc.ScatterChart.Data) + 1
-	pd := make([]Point, len(data))
+	pd := make([]EPoint, len(data))
+	nan := math.NaN()
 	for i, d := range data {
 		pd[i].X = d
 		pd[i].Y = float64(n)
+		pd[i].EX1, pd[i].EX2 = nan, nan
+		pd[i].EY1, pd[i].EY2 = nan, nan
+	}
+	sc.ScatterChart.AddData(name, pd)
+}
+
+func (sc *StripChart) AddDataGeneric(name string, data []Value) {
+	n := len(sc.ScatterChart.Data) + 1
+	pd := make([]EPoint, len(data))
+	nan := math.NaN()
+	for i, d := range data {
+		pd[i].X = d.XVal()
+		pd[i].Y = float64(n)
+		pd[i].EX1, pd[i].EX2 = nan, nan
+		pd[i].EY1, pd[i].EY2 = nan, nan
 	}
 	sc.ScatterChart.AddData(name, pd)
 }
