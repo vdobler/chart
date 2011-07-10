@@ -45,6 +45,10 @@ func (tb *TextBuf) Rect(x, y, w, h int, style int, fill int) {
 		h = -h
 		y -= h
 	}
+	if w < 0 {
+		w = -w
+		x -= w
+	}
 
 	tb.Put(x, y, Edge[style][0])
 	tb.Put(x+w, y, Edge[style][1])
@@ -66,6 +70,14 @@ func (tb *TextBuf) Rect(x, y, w, h int, style int, fill int) {
 }
 
 func (tb *TextBuf) Block(x, y, w, h int, fill int) {
+	if h < 0 {
+		h = -h
+		y -= h
+	}
+	if w < 0 {
+		w = -w
+		x -= w
+	}
 	for i := 0; i < w; i++ {
 		for j := 0; j <= h; j++ {
 			tb.Put(x+i, y+j, fill)

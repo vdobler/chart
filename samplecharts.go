@@ -185,4 +185,13 @@ func main() {
 		fmt.Printf("%s\n", bc.PlotTxt(100, 25))
 	*/
 
+
+	barc := chart.BarChart{Title: "My first Bar Chart"}
+	barc.AddDataPair("Amount", []float64{10,20,30,35,40,50} , []float64{120,180,205,230,150,190} )
+	fmt.Printf("%s\n", barc.PlotTxt(100,25))
+	barc.AddDataPair("Test", []float64{15,25,35,45,55} , []float64{80,95,80,120,140} )
+	fmt.Printf("%s\n", barc.PlotTxt(100,25))
+	barc.SameBarWidth = true
+	fmt.Printf("%s\n", barc.PlotTxt(100,25))
+
 }

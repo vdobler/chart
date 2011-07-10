@@ -10,7 +10,8 @@ GOFILES=\
 	strip.go\
 	scatter.go\
 	box.go\
-	hist.go
+	hist.go\
+	bar.go
 
 include $(GOROOT)/src/Make.pkg
 
