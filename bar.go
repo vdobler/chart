@@ -9,9 +9,9 @@ import (
 
 
 type BarChartData struct {
-	Name      string
-	Style DataStyle
-	Samples   []Point
+	Name    string
+	Style   DataStyle
+	Samples []Point
 }
 
 
@@ -34,10 +34,10 @@ type BarChart struct {
 	Title          string
 	Xlabel, Ylabel string
 	Key            Key
-	Horizontal     bool // Display is horizontal bars
-	Stacked        bool // Display different data sets ontop of each other
-	ShowVal        bool // Display values 
-	SameBarWidth   bool // all data sets use smalest bar width
+	Horizontal     bool    // Display is horizontal bars
+	Stacked        bool    // Display different data sets ontop of each other
+	ShowVal        bool    // Display values 
+	SameBarWidth   bool    // all data sets use smalest bar width
 	BarWidthFac    float64 // if nonzero: use this as width for all bars
 	Data           []BarChartData
 }
@@ -81,9 +81,11 @@ func (c *BarChart) AddDataPair(name string, x, y []float64) {
 func (c *BarChart) barWidth(sample int) float64 {
 	// find bar width
 	barWidth := c.XRange.Max - c.XRange.Min // large enough
-	for i:=1; i<len(c.Data[sample].Samples); i++ {
+	for i := 1; i < len(c.Data[sample].Samples); i++ {
 		diff := math.Fabs(c.Data[sample].Samples[i].X - c.Data[sample].Samples[i-1].X)
-		if diff < barWidth { barWidth = diff }
+		if diff < barWidth {
+			barWidth = diff
+		}
 	}
 	if c.BarWidthFac != 0 {
 		barWidth *= math.Fabs(c.BarWidthFac)
@@ -95,12 +97,12 @@ func (c *BarChart) barWidth(sample int) float64 {
 func (c *BarChart) extremBarWidth() (smallest, widest float64) {
 	w0 := c.barWidth(0)
 	widest, smallest = w0, w0
-	for s := 1; s<len(c.Data); s++ {
+	for s := 1; s < len(c.Data); s++ {
 		b := c.barWidth(s)
-		if b > widest{ 
-			widest = b 
-		} else if b<smallest { 
-			smallest = b 
+		if b > widest {
+			widest = b
+		} else if b < smallest {
+			smallest = b
 		}
 	}
 	return
@@ -118,7 +120,7 @@ func (c *BarChart) PlotTxt(w, h int) string {
 	lbw, ubw := c.extremBarWidth()
 	var barWidth float64
 	if c.SameBarWidth {
-		barWidth = lbw 
+		barWidth = lbw
 	} else {
 		barWidth = ubw
 	}
@@ -127,14 +129,13 @@ func (c *BarChart) PlotTxt(w, h int) string {
 	c.XRange.Setup(numxtics, numxtics+1, width, leftm, false)
 	c.YRange.Setup(numytics, numytics+2, height, topm, true)
 
-	if c.XRange.DataMin - barWidth/2 < c.XRange.Min {
-		c.XRange.DataMin -= barWidth/2
+	if c.XRange.DataMin-barWidth/2 < c.XRange.Min {
+		c.XRange.DataMin -= barWidth / 2
 	}
-	if c.XRange.DataMax + barWidth > c.XRange.Max {
-		c.XRange.DataMax += barWidth/2
+	if c.XRange.DataMax+barWidth > c.XRange.Max {
+		c.XRange.DataMax += barWidth / 2
 	}
 	c.XRange.Setup(numxtics, numxtics+1, width, leftm, false)
-
 
 	tb := NewTextBuf(w, h)
 	if c.Title != "" {
@@ -152,15 +153,15 @@ func (c *BarChart) PlotTxt(w, h int) string {
 		if !c.SameBarWidth {
 			barWidth = c.barWidth(i)
 		}
-		sbw := max(1, xf(2*barWidth) - xf(barWidth) - 1) // screen bar width
+		sbw := max(1, xf(2*barWidth)-xf(barWidth)-1) // screen bar width
 		symbol := data.Style.Symbol
 		for _, point := range data.Samples {
 			x, y := point.X, point.Y
-			sx := xf(x-barWidth/2)+1
+			sx := xf(x-barWidth/2) + 1
 			// sw := xf(x+barWidth/2) - sx
 			sy := yf(y)
 			sh := sy0 - sy
-			tb.Block(sx, sy, sbw, sh, symbol) 
+			tb.Block(sx, sy, sbw, sh, symbol)
 		}
 	}
 

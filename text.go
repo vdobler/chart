@@ -6,7 +6,7 @@ import (
 
 var Edge = [][4]int{{'+', '+', '+', '+'}, {'.', '.', '\'', '\''}, {'/', '\\', '\\', '/'}}
 
-var Symbol = []int{'*', '+', 'o', '#', '='}
+var Symbol = []int{'*', '+', 'o', '#', '=', '%', 'X', '@', '$', 'H', 'A', 'B', 'C', 'D'}
 
 type TextBuf struct {
 	Buf  []int

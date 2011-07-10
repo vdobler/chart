@@ -11,7 +11,8 @@ GOFILES=\
 	scatter.go\
 	box.go\
 	hist.go\
-	bar.go
+	bar.go\
+	pie.go
 
 include $(GOROOT)/src/Make.pkg
 
