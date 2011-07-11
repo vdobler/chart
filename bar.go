@@ -24,7 +24,7 @@ type BarChartData struct {
 // 
 // If BarWidth is zero the BarWidth is the smallest distance between two
 // x values multiplied ny BarWidthFac (<1). 
-// Data is drwan first to last, last overwriting previous, maybe
+// Data sets are drawn first to last, last overwriting previous, maybe
 // at the same x position.  Use CategoricalBarChart if your x axis is
 // categorical.
 //

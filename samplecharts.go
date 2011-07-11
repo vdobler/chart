@@ -201,4 +201,9 @@ func main() {
 	piec.AddDataPair("America", []string{"North", "Middel", "South"}, []float64{20, 10, 15})
 	piec.Key.Cols = 2
 	fmt.Printf("%s\n", piec.PlotTxt(80, 30))
+
+	cbarc := chart.CategoryBarChart{Title: "Income", Categories: []string{"none", "low", "average", "high"}}
+	cbarc.AddData("Europe", map[string]float64{"none": 10, "low": 15, "average": 25, "high": 5})
+	fmt.Printf("%s\n", cbarc.PlotTxt(80, 20))
+
 }
