@@ -31,7 +31,8 @@ func (c *PieChart) AddData(name string, data []CatValue) {
 	c.Data = append(c.Data, CategoryChartData{name, DataStyle{}, data})
 	c.Key.Entries = append(c.Key.Entries, KeyEntry{-1, name})
 	for s, cv := range data {
-		c.Key.Entries = append(c.Key.Entries, KeyEntry{s, cv.Cat})
+		symbol := Symbol[s%len(Symbol)]
+		c.Key.Entries = append(c.Key.Entries, KeyEntry{symbol, cv.Cat})
 	}
 }
 
@@ -90,17 +91,17 @@ func (c *PieChart) PlotTxt(w, h int) string {
 
 	keidx := 0 // key-entry-index
 	for i, data := range c.Data {
-		datasetname := c.Key.Entries[keidx].Text
+		// _ := c.Key.Entries[keidx].Text // data set name
 		keidx++
 
 		var sum float64
 		for _, d := range data.Samples {
 			sum += d.Val
 		}
-		
+
 		var phi float64 = -math.Pi
-		for j, d := range data.Samples {
-			symbol := Symbol[c.Key.Entries[keidx].Symbol%len(Symbol)]
+		for _, d := range data.Samples {
+			symbol := c.Key.Entries[keidx].Symbol
 			keidx++
 			alpha := 2 * math.Pi * d.Val / sum
 			for r := c.Inner * radiusy; r <= radiusy+0.1; r += 0.2 {
@@ -132,7 +133,8 @@ func (c *PieChart) PlotTxt(w, h int) string {
 		radiusx, radiusy = radiusx*PieChartShrinkage, radiusy*PieChartShrinkage // next data set is smaler
 	}
 
-	kb := c.Key.LayoutTxt()
+	// TODO(vodo) honour key placement
+	kb := c.Key.LayoutKeyTxt()
 	if kb != nil {
 		tb.Paste(w-kb.W-1, 2, kb)
 	}

@@ -197,7 +197,8 @@ func main() {
 	piec.AddDataPair("Europe", []string{"D", "AT", "CH", "F", "E", "I"}, []float64{10, 20, 30, 35, 15, 25})
 	piec.Inner = 0.5
 	piec.ShowVal = 1
-	fmt.Printf("%s\n", piec.PlotTxt(60, 30))
+	fmt.Printf("%s\n", piec.PlotTxt(80, 30))
 	piec.AddDataPair("America", []string{"North", "Middel", "South"}, []float64{20, 10, 15})
-	fmt.Printf("%s\n", piec.PlotTxt(60, 30))
+	piec.Key.Cols = 2
+	fmt.Printf("%s\n", piec.PlotTxt(80, 30))
 }

@@ -529,7 +529,7 @@ func (key *Key) LayoutKeyTxt() (kb *TextBuf) {
 			if width[c][r] == 0 {
 				continue
 			}
-			xx := x+KL_LRBorder
+			xx := x + KL_LRBorder
 			if symbol[c][r] != -1 {
 				kb.Put(xx, y, symbol[c][r])
 				xx += 1 + KL_SLSep
