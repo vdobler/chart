@@ -30,7 +30,8 @@ func NewTextBuf(w, h int) (tb *TextBuf) {
 
 func (tb *TextBuf) Put(x, y, c int) {
 	if x < 0 || y < 0 || x >= tb.W || y >= tb.H {
-		// fmt.Printf("Falsch: %d, %d  '%c' \n", x, y, c)
+		return
+		// fmt.Printf("Ooooops Put(): %d, %d  '%c' \n", x, y, c)
 		x, y = 0, 0
 	}
 	i := (tb.W+1)*y + x

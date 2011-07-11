@@ -1,17 +1,17 @@
 package chart
 
 import (
-//"fmt"
-//"math"
-//	"os"
-//	"strings"
+	"fmt"
+	//"math"
+	//	"os"
+	//	"strings"
 )
 
 
 type CategoryBarChartData struct {
 	Name    string
 	Style   DataStyle
-	Samples map[string]float64
+	Samples map[string]float64 // Keys not in CategoryBarChart.Categories are ignored
 }
 
 
@@ -78,12 +78,29 @@ func (c *CategoryBarChart) PlotTxt(w, h int) string {
 	leftm, width = leftm+2, width-2
 	topm, height = topm, height-1
 
-	// find bar width
-	var barWidth float64 = 0.3
-
-	// set up range and extend if bar would not fit
-	xrange.Setup(n, n, width, leftm, false)
+	if c.Stacked {
+		// rescale y-axis
+		sum := make([]float64, n)
+		min, max := c.YRange.DataMin, c.YRange.DataMax
+		for _, d := range c.Data {
+			for k, v := range d.Samples {
+				i := c.catIdx(k)
+				if i == -1 {
+					continue
+				}
+				sum[i] += v
+				if sum[i] > max {
+					max = sum[i]
+				} else if sum[i] < min {
+					min = sum[i]
+				}
+			}
+		}
+		c.YRange.DataMin, c.YRange.DataMax = min, max
+	}
 	c.YRange.Setup(numytics, numytics+2, height, topm, true)
+
+	xrange.Setup(n, n, width, leftm, false)
 	xrange.Tics = make([]Tic, n)
 	for i := 0; i < n; i++ {
 		xrange.Tics[i].Pos = -1 // outside, no tic
@@ -97,28 +114,67 @@ func (c *CategoryBarChart) PlotTxt(w, h int) string {
 		tb.Text(width/2+leftm, 0, c.Title, 0)
 	}
 	TxtXRange(xrange, tb, topm+height+1, 0, c.Xlabel, 0)
-	TxtYRange(c.YRange, tb, leftm-2, 0, c.Ylabel, 0)
+	TxtYRange(c.YRange, tb, leftm-2, leftm+width, c.Ylabel, 0)
 
 	xf := xrange.Data2Screen
 	yf := c.YRange.Data2Screen
-	sy0 := yf(c.YRange.Min)
+	var sy0 int
+	switch {
+	case c.YRange.Min >= 0:
+		sy0 = yf(c.YRange.Min)
+	case c.YRange.Min < 0 && c.YRange.Max > 0:
+		sy0 = yf(0)
+	case c.YRange.Max <= 0:
+		sy0 = yf(c.YRange.Max)
+	default:
+		fmt.Printf("No f.... idea how this can happen. You've been fiddeling?")
+	}
 
-	sbw := xf(2*barWidth) - xf(barWidth)
+	var sbw, fbw int
+	if c.Stacked {
+		sbw = (xf(2) - xf(0)) / 4
+		fbw = sbw
+	} else {
+		//        V
+		//   xxx === 000 ... xxx    sbw = 3
+		//   xx == 00 ## .. xx ==   fbw = 11
+		sbw = (xf(1)-xf(0))/(len(c.Data)+1) - 1
+		fbw = len(c.Data)*sbw + len(c.Data) - 1
+	}
 
-	for _, data := range c.Data {
+	current := make([]float64, n)
+	for dn, data := range c.Data {
 		symbol := data.Style.Symbol
 		for k, v := range data.Samples {
-			x := float64(c.catIdx(k) + 1)
-			y := v
-			sx := xf(x - barWidth/2)
-			sy := yf(y)
-			sh := sy0 - sy
+			i := c.catIdx(k)
+			if i == -1 {
+				continue
+			}
+
+			sx := xf(float64(i+1)) - fbw/2
+			if !c.Stacked {
+				sx += dn * (sbw + 1)
+			}
+
+			var sy, sh int
+			if c.Stacked {
+				sy = yf(v + current[i])
+				sh = yf(current[i]) - sy
+			} else {
+				sy = yf(v)
+				sh = sy0 - sy
+			}
 			tb.Block(sx, sy, sbw, sh, symbol)
+			current[i] += v
+
+			if c.ShowVal {
+				_ = fmt.Sprintf("%f", v)
+			}
 		}
 	}
 
 	if kb != nil {
-
+		tb.Paste(c.Key.X, c.Key.Y, kb)
 	}
 
 	return tb.String()

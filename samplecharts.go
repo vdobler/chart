@@ -185,14 +185,21 @@ func main() {
 		fmt.Printf("%s\n", bc.PlotTxt(100, 25))
 	*/
 
+	// Bar chart
 	barc := chart.BarChart{Title: "My first Bar Chart"}
-	barc.AddDataPair("Amount", []float64{10, 20, 30, 35, 40, 50}, []float64{120, 180, 205, 230, 150, 190})
+	barc.XRange.ShowZero = true
+	barc.AddDataPair("Amount",
+		[]float64{-10, 10, 20, 30, 35, 40, 50},
+		[]float64{90, 120, 180, 205, 230, 150, 190})
 	fmt.Printf("%s\n", barc.PlotTxt(100, 25))
-	barc.AddDataPair("Test", []float64{15, 25, 35, 45, 55}, []float64{80, 95, 80, 120, 140})
+	barc.AddDataPair("Test",
+		[]float64{-5, 15, 25, 35, 45, 55},
+		[]float64{110, 80, 95, 80, 120, 140})
 	fmt.Printf("%s\n", barc.PlotTxt(100, 25))
 	barc.SameBarWidth = true
 	fmt.Printf("%s\n", barc.PlotTxt(100, 25))
 
+	// Pie Chart
 	piec := chart.PieChart{Title: "Some Pies"}
 	piec.AddDataPair("Europe", []string{"D", "AT", "CH", "F", "E", "I"}, []float64{10, 20, 30, 35, 15, 25})
 	piec.Inner = 0.5
@@ -202,8 +209,19 @@ func main() {
 	piec.Key.Cols = 2
 	fmt.Printf("%s\n", piec.PlotTxt(80, 30))
 
+	// Categorized Bar Chart
 	cbarc := chart.CategoryBarChart{Title: "Income", Categories: []string{"none", "low", "average", "high"}}
-	cbarc.AddData("Europe", map[string]float64{"none": 10, "low": 15, "average": 25, "high": 5})
-	fmt.Printf("%s\n", cbarc.PlotTxt(80, 20))
+	cbarc.AddData("Europe", map[string]float64{"none": 10, "low": 15, "average": 25, "high": 20})
+	fmt.Printf("%s\n", cbarc.PlotTxt(100, 20))
+	cbarc.AddData("Asia", map[string]float64{"none": 15, "low": 30, "average": 10, "high": 20})
+	fmt.Printf("%s\n", cbarc.PlotTxt(100, 20))
+	cbarc.Stacked = true
+	fmt.Printf("%s\n", cbarc.PlotTxt(100, 20))
+
+	cbarc = chart.CategoryBarChart{Title: "Income", Categories: []string{"none", "low", "average", "high"}}
+	cbarc.YRange.ShowZero = true
+	cbarc.AddData("Europe", map[string]float64{"none": 10, "low": 15, "average": 25, "high": 20})
+	cbarc.AddData("Asia", map[string]float64{"none": 15, "low": 30, "average": 10, "high": -20})
+	fmt.Printf("%s\n", cbarc.PlotTxt(100, 20))
 
 }

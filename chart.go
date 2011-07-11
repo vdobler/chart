@@ -56,6 +56,7 @@ type Range struct {
 	Min, Max         float64 // the min an d max of the xais
 	TMin, TMax       *time.Time
 	ShowLimits       bool
+	ShowZero         bool // add line to show 0 of this axis
 	Tics             []Tic
 	Norm             func(float64) float64 // map [Min:Max] to [0:1]
 	InvNorm          func(float64) float64 // inverse of Norm()
@@ -751,6 +752,12 @@ func TxtXRange(xrange Range, tb *TextBuf, y, y1 int, label string, mirror int) {
 			tb.Put(sx, y1, '-')
 		}
 	}
+	if xrange.ShowZero && xrange.Min < 0 && xrange.Max > 0 {
+		z := xrange.Data2Screen(0)
+		for yy := y - 1; yy > y1+1; yy-- {
+			tb.Put(z, yy, ':')
+		}
+	}
 
 	if label != "" {
 		yy := y + 1
@@ -803,6 +810,12 @@ func TxtYRange(yrange Range, tb *TextBuf, x, x1 int, label string, mirror int) {
 		tb.Put(x, sy, '|')
 		if mirror >= 1 {
 			tb.Put(x1, sy, '|')
+		}
+	}
+	if yrange.ShowZero && yrange.Min < 0 && yrange.Max > 0 {
+		z := yrange.Data2Screen(0)
+		for xx := x + 1; xx < x1; xx += 2 {
+			tb.Put(xx, z, '-')
 		}
 	}
 
