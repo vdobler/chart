@@ -194,8 +194,10 @@ func main() {
 	fmt.Printf("%s\n", barc.PlotTxt(100, 25))
 
 	piec := chart.PieChart{Title: "Some Pies"}
-	piec.AddDataPair("Europ", []string{"D", "AT", "CH", "F", "E", "I"}, []float64{10, 20, 30, 35, 15, 25})
-	piec.InnerR = 0.5
+	piec.AddDataPair("Europe", []string{"D", "AT", "CH", "F", "E", "I"}, []float64{10, 20, 30, 35, 15, 25})
+	piec.Inner = 0.5
+	piec.ShowVal = 1
 	fmt.Printf("%s\n", piec.PlotTxt(60, 30))
-
+	piec.AddDataPair("America", []string{"North", "Middel", "South"}, []float64{20, 10, 15})
+	fmt.Printf("%s\n", piec.PlotTxt(60, 30))
 }
