@@ -28,9 +28,11 @@ type PieChart struct {
 }
 
 func (c *PieChart) AddData(name string, data []CatValue) {
-	s := Symbol[len(c.Data)%len(Symbol)]
-	c.Data = append(c.Data, CategoryChartData{name, DataStyle{Symbol: s}, data})
-	c.Key.Entries = append(c.Key.Entries, KeyEntry{s, name})
+	c.Data = append(c.Data, CategoryChartData{name, DataStyle{}, data})
+	c.Key.Entries = append(c.Key.Entries, KeyEntry{-1, name})
+	for s, cv := range data {
+		c.Key.Entries = append(c.Key.Entries, KeyEntry{s, cv.Cat})
+	}
 }
 
 func (c *PieChart) AddDataPair(name string, cat []string, val []float64) {
@@ -86,16 +88,20 @@ func (c *PieChart) PlotTxt(w, h int) string {
 		tb.Text(left+int(radiusx), 0, c.Title, 0)
 	}
 
+	keidx := 0 // key-entry-index
 	for i, data := range c.Data {
+		datasetname := c.Key.Entries[keidx].Text
+		keidx++
+
 		var sum float64
 		for _, d := range data.Samples {
 			sum += d.Val
 		}
-		fmt.Printf("Total of set %d: %f\n", i, sum)
-
+		
 		var phi float64 = -math.Pi
 		for j, d := range data.Samples {
-			symbol := Symbol[j%len(Symbol)]
+			symbol := Symbol[c.Key.Entries[keidx].Symbol%len(Symbol)]
+			keidx++
 			alpha := 2 * math.Pi * d.Val / sum
 			for r := c.Inner * radiusy; r <= radiusy+0.1; r += 0.2 {
 				for w := phi + dalpha; w < phi+alpha-dalpha; w += dalpha / 5 {
@@ -126,9 +132,10 @@ func (c *PieChart) PlotTxt(w, h int) string {
 		radiusx, radiusy = radiusx*PieChartShrinkage, radiusy*PieChartShrinkage // next data set is smaler
 	}
 
-	// if kb != nil {
-	//	tb.Paste(c.Key.X, c.Key.Y, kb)
-	//}
+	kb := c.Key.LayoutTxt()
+	if kb != nil {
+		tb.Paste(w-kb.W-1, 2, kb)
+	}
 
 	return tb.String()
 }

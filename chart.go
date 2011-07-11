@@ -529,9 +529,13 @@ func (key *Key) LayoutKeyTxt() (kb *TextBuf) {
 			if width[c][r] == 0 {
 				continue
 			}
-			kb.Put(x+KL_LRBorder, y, symbol[c][r])
+			xx := x+KL_LRBorder
+			if symbol[c][r] != -1 {
+				kb.Put(xx, y, symbol[c][r])
+				xx += 1 + KL_SLSep
+			}
 			for l, t := range text[c][r] {
-				kb.Text(x+KL_LRBorder+1+KL_SLSep, y+l, t, -1)
+				kb.Text(xx, y+l, t, -1)
 			}
 			y += rowheight[r]
 			if haveml {
