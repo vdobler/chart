@@ -222,6 +222,6 @@ func main() {
 	cbarc.YRange.ShowZero = true
 	cbarc.AddData("Europe", map[string]float64{"none": 10, "low": 15, "average": 25, "high": 20})
 	cbarc.AddData("Asia", map[string]float64{"none": 15, "low": 30, "average": 10, "high": -20})
-	fmt.Printf("%s\n", cbarc.PlotTxt(100, 20))
+	fmt.Printf("%s\n", cbarc.PlotTxt(100, 25))
 
 }

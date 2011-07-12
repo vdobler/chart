@@ -52,6 +52,16 @@ func abs(a int) int {
 	return a
 }
 
+func sign(a int) int {
+	if a < 0 {
+		return -1
+	}
+	if a == 0 {
+		return 0
+	}
+	return 1
+}
+
 func clip(x, l, u int) int {
 	if x < min(l, u) {
 		return l

@@ -4,16 +4,20 @@ import (
 // "fmt"
 )
 
+// Different edge styles for boxes
 var Edge = [][4]int{{'+', '+', '+', '+'}, {'.', '.', '\'', '\''}, {'/', '\\', '\\', '/'}}
 
+// Different symbols
 var Symbol = []int{'*', '+', 'o', '#', '=', '%', 'X', '@', '$', 'H', 'A', 'B', 'C', 'D'}
 
+
+// A Text Buffer
 type TextBuf struct {
-	Buf  []int
-	W, H int
+	Buf  []int // the internal buffer.  Point (x,y) is mapped to x + y*(W+1)
+	W, H int   // Width and Height
 }
 
-// Data is from 0 to w-1. Pos w is nl.
+// Set up a new TextBuf with width w and height h.
 func NewTextBuf(w, h int) (tb *TextBuf) {
 	tb = new(TextBuf)
 	tb.W, tb.H = w, h
@@ -28,6 +32,8 @@ func NewTextBuf(w, h int) (tb *TextBuf) {
 	return
 }
 
+
+// Put character c at (x,y)
 func (tb *TextBuf) Put(x, y, c int) {
 	if x < 0 || y < 0 || x >= tb.W || y >= tb.H {
 		return
@@ -38,9 +44,11 @@ func (tb *TextBuf) Put(x, y, c int) {
 	tb.Buf[i] = c
 }
 
-// buf[x+y*s] is pos x,y
+// Draw rectangle of width w and height h from corner at (x,y).
+// Use one of the corner style defined in Edge. 
+// Interior is filled with charater fill iff != 0.
 func (tb *TextBuf) Rect(x, y, w, h int, style int, fill int) {
-	style = style % 3
+	style = style % len(Edge)
 
 	if h < 0 {
 		h = -h
@@ -86,7 +94,7 @@ func (tb *TextBuf) Block(x, y, w, h int, fill int) {
 	}
 }
 
-
+// Return real character len of s (rune count).
 func StrLen(s string) (n int) {
 	for _, _ = range s {
 		n++
@@ -94,7 +102,9 @@ func StrLen(s string) (n int) {
 	return
 }
 
-// align: -1: left, 0: centered, 1: right, 2 |top, 3 |center, 4 |bot
+// Print text txt at (x,y). Horizontal display for align in [-1,1],
+// vasrtical alignment for align in [2,4]
+// align: -1: left; 0: centered; 1: right; 2: top, 3: center, 4: bottom
 func (tb *TextBuf) Text(x, y int, txt string, align int) {
 	if align <= 1 {
 		switch align {
@@ -124,6 +134,7 @@ func (tb *TextBuf) Text(x, y int, txt string, align int) {
 }
 
 
+// Paste buf at (x,y)
 func (tb *TextBuf) Paste(x, y int, buf *TextBuf) {
 	s := buf.W + 1
 	for i := 0; i < buf.W; i++ {
@@ -133,7 +144,49 @@ func (tb *TextBuf) Paste(x, y int, buf *TextBuf) {
 	}
 }
 
+func (tb *TextBuf) Line(x0, y0, x1, y1 int, symbol int) {
+	// handle trivial cases first
+	if x0 == x1 {
+		if y0 > y1 {
+			y0, y1 = y1, y0
+		}
+		for ; y0 <= y1; y0++ {
+			tb.Put(x0, y0, symbol)
+		}
+		return
+	}
+	if y0 == y1 {
+		if x0 > x1 {
+			x0, x1 = x1, x0
+		}
+		for ; x0 <= x1; x0++ {
+			tb.Put(x0, y0, symbol)
+		}
+		return
+	}
+	dx, dy := abs(x1-x0), -abs(y1-y0)
+	sx, sy := sign(x1-x0), sign(y1-y0)
+	err, e2 := dx+dy, 0
+	for {
+		tb.Put(x0, y0, symbol)
+		if x0 == x1 && y0 == y1 {
+			return
+		}
+		e2 = 2 * err
+		if e2 >= dy {
+			err += dy
+			x0 += sx
+		}
+		if e2 <= dx {
+			err += dx
+			y0 += sy
+		}
 
+	}
+}
+
+
+// Convert to plain (utf8) string.
 func (tb *TextBuf) String() string {
 	return string(tb.Buf)
 }
