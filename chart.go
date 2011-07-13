@@ -9,59 +9,71 @@ import (
 )
 
 
-type RangeExpansion int
-
+// Suitable values for Expand in RangeMode.
 const (
-	ExpandNextTic = iota // Set min/max to next tic really below/above data-min/max data
-	ExpandToTic          // Set to next tic below/above or equal to data-min/max data
+	ExpandNextTic = iota // Set min/max to next tic really below/above min/max of data
+	ExpandToTic          // Set to next tic below/above or equal to min/max of data
 	ExpandTight          // Use data min/max as limit 
-	ExpandABit           // Like ExpandToTic and add/subtract half a tic distance.
+	ExpandABit           // Like ExpandToTic and add/subtract ExpandABitFraction of tic distance.
 )
 
+var ExpandABitFraction = 0.5 // Fraction of tic spacing added in ExpandABit Range.Expand mode.
+
+// RangeMode describes how one end of an axis is set up. There are basically three different main modes:
+//   o Fixed: Fixed==true. 
+//     Use Value/TValue as fixed value ignoring data 
+//   o Unconstrained autoscaling: Fixed==false && Constrained==false
+//     Set range to whatever data requires
+//   o Constrained autoscaling: Fixed==false && Constrained==true
+//     Scale axis according to data present, but limit scaling to intervall [Lower,Upper]
+// For both autoscaling modes Expand defines how much expansion is done below/above
+// the lowest/highest data point.
 type RangeMode struct {
-	// If false: autoscaling. If true: use Value as fixed setting
-	Fixed bool
-	// If false: unconstrained autoscaling. If rue: use Lower and Upper as limits
-	Constrained bool
-	// One of ExpandNextTic, ExpandTight, ExpandABit
-	Expand int
-	// see above
-	Value, Lower, Upper    float64
-	TValue, TLower, TUpper *time.Time
+	Fixed          bool       // If false: autoscaling. If true: use (T)Value/TValue as fixed setting
+	Constrained    bool       // If false: full autoscaling. If true: use (T)Lower (T)Upper as limits
+	Expand         int        // One of ExpandNextTic, ExpandTight, ExpandABit
+	Value          float64    // Value of end point of axis in Fixed=true mode, ignorder otherwise
+	TValue         *time.Time // Same as Value, but used for Date/Time axis
+	Lower, Upper   float64    // Lower and upper limit for constrained autoscaling
+	TLower, TUpper *time.Time // Same s Lower/Upper, but used for Date/Time axis
 }
 
 
+// TicSettings describes how (if at all) tics are shown on an axis.
 type TicSetting struct {
-	Hide   bool    // Dont show tics if true
-	Minor  int     // 0: off, 1: clever, >1: number of intervalls
-	Delta  float64 // Wanted step. 0 means auto 
-	TDelta TimeDelta
-	Fmt    string // special format string
+	Hide   bool      // Dont show tics if true
+	Minor  int       // 0: off, 1: auto, >1: number of intervalls (not number of tics!)
+	Delta  float64   // Wanted step. 0 means auto 
+	TDelta TimeDelta // Same as Delta, used for Date/Time axis
+	Fmt    string    // special format string
 
 }
 
+// Tic describs a single tic on an axis.
 type Tic struct {
-	Pos, LabelPos float64
-	Label         string
-	Align         int // -1: left/top, 0 center, 1 right/bottom (unused)
+	Pos, LabelPos float64 // Position if the tic and its label
+	Label         string  // The Label
+	Align         int     // Alignment of the label: -1: left/top, 0 center, 1 right/bottom (unused)
 }
 
-
+// Range encapsulates all information about an axis.
 type Range struct {
-	Log              bool      // logarithmic axis?
-	Time             bool      // Time axis
-	MinMode, MaxMode RangeMode // how to handel min and max
-	TicSetting       TicSetting
-	DataMin, DataMax float64 // actual values from data. if both zero: not calculated
-	Min, Max         float64 // the min an d max of the xais
-	TMin, TMax       *time.Time
-	ShowLimits       bool
-	ShowZero         bool // add line to show 0 of this axis
-	Tics             []Tic
-	Norm             func(float64) float64 // map [Min:Max] to [0:1]
-	InvNorm          func(float64) float64 // inverse of Norm()
-	Data2Screen      func(float64) int
-	Screen2Data      func(int) float64
+	Log              bool       // logarithmic axis?
+	Time             bool       // Date/Time axis
+	MinMode, MaxMode RangeMode  // How to handel min and max of this axis/range
+	TicSetting       TicSetting // How to handle tics.
+	DataMin, DataMax float64    // Actual min/max values from data. If both zero: not calculated
+	ShowLimits       bool       // Display axis Min and Max on plot
+	ShowZero         bool       // Add line to show 0 of this axis
+	Tics             []Tic      // List of tics to display
+
+	Min, Max   float64    // Minium and Maximum of this axis/range.
+	TMin, TMax *time.Time // Same as Min/Max, but used for Date/Time axis
+
+	Norm        func(float64) float64 // Function to map [Min:Max] to [0:1]
+	InvNorm     func(float64) float64 // Inverse of Norm()
+	Data2Screen func(float64) int     // Function to map data value to screen position
+	Screen2Data func(int) float64     // Inverse of Data2Screen
 }
 
 var wochentage = []string{"So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"}
@@ -117,8 +129,10 @@ func FmtFloat(f float64) string {
 }
 
 
-// Return val constrained by mode.
-func Bound(mode RangeMode, val, ticDelta float64, upper bool) float64 {
+// ApplyRangeMode returns val constrained by mode. val is considered the upper end of an range/axis
+// if upper is true. To allow proper rounding to tic (depending on desired RangeMode)
+// the ticDelta has to be provided.
+func ApplyRangeMode(mode RangeMode, val, ticDelta float64, upper bool) float64 {
 	if mode.Fixed {
 		return mode.Value
 	}
@@ -157,8 +171,8 @@ func Bound(mode RangeMode, val, ticDelta float64, upper bool) float64 {
 }
 
 
-// Return val constrained by mode.
-func TimeBound(mode RangeMode, val *time.Time, step TimeDelta, upper bool) (bound *time.Time, tic *time.Time) {
+// TApplyRangeMode is the same as ApplyRangeMode for date/time axis/ranges.
+func TApplyRangeMode(mode RangeMode, val *time.Time, step TimeDelta, upper bool) (bound *time.Time, tic *time.Time) {
 	if mode.Fixed {
 		bound = mode.TValue
 		if upper {
@@ -225,8 +239,21 @@ func f2d(x float64) string {
 }
 
 
-// Set up Range according to RangeModes and TicSettings.
-// DataMin and DataMax should be present.
+// SetUp sets up several fields of Range r according to RangeModes and TicSettings.
+// DataMin and DataMax of r must be present and should indicate lowest and highest
+// value present in the data set. The following field if r are filled:
+//   (T)Min and (T)Max    lower and upper limit of axis, (T)-version for date/time axis
+//   Tics                 slice of tics to draw
+//   TicSetting.(T)Delta  actual tic delta
+//   Norm and InvNorm     TODO(vodo) not jet implemented
+//   Data2Screen
+//   Screen2Data
+// The parameters desired- and maxNumberOfTics are what the say.
+// sWidth and sOffset are screen-width and -offset and are used to set up the
+// Data-Screen conversion functions. If revert is true, than screen coordinates
+// are asumed to be the other way around than mathematical coordinates.
+//
+// TODO(vodo) seperate screen stuff into own method.
 func (r *Range) Setup(desiredNumberOfTics, maxNumberOfTics, sWidth, sOffset int, revert bool) {
 	if desiredNumberOfTics <= 1 {
 		desiredNumberOfTics = 2
@@ -247,8 +274,8 @@ func (r *Range) Setup(desiredNumberOfTics, maxNumberOfTics, sWidth, sOffset int,
 		maxt := time.SecondsToLocalTime(int64(r.DataMax))
 
 		var ftic, ltic *time.Time
-		r.TMin, ftic = TimeBound(r.MinMode, mint, td, false)
-		r.TMax, ltic = TimeBound(r.MaxMode, maxt, td, true)
+		r.TMin, ftic = TApplyRangeMode(r.MinMode, mint, td, false)
+		r.TMax, ltic = TApplyRangeMode(r.MaxMode, maxt, td, true)
 		r.TicSetting.Delta, r.TicSetting.TDelta = float64(td.Seconds()), td
 		r.Min, r.Max = float64(r.TMin.Seconds()), float64(r.TMax.Seconds())
 
@@ -259,8 +286,8 @@ func (r *Range) Setup(desiredNumberOfTics, maxNumberOfTics, sWidth, sOffset int,
 			td = NextTimeDelta(td)
 			ftd = float64(td.Seconds())
 			fmt.Printf("  -->  %s\n", td)
-			r.TMin, ftic = TimeBound(r.MinMode, mint, td, false)
-			r.TMax, ltic = TimeBound(r.MaxMode, maxt, td, true)
+			r.TMin, ftic = TApplyRangeMode(r.MinMode, mint, td, false)
+			r.TMax, ltic = TApplyRangeMode(r.MaxMode, maxt, td, true)
 			r.TicSetting.Delta, r.TicSetting.TDelta = float64(td.Seconds()), td
 			r.Min, r.Max = float64(r.TMin.Seconds()), float64(r.TMax.Seconds())
 			actNumTics = int((r.Max - r.Min) / ftd)
@@ -268,8 +295,8 @@ func (r *Range) Setup(desiredNumberOfTics, maxNumberOfTics, sWidth, sOffset int,
 				fmt.Printf("Switching to over next (%d > %d) delta from %s", actNumTics, maxNumberOfTics, td)
 				td = NextTimeDelta(td)
 				fmt.Printf("  -->  %s\n", td)
-				r.TMin, ftic = TimeBound(r.MinMode, mint, td, false)
-				r.TMax, ltic = TimeBound(r.MaxMode, maxt, td, true)
+				r.TMin, ftic = TApplyRangeMode(r.MinMode, mint, td, false)
+				r.TMax, ltic = TApplyRangeMode(r.MaxMode, maxt, td, true)
 				r.TicSetting.Delta, r.TicSetting.TDelta = float64(td.Seconds()), td
 				r.Min, r.Max = float64(r.TMin.Seconds()), float64(r.TMax.Seconds())
 			}
@@ -328,8 +355,8 @@ func (r *Range) Setup(desiredNumberOfTics, maxNumberOfTics, sWidth, sOffset int,
 			}
 		}
 
-		r.Min = Bound(r.MinMode, r.DataMin, delta, false)
-		r.Max = Bound(r.MaxMode, r.DataMax, delta, true)
+		r.Min = ApplyRangeMode(r.MinMode, r.DataMin, delta, false)
+		r.Max = ApplyRangeMode(r.MaxMode, r.DataMax, delta, true)
 		r.TicSetting.Delta = delta
 		first := delta * math.Ceil(r.Min/delta)
 		num := int(-first/delta + math.Floor(r.Max/delta) + 1.5)
@@ -374,7 +401,9 @@ type DataStyle struct {
 }
 
 
-// Key placement
+// Key encapsulates settings for keys/legends in a chart.
+//
+// Key placement os governed by Pos which may take the following values:
 //          otl  otc  otr      
 //         +--------------+ 
 //     olt |itl  itc  itr | ort
@@ -384,19 +413,22 @@ type DataStyle struct {
 //     olb |ibl  ibc  ibr | orb
 //         +--------------+ 
 //        obl  obc  obr
+//
 type Key struct {
-	Hide   bool
-	Cols   int    // 
-	Border int    // -1: off, 0: std, 1...:other styles
-	Pos    string // "": itr
-	// Width, Height int    // 0,0: auto
-	X, Y    int
-	Entries []KeyEntry
+	Hide    bool       // Don't show key/legend if true
+	Cols    int        // Number of colums to use. If <0 fill rows before colums
+	Border  int        // -1: off, 0: std, 1...:other styles
+	Pos     string     // default "" is "itr"
+	X, Y    int        // Coordiantes where to put in chart.
+	Entries []KeyEntry // List of entries in the legend
 }
 
+
+// KeyEntry encapsulates an antry in the key/legend.
 type KeyEntry struct {
-	Symbol int
-	Text   string
+	Symbol int    // Symbol index to use
+	Linie  int    // Line Style
+	Text   string // Text to display
 }
 
 // Margins
@@ -550,76 +582,7 @@ func (key *Key) LayoutKeyTxt() (kb *TextBuf) {
 }
 
 
-// Values and its std. implementation Real
-type Value interface {
-	XVal() float64
-}
 
-type Real float64
-
-func (r Real) XVal() float64 { return float64(r) }
-
-
-// XY-Values and its std. implementation Point
-type XYValue interface {
-	XVal() float64
-	YVal() float64
-}
-
-type Point struct{ X, Y float64 }
-
-func (p Point) XVal() float64            { return p.X }
-func (p Point) YVal() float64            { return p.Y }
-func (p Point) XErr() (float64, float64) { return math.NaN(), math.NaN() }
-func (p Point) YErr() (float64, float64) { return math.NaN(), math.NaN() }
-
-
-// XY-Value with error bars
-type XYErrValue interface {
-	XVal() float64
-	YVal() float64
-	XErr() (float64, float64)
-	YErr() (float64, float64)
-}
-type EPoint struct {
-	X, Y           float64
-	DeltaX, DeltaY float64 // full range of x and y error, NaN for no errorbar
-	OffX, OffY     float64 // offset of error range (must be < Delta)
-}
-
-func (p EPoint) XVal() float64 { return p.X }
-func (p EPoint) YVal() float64 { return p.Y }
-func (p EPoint) XErr() (float64, float64) {
-	xl, _, xh, _ := p.BoundingBox()
-	return xl, xh
-}
-func (p EPoint) YErr() (float64, float64) {
-	_, yl, _, yh := p.BoundingBox()
-	return yl, yh
-}
-func (p EPoint) BoundingBox() (xl, yl, xh, yh float64) { // bounding box
-	xl, xh, yl, yh = p.X, p.X, p.Y, p.Y
-	if !math.IsNaN(p.DeltaX) {
-		xl -= p.DeltaX/2 - p.OffX
-		xh += p.DeltaX/2 + p.OffX
-	}
-	if !math.IsNaN(p.DeltaY) {
-		yl -= p.DeltaY/2 - p.OffY
-		yh += p.DeltaY/2 + p.OffY
-	}
-	return
-}
-
-// Box in Boxplot
-type Box struct {
-	X, Avg, Med, Q1, Q3, Low, High float64
-	Outliers                       []float64
-}
-
-func (p Box) XVal() float64 { return p.X }
-func (p Box) YVal() float64 { return p.Med }
-func (p Box) XErr() float64 { return p.Med - p.Q1 }
-func (p Box) YErr() float64 { return p.Q3 - p.Med }
 
 
 func LayoutTxt(w, h int, title, xlabel, ylabel string, hidextics, hideytics bool, key *Key) (width, leftm, height, topm int, kb *TextBuf, numxtics, numytics int) {

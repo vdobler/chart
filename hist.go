@@ -32,7 +32,7 @@ type HistChart struct {
 func (c *HistChart) AddData(name string, data []float64) {
 	s := Symbol[len(c.Data)%len(Symbol)]
 	c.Data = append(c.Data, HistChartData{name, DataStyle{}, data})
-	c.Key.Entries = append(c.Key.Entries, KeyEntry{s, name})
+	c.Key.Entries = append(c.Key.Entries, KeyEntry{Symbol:s, Text:name})
 
 	if len(c.Data) == 1 { // first data set 
 		c.XRange.DataMin = data[0]

@@ -7,10 +7,6 @@ import (
 	"strings"
 )
 
-type CatValue struct {
-	Cat string
-	Val float64
-}
 
 type CategoryChartData struct {
 	Name    string
@@ -29,10 +25,10 @@ type PieChart struct {
 
 func (c *PieChart) AddData(name string, data []CatValue) {
 	c.Data = append(c.Data, CategoryChartData{name, DataStyle{}, data})
-	c.Key.Entries = append(c.Key.Entries, KeyEntry{-1, name})
+	c.Key.Entries = append(c.Key.Entries, KeyEntry{Symbol: -1, Text: name})
 	for s, cv := range data {
 		symbol := Symbol[s%len(Symbol)]
-		c.Key.Entries = append(c.Key.Entries, KeyEntry{symbol, cv.Cat})
+		c.Key.Entries = append(c.Key.Entries, KeyEntry{Symbol: symbol, Text: cv.Cat})
 	}
 }
 

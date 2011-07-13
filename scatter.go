@@ -28,7 +28,8 @@ type ScatterChart struct {
 func (sc *ScatterChart) AddFunc(name string, f func(float64) float64) {
 	s := Symbol[len(sc.Data)%len(Symbol)]
 	sc.Data = append(sc.Data, ScatterChartData{name, DataStyle{}, nil, f})
-	sc.Key.Entries = append(sc.Key.Entries, KeyEntry{s, name})
+	ke := KeyEntry{Symbol:s, Text:name}
+	sc.Key.Entries = append(sc.Key.Entries, ke)
 }
 
 
@@ -44,7 +45,8 @@ func (sc *ScatterChart) AddLinear(name string, ax, ay, bx, by float64) {
 func (sc *ScatterChart) AddData(name string, data []EPoint) {
 	s := Symbol[len(sc.Data)%len(Symbol)]
 	sc.Data = append(sc.Data, ScatterChartData{name, DataStyle{}, data, nil})
-	sc.Key.Entries = append(sc.Key.Entries, KeyEntry{s, name})
+	ke := KeyEntry{Symbol:s, Text:name}
+	sc.Key.Entries = append(sc.Key.Entries, ke)
 	if sc.XRange.DataMin == 0 && sc.XRange.DataMax == 0 && sc.YRange.DataMin == 0 && sc.YRange.DataMax == 0 {
 		sc.XRange.DataMin = data[0].X
 		sc.XRange.DataMax = data[0].X
@@ -52,7 +54,7 @@ func (sc *ScatterChart) AddData(name string, data []EPoint) {
 		sc.YRange.DataMax = data[0].Y
 	}
 	for _, d := range data {
-		xl, yl, xh, yh := d.BoundingBox()
+		xl, yl, xh, yh := d.boundingBox()
 		if xl < sc.XRange.DataMin {
 			sc.XRange.DataMin = xl
 		} else if xh > sc.XRange.DataMax {
@@ -121,7 +123,7 @@ func (sc *ScatterChart) PlotTxt(w, h int) string {
 				y := sc.YRange.Data2Screen(d.Y)
 				// TODO: clip
 				if d.DeltaX != nan {
-					xl, _, xh, _ := d.BoundingBox()
+					xl, _, xh, _ := d.boundingBox()
 					xe := sc.XRange.Data2Screen(xh)
 					for xa := sc.XRange.Data2Screen(xl); xa <= xe; xa++ {
 						tb.Put(xa, y, '-')
@@ -129,7 +131,7 @@ func (sc *ScatterChart) PlotTxt(w, h int) string {
 
 				}
 				if d.DeltaY != nan {
-					_, yl, _, yh := d.BoundingBox()
+					_, yl, _, yh := d.boundingBox()
 					ye := sc.YRange.Data2Screen(yh)
 					for ya := sc.YRange.Data2Screen(yl); ya >= ye; ya-- {
 						tb.Put(x, ya, '|')
@@ -139,40 +141,24 @@ func (sc *ScatterChart) PlotTxt(w, h int) string {
 				tb.Put(x, y, Symbol[s%len(Symbol)])
 			}
 		} else if data.Func != nil {
-			// Functions
-			var lastsy, lastsx int
+			// Functions. TODO(vodo) proper clipping
 			symbol := Symbol[s%len(Symbol)]
+			var lastsy, lastsx int
+			var lastvalid bool
 			for sx := leftm; sx < leftm+width; sx++ {
 				x := sc.XRange.Screen2Data(sx)
 				y := data.Func(x)
 				sy := sc.YRange.Data2Screen(y)
 				if y >= sc.YRange.Min && y <= sc.YRange.Max {
-					tb.Put(sx, sy, symbol)
-				}
-				d := abs(lastsy - sy)
-				// fmt.Printf("Point (%.2f, %.2f) : sx=%d, sy=%d\n", x, y, sx, sy)
-				if sx > leftm && d > 2 {
-					// Oversampling
-					f := 1
-					if sy < lastsy {
-						f = -1
+					if lastvalid {
+						tb.Line(lastsx,lastsy, sx,sy, symbol)
+					} else {
+						lastvalid = true
 					}
-					osx := lastsx
-					// fmt.Printf("Oversampling: d=%d, f=%d, from %d to %d\n", d, f, lastsy+f, sy-f)
-					var done bool
-					for osy := clip(lastsy+f, 0, h); osy != clip(sy-f, 0, h); osy += f {
-						// fmt.Printf("  osx=%d, osy=%d\n", osx, osy)
-						if sc.YRange.Screen2Data(osy) >= sc.YRange.Min && sc.YRange.Screen2Data(osy) <= sc.YRange.Max {
-							tb.Put(osx, osy, symbol)
-						}
-						if !done && osy > (sy+lastsy)/2 {
-							osx++
-							done = true
-						}
-					}
+					lastsx, lastsy = sx, sy
+				} else {
+					lastvalid = false
 				}
-
-				lastsx, lastsy = sx, sy
 			}
 		}
 	}

@@ -32,7 +32,7 @@ type CategoryBarChart struct {
 func (c *CategoryBarChart) AddData(name string, data map[string]float64) {
 	s := Symbol[len(c.Data)%len(Symbol)]
 	c.Data = append(c.Data, CategoryBarChartData{name, DataStyle{Symbol: s}, data})
-	c.Key.Entries = append(c.Key.Entries, KeyEntry{s, name})
+	c.Key.Entries = append(c.Key.Entries, KeyEntry{Symbol: s, Text: name})
 
 	if len(c.Data) == 1 { // first data set
 		for _, v := range data {

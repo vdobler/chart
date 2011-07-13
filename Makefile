@@ -3,6 +3,7 @@ include $(GOROOT)/src/Make.inc
 TARG=github.com/vdobler/chart
 GOFILES=\
 	chart.go\
+	data.go\
 	util.go\
 	stat.go\
 	time.go\
