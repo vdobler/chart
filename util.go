@@ -71,8 +71,3 @@ func clip(x, l, u int) int {
 	}
 	return x
 }
-
-func almostEqual(a, b float64) bool {
-	rd := math.Fabs((a - b) / (a + b))
-	return rd < 1e-5
-}

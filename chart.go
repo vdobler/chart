@@ -128,11 +128,16 @@ func FmtFloat(f float64) string {
 	return "xxx"
 }
 
+func almostEqual(a, b, d float64) bool {
+	return math.Fabs(a-b) < d
+}
+
 
 // ApplyRangeMode returns val constrained by mode. val is considered the upper end of an range/axis
 // if upper is true. To allow proper rounding to tic (depending on desired RangeMode)
-// the ticDelta has to be provided.
-func ApplyRangeMode(mode RangeMode, val, ticDelta float64, upper bool) float64 {
+// the ticDelta has to be provided. Logaritmic axis are selected by log = true and ticDelta
+// is ignored: Tics are of the form 1*10^n.
+func ApplyRangeMode(mode RangeMode, val, ticDelta float64, upper, log bool) float64 {
 	if mode.Fixed {
 		return mode.Value
 	}
@@ -143,27 +148,60 @@ func ApplyRangeMode(mode RangeMode, val, ticDelta float64, upper bool) float64 {
 			val = mode.Upper
 		}
 	}
+
 	switch mode.Expand {
 	case ExpandToTic, ExpandNextTic:
 		var v float64
 		if upper {
-			v = math.Ceil(val/ticDelta) * ticDelta
-		} else {
-			v = math.Floor(val/ticDelta) * ticDelta
-		}
-		if mode.Expand == ExpandNextTic && almostEqual(v, val) {
-			if upper {
-				v += ticDelta
+			if log {
+				v = math.Pow10(int(math.Ceil(math.Log10(val))))
 			} else {
-				v -= ticDelta
+				v = math.Ceil(val/ticDelta) * ticDelta
+			}
+		} else {
+			if log {
+				v = math.Pow10(int(math.Floor(math.Log10(val))))
+			} else {
+				v = math.Floor(val/ticDelta) * ticDelta
+			}
+		}
+		if mode.Expand == ExpandNextTic {
+			if upper {
+				if log {
+					if val/v < 2 { // TODO(vodo) use ExpandABitFraction
+						v *= ticDelta
+					}
+				} else {
+					if almostEqual(v, val, ticDelta/15) {
+						v += ticDelta
+					}
+				}
+			} else {
+				if log {
+					if v/val > 7 { // TODO(vodo) use ExpandABitFraction
+						v /= ticDelta
+					}
+				} else {
+					if almostEqual(v, val, ticDelta/15) {
+						v -= ticDelta
+					}
+				}
 			}
 		}
 		val = v
 	case ExpandABit:
 		if upper {
-			val += ticDelta / 2
+			if log {
+				val *= math.Pow(10, ExpandABitFraction)
+			} else {
+				val += ticDelta * ExpandABitFraction
+			}
 		} else {
-			val -= ticDelta / 2
+			if log {
+				val /= math.Pow(10, ExpandABitFraction)
+			} else {
+				val -= ticDelta * ExpandABitFraction
+			}
 		}
 	}
 
@@ -239,6 +277,133 @@ func f2d(x float64) string {
 }
 
 
+func (r *Range) tSetup(desiredNumberOfTics, maxNumberOfTics int, delta, mindelta float64) {
+	r.ShowLimits = true
+
+	// Set up time tic delta
+	td := MatchingTimeDelta(delta, 3)
+	mint := time.SecondsToLocalTime(int64(r.DataMin))
+	maxt := time.SecondsToLocalTime(int64(r.DataMax))
+
+	var ftic, ltic *time.Time
+	r.TMin, ftic = TApplyRangeMode(r.MinMode, mint, td, false)
+	r.TMax, ltic = TApplyRangeMode(r.MaxMode, maxt, td, true)
+	r.TicSetting.Delta, r.TicSetting.TDelta = float64(td.Seconds()), td
+	r.Min, r.Max = float64(r.TMin.Seconds()), float64(r.TMax.Seconds())
+
+	ftd := float64(td.Seconds())
+	actNumTics := int((r.Max - r.Min) / ftd)
+	if actNumTics > maxNumberOfTics {
+		// recalculate time tic delta
+		fmt.Printf("Switching to next (%d > %d) delta from %s", actNumTics, maxNumberOfTics, td)
+		td = NextTimeDelta(td)
+		ftd = float64(td.Seconds())
+		fmt.Printf("  -->  %s\n", td)
+		r.TMin, ftic = TApplyRangeMode(r.MinMode, mint, td, false)
+		r.TMax, ltic = TApplyRangeMode(r.MaxMode, maxt, td, true)
+		r.TicSetting.Delta, r.TicSetting.TDelta = float64(td.Seconds()), td
+		r.Min, r.Max = float64(r.TMin.Seconds()), float64(r.TMax.Seconds())
+		actNumTics = int((r.Max - r.Min) / ftd)
+	}
+
+	fmt.Printf("Range:\n  Data:  %s  to  %s\n  --->   %s  to  %s\n  Tic-Delta: %s\n  Tics:  %s  to  %s\n",
+		f2d(r.DataMin), f2d(r.DataMax), f2d(r.Min), f2d(r.Max), td,
+		ftic.Format("2006-01-02 15:04:05 (Mon)"), ltic.Format("2006-01-02 15:04:05 (Mon)"))
+
+	// Set up tics
+	r.Tics = make([]Tic, 0)
+	step := int64(td.Seconds())
+	align := 0
+	for i := 0; ftic.Seconds() <= ltic.Seconds(); i++ {
+		x := float64(ftic.Seconds())
+		label := td.Format(ftic)
+		var labelPos float64
+		if td.Period() {
+			labelPos = x + float64(step)/2
+		} else {
+			labelPos = x
+		}
+		t := Tic{Pos: x, LabelPos: labelPos, Label: label, Align: align}
+		r.Tics = append(r.Tics, t)
+		ftic = RoundDown(time.SecondsToLocalTime(ftic.Seconds()+step+step/5), td)
+		if i > maxNumberOfTics+3 {
+			break
+		}
+	}
+}
+
+func (r *Range) fDelta(delta, mindelta float64) float64 {
+	if r.Log {
+		return 10
+	}
+
+	// Set up nice tic delta of the form 1,2,5 * 10^n
+	de := math.Pow10(int(math.Floor(math.Log10(delta))))
+	f := delta / de
+	switch {
+	case f < 2:
+		f = 1
+	case f < 4:
+		f = 2
+	case f < 9:
+		f = 5
+	default:
+		f = 1
+		de *= 10
+	}
+	delta = f * de
+	if delta < mindelta {
+		// recalculate tic delta
+		switch f {
+		case 1, 5:
+			delta *= 2
+		case 2:
+			delta *= 2.5
+		default:
+			fmt.Printf("Oooops. Strange f: %g\n", f)
+		}
+	}
+	return delta
+}
+
+func (r *Range) fSetup(desiredNumberOfTics, maxNumberOfTics int, delta, mindelta float64) {
+	if r.TicSetting.Delta != 0 {
+		delta = r.TicSetting.Delta
+	} else {
+		delta = r.fDelta(delta, mindelta)
+	}
+
+	r.Min = ApplyRangeMode(r.MinMode, r.DataMin, delta, false, r.Log)
+	r.Max = ApplyRangeMode(r.MaxMode, r.DataMax, delta, true, r.Log)
+	r.TicSetting.Delta = delta
+	if r.Log {
+		x := math.Pow10(int(math.Ceil(math.Log10(r.Min))))
+		last := math.Pow10(int(math.Floor(math.Log10(r.Max))))
+		r.Tics = make([]Tic, 0, maxNumberOfTics)
+		for ; x <= last; x = x * delta {
+			t := Tic{Pos: x, LabelPos: x, Label: FmtFloat(x)}
+			r.Tics = append(r.Tics, t)
+			// fmt.Printf("%v\n", t)
+		}
+
+	} else {
+		first := delta * math.Ceil(r.Min/delta)
+		num := int(-first/delta + math.Floor(r.Max/delta) + 1.5)
+		fmt.Printf("Range: (%g,%g) --> (%g,%g), Tic-Delta: %g, %d tics from %g\n",
+			r.DataMin, r.DataMax, r.Min, r.Max, delta, num, first)
+
+		// Set up tics
+		r.Tics = make([]Tic, num)
+		for i, x := 0, first; i < num; i, x = i+1, x+delta {
+			r.Tics[i].Pos, r.Tics[i].LabelPos = x, x
+			r.Tics[i].Label = FmtFloat(x)
+		}
+
+		// TODO(vodo) r.ShowLimits = true
+	}
+}
+
+
 // SetUp sets up several fields of Range r according to RangeModes and TicSettings.
 // DataMin and DataMax of r must be present and should indicate lowest and highest
 // value present in the data set. The following field if r are filled:
@@ -255,6 +420,7 @@ func f2d(x float64) string {
 //
 // TODO(vodo) seperate screen stuff into own method.
 func (r *Range) Setup(desiredNumberOfTics, maxNumberOfTics, sWidth, sOffset int, revert bool) {
+	// Sanitize input
 	if desiredNumberOfTics <= 1 {
 		desiredNumberOfTics = 2
 	}
@@ -268,122 +434,32 @@ func (r *Range) Setup(desiredNumberOfTics, maxNumberOfTics, sWidth, sOffset int,
 	mindelta := (r.DataMax - r.DataMin) / float64(maxNumberOfTics-1)
 
 	if r.Time {
-		r.ShowLimits = true
-		td := MatchingTimeDelta(delta, 3)
-		mint := time.SecondsToLocalTime(int64(r.DataMin))
-		maxt := time.SecondsToLocalTime(int64(r.DataMax))
-
-		var ftic, ltic *time.Time
-		r.TMin, ftic = TApplyRangeMode(r.MinMode, mint, td, false)
-		r.TMax, ltic = TApplyRangeMode(r.MaxMode, maxt, td, true)
-		r.TicSetting.Delta, r.TicSetting.TDelta = float64(td.Seconds()), td
-		r.Min, r.Max = float64(r.TMin.Seconds()), float64(r.TMax.Seconds())
-
-		ftd := float64(td.Seconds())
-		actNumTics := int((r.Max - r.Min) / ftd)
-		if actNumTics > maxNumberOfTics {
-			fmt.Printf("Switching to next (%d > %d) delta from %s", actNumTics, maxNumberOfTics, td)
-			td = NextTimeDelta(td)
-			ftd = float64(td.Seconds())
-			fmt.Printf("  -->  %s\n", td)
-			r.TMin, ftic = TApplyRangeMode(r.MinMode, mint, td, false)
-			r.TMax, ltic = TApplyRangeMode(r.MaxMode, maxt, td, true)
-			r.TicSetting.Delta, r.TicSetting.TDelta = float64(td.Seconds()), td
-			r.Min, r.Max = float64(r.TMin.Seconds()), float64(r.TMax.Seconds())
-			actNumTics = int((r.Max - r.Min) / ftd)
-			if actNumTics > maxNumberOfTics { // TODO(vodo) this should never happen
-				fmt.Printf("Switching to over next (%d > %d) delta from %s", actNumTics, maxNumberOfTics, td)
-				td = NextTimeDelta(td)
-				fmt.Printf("  -->  %s\n", td)
-				r.TMin, ftic = TApplyRangeMode(r.MinMode, mint, td, false)
-				r.TMax, ltic = TApplyRangeMode(r.MaxMode, maxt, td, true)
-				r.TicSetting.Delta, r.TicSetting.TDelta = float64(td.Seconds()), td
-				r.Min, r.Max = float64(r.TMin.Seconds()), float64(r.TMax.Seconds())
-			}
-
-		}
-
-		fmt.Printf("Range:\n  Data:  %s  to  %s\n  --->   %s  to  %s\n  Tic-Delta: %s\n  Tics:  %s  to  %s\n",
-			f2d(r.DataMin), f2d(r.DataMax), f2d(r.Min), f2d(r.Max), td,
-			ftic.Format("2006-01-02 15:04:05 (Mon)"), ltic.Format("2006-01-02 15:04:05 (Mon)"))
-
-		r.Tics = make([]Tic, 0)
-		step := int64(td.Seconds())
-		align := 0
-		for i := 0; ftic.Seconds() <= ltic.Seconds(); i++ {
-			x := float64(ftic.Seconds())
-			label := td.Format(ftic)
-			var labelPos float64
-			if td.Period() {
-				labelPos = x + float64(step)/2
-			} else {
-				labelPos = x
-			}
-			t := Tic{Pos: x, LabelPos: labelPos, Label: label, Align: align}
-			r.Tics = append(r.Tics, t)
-			// fmt.Printf("    Made Tic %s  '%s' %d at %s \n", t.Label, ftic.Format("2006-01-02 15:04:05 (Mon)"), align, time.SecondsToLocalTime(int64(t.LabelPos)).Format("2006-01-02 15:04:05 (Mon)") )
-			ftic = RoundDown(time.SecondsToLocalTime(ftic.Seconds()+step+step/5), td)
-			if i > maxNumberOfTics+3 {
-				break
-			}
-		}
-
+		r.tSetup(desiredNumberOfTics, maxNumberOfTics, delta, mindelta)
 	} else { // simple, not a date range 
-		de := math.Pow10(int(math.Floor(math.Log10(delta))))
-		// fmt.Printf(":: %f, %f, %d \n", delta, de, int(de))
-		f := delta / de
-		switch {
-		case f < 2:
-			f = 1
-		case f < 4:
-			f = 2
-		case f < 9:
-			f = 5
-		default:
-			f = 1
-			de *= 10
-		}
-		delta = f * de
-		if delta < mindelta {
-			switch f {
-			case 1, 5:
-				delta *= 2
-			case 2:
-				delta *= 2.5
-			default:
-				fmt.Printf("Oooops. Strange f: %g\n", f)
-			}
-		}
+		r.fSetup(desiredNumberOfTics, maxNumberOfTics, delta, mindelta)
+	}
 
-		r.Min = ApplyRangeMode(r.MinMode, r.DataMin, delta, false)
-		r.Max = ApplyRangeMode(r.MaxMode, r.DataMax, delta, true)
-		r.TicSetting.Delta = delta
-		first := delta * math.Ceil(r.Min/delta)
-		num := int(-first/delta + math.Floor(r.Max/delta) + 1.5)
-		fmt.Printf("Range: (%g,%g) --> (%g,%g), Tic-Delta: %g, %d tics from %g\n", r.DataMin, r.DataMax, r.Min, r.Max, delta, num, first)
-
-		r.Tics = make([]Tic, num)
-		for i, x := 0, first; i < num; i, x = i+1, x+delta {
-			r.Tics[i].Pos, r.Tics[i].LabelPos = x, x
-			r.Tics[i].Label = FmtFloat(x)
-		}
-
-		// TODO(vodo) r.ShowLimits = true
+	if r.Log {
+		r.Norm = func(x float64) float64 { return math.Log10(x/r.Min) / math.Log10(r.Max/r.Min) }
+		r.InvNorm = func(f float64) float64 { return (r.Max-r.Min)*f + r.Min }
+	} else {
+		r.Norm = func(x float64) float64 { return (x - r.Min) / (r.Max - r.Min) }
+		r.InvNorm = func(f float64) float64 { return (r.Max-r.Min)*f + r.Min }
 	}
 
 	if !revert {
 		r.Data2Screen = func(x float64) int {
-			return int(math.Floor(float64(sWidth)*(x-r.Min)/(r.Max-r.Min))) + sOffset
+			return int(float64(sWidth)*r.Norm(x)) + sOffset
 		}
 		r.Screen2Data = func(x int) float64 {
-			return (r.Max-r.Min)*float64(x-sOffset)/float64(sWidth) + r.Min
+			return r.InvNorm(float64(x-sOffset) / float64(sWidth))
 		}
 	} else {
 		r.Data2Screen = func(x float64) int {
-			return sWidth - int(math.Floor(float64(sWidth)*(x-r.Min)/(r.Max-r.Min))) + sOffset
+			return sWidth - int(float64(sWidth)*r.Norm(x)) + sOffset
 		}
 		r.Screen2Data = func(x int) float64 {
-			return (r.Max-r.Min)*float64(-x+sOffset+sWidth)/float64(sWidth) + r.Min
+			return r.InvNorm(float64(-x+sOffset+sWidth) / float64(sWidth))
 		}
 
 	}
@@ -582,9 +658,6 @@ func (key *Key) LayoutKeyTxt() (kb *TextBuf) {
 }
 
 
-
-
-
 func LayoutTxt(w, h int, title, xlabel, ylabel string, hidextics, hideytics bool, key *Key) (width, leftm, height, topm int, kb *TextBuf, numxtics, numytics int) {
 	if key.Pos == "" {
 		key.Pos = "itr"
@@ -597,7 +670,7 @@ func LayoutTxt(w, h int, title, xlabel, ylabel string, hidextics, hideytics bool
 		w = 10
 	}
 
-	width, leftm, height, topm = w-4, 2, h-1, 0
+	width, leftm, height, topm = w-6, 2, h-1, 0
 	xlabsep, ylabsep := 1, 3
 	if title != "" {
 		topm++

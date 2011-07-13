@@ -78,14 +78,14 @@ func (c *BoxChart) AddSet(x float64, data []float64, outlier bool) {
 func (c *BoxChart) NextDataSet(name string) {
 	s := Symbol[len(c.Data)%len(Symbol)]
 	c.Data = append(c.Data, BoxChartData{name, DataStyle{}, nil})
-	c.Key.Entries = append(c.Key.Entries, KeyEntry{Symbol:s, Text:name})
+	c.Key.Entries = append(c.Key.Entries, KeyEntry{Symbol: s, Text: name})
 }
 
 // Add data boxes to chart.
 func (c *BoxChart) AddData(name string, data []Box) {
 	s := Symbol[len(c.Data)%len(Symbol)]
 	c.Data = append(c.Data, BoxChartData{name, DataStyle{}, data})
-	c.Key.Entries = append(c.Key.Entries, KeyEntry{Symbol: s, Text:name})
+	c.Key.Entries = append(c.Key.Entries, KeyEntry{Symbol: s, Text: name})
 	// TODO(vodo) min, max
 }
 

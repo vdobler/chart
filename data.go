@@ -78,7 +78,7 @@ func (p EPoint) boundingBox() (xl, yl, xh, yh float64) { // bounding box
 // CategoryValue is an interface for any type of data which is category-real-pair.
 type CategoryValue interface {
 	Category() string
-	Value()    float64
+	Value() float64
 }
 
 // CatValue is the standard implementation for CategoryValue
@@ -86,9 +86,9 @@ type CatValue struct {
 	Cat string
 	Val float64
 }
-func (c CatValue) Category() string { return c.Cat }
-func (c CatValue) Value() float64 { return c.Val }
 
+func (c CatValue) Category() string { return c.Cat }
+func (c CatValue) Value() float64   { return c.Val }
 
 
 // Box represents a box in an boxplot.
