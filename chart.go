@@ -278,10 +278,15 @@ func f2d(x float64) string {
 
 
 func (r *Range) tSetup(desiredNumberOfTics, maxNumberOfTics int, delta, mindelta float64) {
+	var td TimeDelta
+	if r.TicSetting.TDelta != nil {
+		td = r.TicSetting.TDelta
+	} else {
+		td = MatchingTimeDelta(delta, 3)
+	}
 	r.ShowLimits = true
 
 	// Set up time tic delta
-	td := MatchingTimeDelta(delta, 3)
 	mint := time.SecondsToLocalTime(int64(r.DataMin))
 	maxt := time.SecondsToLocalTime(int64(r.DataMax))
 
@@ -466,14 +471,67 @@ func (r *Range) Setup(desiredNumberOfTics, maxNumberOfTics, sWidth, sOffset int,
 
 }
 
+var Palette = []string{"#000000", // 0: black
+	"#dd0000", "#0000dd", "#00bb00", // 1: red, 2: green, 3: blue
+	"#bb00bb", "#00aaaa", "#aaaa00", // 4: purple, 5: turkis, 6: gold
+	"#ff8888", "#8888ff", "#66ff66", // 7: light red, 8: light blue, 9: light green
+	// Last are system colors
+	"#000000",                                                                   // len-9: black
+	"#202020", "#404040", "#606060", "#808080", "#a0a0a0", "#c0c0c0", "#e0e0e0", // len-2 to len-8: gray
+	"#ffffff", // len-1: white
+}
+
+// DataStyle contains all information about all graphic elements in a chart.
 type DataStyle struct {
-	Symbol   int     // -1: no symbol, 0: auto, 1... fixed
-	Line     int     // 0: no line, 1, solid, 2 dashed, 3 dotted, 4 dashdotted
-	Size     float64 // 0: auto (1)
-	Color    int     // index into palette
-	Font     string
-	FontSize int
-	Alpha    float64
+	Symbol      int     // -1: no symbol, 0: auto, 1... fixed
+	SymbolColor int     // 0: auto
+	Line        int     // -1: no line, 0: auto, 1, solid, 2 dashed, 3 dotted, 4 dashdotdot, 5 longdash 6 longdot
+	LineColor   int     // 0: auto = same as SymbolColor
+	Size        float64 // 0: auto (=1)
+	Font        string  // "": default
+	FontSize    int     // -2: tiny, -1: small, 0: normal, 1: large, 2: huge
+	Alpha       float64
+}
+
+// Next yields the next style: Next symbol, line type and colors.
+func (ds DataStyle) Next() DataStyle {
+	ds.Symbol = (ds.Symbol + 1) % len(Symbol)
+	ds.SymbolColor = (ds.SymbolColor + 1) % (len(Palette) - 9) // 9 system colors
+	ds.Line = (ds.Line+1)%6 + 1
+	if ds.LineColor != 0 {
+		ds.LineColor = (ds.LineColor + 1) % (len(Palette) - 9) // 9 system colors
+	}
+	return ds
+}
+
+// NextMerge yields the next data style and merges all "non-auto" setting s of.
+func (ds DataStyle) NextMerge(m DataStyle) DataStyle {
+	ds = ds.Next()
+	if m.Symbol != 0 {
+		ds.Symbol = m.Symbol
+	}
+	if m.SymbolColor != 0 {
+		ds.SymbolColor = m.SymbolColor
+	}
+	if m.Line != 0 {
+		ds.Line = m.Line
+	}
+	if m.LineColor != 0 {
+		ds.LineColor = m.LineColor
+	}
+	if m.Size != 0 {
+		ds.Size = m.Size
+	}
+	if m.Font != "" {
+		ds.Font = m.Font
+	}
+	if m.FontSize != 0 {
+		ds.FontSize = m.FontSize
+	}
+	if m.Alpha != 0 {
+		ds.Alpha = m.Alpha
+	}
+	return ds
 }
 
 
@@ -771,7 +829,7 @@ func LayoutTxt(w, h int, title, xlabel, ylabel string, hidextics, hideytics bool
 	}
 	// fmt.Printf("Requesting %d,%d tics.\n", ntics,height/3)
 
-	numytics = h / 4
+	numytics = h / 5
 
 	return
 }

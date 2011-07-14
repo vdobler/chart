@@ -3,6 +3,7 @@ package main
 import (
 	"chart"
 	"fmt"
+	"os"
 	// "rand"
 	// "time"
 )
@@ -57,6 +58,9 @@ func main() {
 	pl.Data[last].Samples[6].OffX = 0.5
 	pl.Data[last].Samples[6].DeltaY = 16
 	pl.Data[last].Samples[6].OffY = 2
+	pl.AddData("Volker", []chart.EPoint{chart.EPoint{-4, 40, 0, 0, 0, 0}, chart.EPoint{-3, 45, 0, 0, 0, 0},
+		chart.EPoint{-2, 35, 0, 0, 0, 0}},
+		chart.DataStyle{Symbol: 4, SymbolColor: 2})
 	pl.AddFunc("Theory", func(x float64) float64 {
 		if x > 5.25 && x < 5.75 {
 			return 75
@@ -68,6 +72,11 @@ func main() {
 	})
 	pl.AddLinear("Line", -4, 0, 10, 60)
 	fmt.Printf("%s\n", pl.PlotTxt(100, 28))
+
+	sf, _ := os.Create("scatter.svg")
+	pl.PlotSvg(600, 400, sf)
+	sf.Close()
+
 	fmt.Printf("%s\n", pl.PlotTxt(100, 28))
 
 	/*
@@ -239,4 +248,7 @@ func main() {
 	lc.AddDataPair("Measurement", lx, ly)
 	fmt.Printf("%s\n", lc.PlotTxt(100, 25))
 
+	svgf, _ := os.Create("first.svg")
+	lc.PlotSvg(600, 400, svgf)
+	svgf.Close()
 }

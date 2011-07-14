@@ -23,7 +23,7 @@ func (sc *StripChart) AddData(name string, data []float64) {
 		pd[i].Y = float64(n)
 		pd[i].DeltaX, pd[i].DeltaY = nan, nan
 	}
-	sc.ScatterChart.AddData(name, pd)
+	sc.ScatterChart.AddData(name, pd, DataStyle{})
 }
 
 func (sc *StripChart) AddDataGeneric(name string, data []Value) {
@@ -35,7 +35,7 @@ func (sc *StripChart) AddDataGeneric(name string, data []Value) {
 		pd[i].Y = float64(n)
 		pd[i].DeltaX, pd[i].DeltaY = nan, nan
 	}
-	sc.ScatterChart.AddData(name, pd)
+	sc.ScatterChart.AddData(name, pd, DataStyle{})
 }
 
 
