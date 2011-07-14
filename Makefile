@@ -5,6 +5,7 @@ GOFILES=\
 	chart.go\
 	data.go\
 	util.go\
+	style.go\
 	stat.go\
 	time.go\
 	text.go\

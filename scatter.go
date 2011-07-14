@@ -4,7 +4,7 @@ import (
 	"math"
 	"github.com/ajstarks/svgo"
 	"io"
-	// "fmt"
+	"fmt"
 	//	"os"
 	//	"strings"
 )
@@ -22,33 +22,28 @@ type ScatterChart struct {
 	XRange, YRange Range
 	Title          string
 	Xlabel, Ylabel string
-	Style          DataStyle
 	Key            Key
 	Data           []ScatterChartData
 }
 
 // Add any function f to this chart.
-func (sc *ScatterChart) AddFunc(name string, f func(float64) float64) {
-	s := Symbol[len(sc.Data)%len(Symbol)]
-	sc.Data = append(sc.Data, ScatterChartData{name, DataStyle{}, nil, f})
-	ke := KeyEntry{Symbol: s, Text: name}
+func (sc *ScatterChart) AddFunc(name string, f func(float64) float64, style DataStyle) {
+	if style.empty() {
+		style = AutoStyle()
+	}
+	sc.Data = append(sc.Data, ScatterChartData{name, style, nil, f})
+	ke := KeyEntry{Symbol: style.Symbol, Text: name}
 	sc.Key.Entries = append(sc.Key.Entries, ke)
-}
-
-
-// Add straight line through points (ax,ay) and (bx,by) tho chart.
-func (sc *ScatterChart) AddLinear(name string, ax, ay, bx, by float64) {
-	sc.AddFunc(name, func(x float64) float64 {
-		return ay + (x-ax)*(by-ay)/(bx-ax)
-	})
 }
 
 
 // Add points in data to chart.
 func (sc *ScatterChart) AddData(name string, data []EPoint, style DataStyle) {
-	sc.Style = sc.Style.NextMerge(style)
-	sc.Data = append(sc.Data, ScatterChartData{name, sc.Style, data, nil})
-	ke := KeyEntry{Symbol: Symbol[sc.Style.Symbol], Text: name}
+	if style.empty() {
+		style = AutoStyle()
+	}
+	sc.Data = append(sc.Data, ScatterChartData{name, style, data, nil})
+	ke := KeyEntry{Symbol: style.Symbol, Text: name}
 	sc.Key.Entries = append(sc.Key.Entries, ke)
 	if sc.XRange.DataMin == 0 && sc.XRange.DataMax == 0 && sc.YRange.DataMin == 0 && sc.YRange.DataMax == 0 {
 		sc.XRange.DataMin = data[0].X
@@ -76,7 +71,7 @@ func (sc *ScatterChart) AddData(name string, data []EPoint, style DataStyle) {
 }
 
 // Add points in data to chart.
-func (sc *ScatterChart) AddDataGeneric(name string, data []XYErrValue) {
+func (sc *ScatterChart) AddDataGeneric(name string, data []XYErrValue, style DataStyle) {
 	edata := make([]EPoint, len(data))
 	for i, d := range data {
 		x, y := d.XVal(), d.YVal()
@@ -86,19 +81,19 @@ func (sc *ScatterChart) AddDataGeneric(name string, data []XYErrValue) {
 		xo, yo := xh-dx/2-x, yh-dy/2-y
 		edata[i] = EPoint{X: x, Y: y, DeltaX: dx, DeltaY: dy, OffX: xo, OffY: yo}
 	}
-	sc.AddData(name, edata, DataStyle{})
+	sc.AddData(name, edata, style)
 }
 
 
 // Make points from x and y and add to chart.
-func (sc *ScatterChart) AddDataPair(name string, x, y []float64) {
+func (sc *ScatterChart) AddDataPair(name string, x, y []float64, style DataStyle) {
 	n := min(len(x), len(y))
 	data := make([]EPoint, n)
 	nan := math.NaN()
 	for i := 0; i < n; i++ {
 		data[i] = EPoint{X: x[i], Y: y[i], DeltaX: nan, DeltaY: nan}
 	}
-	sc.AddData(name, data, DataStyle{})
+	sc.AddData(name, data, style)
 }
 
 
@@ -120,7 +115,7 @@ func (sc *ScatterChart) PlotTxt(w, h int) string {
 	// Plot Data
 	nan := math.NaN()
 	for _, data := range sc.Data {
-		symbol := Symbol[data.Style.Symbol]
+		symbol := data.Style.Symbol
 		if data.Samples != nil {
 			// Samples
 			for _, d := range data.Samples {
@@ -179,6 +174,19 @@ func (sc *ScatterChart) PlotSvg(w, h int, writer io.Writer) *svg.SVG {
 	chart := svg.New(writer)
 	chart.Start(w, h)
 	chart.Title("SVG: " + sc.Title)
+	var fontsize int
+	switch {
+	case w*h < 100*80: fontsize = 8
+	case w*h < 200*120: fontsize = 9
+	case w*h < 300*200: fontsize = 10
+	case w*h < 400*300: fontsize = 11
+	case w*h < 600*480: fontsize = 12
+	case w*h < 800*600: fontsize = 13
+	case w*h < 1024*800: fontsize = 14
+	case w*h < 1400*1024: fontsize = 16
+	default: fontsize = 18
+	}
+	chart.Gstyle(fmt.Sprintf("font-family: %s; font-size: %d", "Verdana", fontsize))
 	chart.Rect(0, 0, w, h, "fill:white")
 
 	width, leftm, height, topm, kb, numxtics, numytics := LayoutTxt(w, h, sc.Title, sc.Xlabel, sc.Ylabel, sc.XRange.TicSetting.Hide, sc.YRange.TicSetting.Hide, &sc.Key)
@@ -201,10 +209,9 @@ func (sc *ScatterChart) PlotSvg(w, h int, writer io.Writer) *svg.SVG {
 	// Plot Data
 	nan := math.NaN()
 	for _, data := range sc.Data {
+		style := data.Style
 		if data.Samples != nil {
 			// Samples
-			symbol := Symbol[data.Style.Symbol]
-			color := Palette[data.Style.SymbolColor]
 			for _, d := range data.Samples {
 				x := sc.XRange.Data2Screen(d.X)
 				y := sc.YRange.Data2Screen(d.Y)
@@ -221,20 +228,28 @@ func (sc *ScatterChart) PlotSvg(w, h int, writer io.Writer) *svg.SVG {
 					ye := sc.YRange.Data2Screen(yh)
 					chart.Line(x, ya, x, ye, "stroke:gray; stroke-width:1")
 				}
-				SvgSymbol(chart, x, y, symbol, color)
+				SvgSymbol(chart, x, y, style)
 			}
 		} else if data.Func != nil {
 			// Functions. TODO(vodo) proper clipping
 			// symbol := Symbol[s%len(Symbol)]
 			var lastsy, lastsx int
 			var lastvalid bool
+			lineCol := style.LineColor
+			if lineCol == "" { lineCol = style.SymbolColor }
+			lineWidth := 2*style.Size
+			if lineWidth == 0 {
+				lineWidth = 2
+			}
+			st := fmt.Sprintf("stroke:%s; stroke-width:%d", lineCol, int(lineWidth+0.5))
+			chart.Gstyle(st)
 			for sx := leftm; sx < leftm+width; sx++ {
 				x := sc.XRange.Screen2Data(sx)
 				y := data.Func(x)
 				sy := sc.YRange.Data2Screen(y)
 				if y >= sc.YRange.Min && y <= sc.YRange.Max {
 					if lastvalid {
-						chart.Line(lastsx, lastsy, sx, sy, "stroke:red; stroke-width:1") // TODO use style
+						chart.Line(lastsx, lastsy, sx, sy)
 					} else {
 						lastvalid = true
 					}
@@ -243,32 +258,71 @@ func (sc *ScatterChart) PlotSvg(w, h int, writer io.Writer) *svg.SVG {
 					lastvalid = false
 				}
 			}
+			chart.Gend()
 		}
 	}
 
 	if kb != nil {
 		//	tb.Paste(sc.Key.X, sc.Key.Y, kb)
 	}
-
+	
+	chart.Gend()
 	chart.End()
 	return chart
 }
 
 
-func SvgSymbol(svg *svg.SVG, x, y, s int, col string) {
+func SvgSymbol(svg *svg.SVG, x, y int, style DataStyle) {
+	s := style.Symbol
+	col := style.SymbolColor
+	f := style.Size
+	if f==0 { f = 1 }
+	const n = 5 // default size
+	a := int( n*f + 0.5 )   // standard
+	b := int( n/2*f + 0.5 ) // smaller
+	c := int( 1.155*n*f + 0.5 ) // triangel long sist
+ 	d := int( 0.577*n*f + 0.5 ) // triangle short dist
+	e := int( 0.866*n*f + 0.5 )   // diagonal
+
 	svg.Gstyle("stroke:" + col + "; stroke-width: 1")
 	switch s {
 	case '*':
-		svg.Line(x-5, y-5, x+5, y+5)
-		svg.Line(x-5, y+5, x+5, y-5)
+		svg.Line(x-e, y-e, x+e, y+e)
+		svg.Line(x-e, y+e, x+e, y-e)
 		fallthrough
 	case '+':
-		svg.Line(x-5, y, x+5, y)
-		svg.Line(x, y-5, x, y+5)
+		svg.Line(x-a, y, x+a, y)
+		svg.Line(x, y-a, x, y+a)
+	case 'X':
+		svg.Line(x-e, y-e, x+e, y+e)
+		svg.Line(x-e, y+e, x+e, y-e)
 	case 'o':
-		svg.Circle(x, y, 5)
+		svg.Circle(x, y, a, "fill:none")
+	case '0':
+		svg.Circle(x, y, a, "fill:none")
+		svg.Circle(x, y, b, "fill:none")
+	case '.':
+		svg.Circle(x, y, b, "fill:none")
+	case '@':
+		svg.Circle(x, y, a, "fill:"+col)
+	case '=':
+		svg.Rect(x-e, y-e, 2*e, 2*e, "fill:none")
+	case '#':
+		svg.Rect(x-e, y-e, 2*e, 2*e, "fill:"+col)
+	case 'A':
+		svg.Polygon([]int{x-a,x+a,x}, []int{y+d,y+d,y-c}, "fill:"+col)
+	case '%':
+		svg.Polygon([]int{x-a,x+a,x}, []int{y+d,y+d,y-c}, "fill:none")
+	case 'W':
+		svg.Polygon([]int{x-a,x+a,x}, []int{y-c,y-c,y+d}, "fill:"+col)
+	case 'V':
+		svg.Polygon([]int{x-a,x+a,x}, []int{y-c,y-c,y+d}, "fill:none")
+	case 'Z':
+		svg.Polygon([]int{x-e,x,x+e,x}, []int{y,y+e,y,y-e}, "fill:"+col)
+	case '&':
+		svg.Polygon([]int{x-e,x,x+e,x}, []int{y,y+e,y,y-e}, "fill:none")
 	default:
-		svg.Rect(x-5, y-5, 10, 10)
+		svg.Text(x,y, "?", "text-anchor:middle; alignment-baseline:middle")
 	}
 	svg.Gend()
 }
