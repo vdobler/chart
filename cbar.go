@@ -72,7 +72,7 @@ func (c *CategoryBarChart) PlotTxt(w, h int) string {
 	xrange.MinMode = RangeMode{Fixed: true, Value: 0.5}
 	xrange.MaxMode = RangeMode{Fixed: true, Value: float64(n) + 0.5}
 
-	width, leftm, height, topm, kb, _, numytics := LayoutTxt(w, h, c.Title, c.Xlabel, c.Ylabel, xrange.TicSetting.Hide, c.YRange.TicSetting.Hide, &c.Key)
+	width, leftm, height, topm, kb, _, numytics := LayoutTxt(w, h, c.Title, c.Xlabel, c.Ylabel, xrange.TicSetting.Hide, c.YRange.TicSetting.Hide, &c.Key, 1, 1)
 
 	// Outside bound ranges for histograms are nicer
 	leftm, width = leftm+2, width-2

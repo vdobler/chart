@@ -91,7 +91,7 @@ func (c *BoxChart) AddData(name string, data []Box) {
 
 
 func (c *BoxChart) PlotTxt(w, h int) string {
-	width, leftm, height, topm, kb, numxtics, numytics := LayoutTxt(w, h, c.Title, c.Xlabel, c.Ylabel, c.XRange.TicSetting.Hide, c.YRange.TicSetting.Hide, &c.Key)
+	width, leftm, height, topm, kb, numxtics, numytics := LayoutTxt(w, h, c.Title, c.Xlabel, c.Ylabel, c.XRange.TicSetting.Hide, c.YRange.TicSetting.Hide, &c.Key, 1, 1)
 
 	c.XRange.Setup(numxtics, numxtics+2, width, leftm, false)
 	c.YRange.Setup(numytics, numytics+1, height, topm, true)

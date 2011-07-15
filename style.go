@@ -18,9 +18,11 @@ var Symbol = []int{'o', // empty circle
 }
 
 // SymbolIndex returns the index of the symbol s in Symbol or -1 if not found.
-func SymbolIndex(s int) (idx int){
+func SymbolIndex(s int) (idx int) {
 	for idx = 0; idx < len(Symbol); idx++ {
-		if Symbol[idx] == s { return idx }
+		if Symbol[idx] == s {
+			return idx
+		}
 	}
 	return -1
 }
@@ -28,10 +30,10 @@ func SymbolIndex(s int) (idx int){
 // NextSymbol returns the next symbol of s: Either in the global list Symbol 
 // or (if not found there) the next character.
 func NextSymbol(s int) int {
-	if idx:= SymbolIndex(s); idx != -1 {
-		return Symbol[(idx+1) % len(Symbol)]
+	if idx := SymbolIndex(s); idx != -1 {
+		return Symbol[(idx+1)%len(Symbol)]
 	}
-	return s+1
+	return s + 1
 }
 
 var CharacterWidth = map[int]float64{'a': 16.8, 'b': 17.0, 'c': 15.2, 'd': 16.8, 'e': 16.8, 'f': 8.5, 'g': 17.0,
@@ -47,17 +49,16 @@ var CharacterWidth = map[int]float64{'a': 16.8, 'b': 17.0, 'c': 15.2, 'd': 16.8,
 }
 
 
-
-var Palette = map[string]string{"title": "#000000", "label": "#000000", "axis": "#000000",
- "ticlabel": "#000000", "grid": "#c0c0c0", "keyborder": "#000000", "errorbar": "*0.3",
+var Palette = map[string]string{"title": "#aa9933", "label": "#000000", "axis": "#000000",
+	"ticlabel": "#000000", "grid": "#c0c0c0", "keyborder": "#000000", "errorbar": "*0.3",
 }
 
 // DataStyle contains all information about all graphic elements in a chart.
 type DataStyle struct {
 	Symbol      int     // 0: no symbol; any codepoint: this symbol
-	SymbolColor string     // 
-	LineStyle    int     // 0: solid, 1 dashed, 2 dotted, 3 dashdotdot, 4 longdash  5 longdot
-	LineColor   string     // 0: auto = same as SymbolColor
+	SymbolColor string  // 
+	LineStyle   int     // 0: solid, 1 dashed, 2 dotted, 3 dashdotdot, 4 longdash  5 longdot
+	LineColor   string  // 0: auto = same as SymbolColor
 	Fill        float64 // 0: none, 1: same as line, 0.x: lighter fill
 	Size        float64 // 0: auto (=1)
 	Font        string  // "": default
@@ -66,26 +67,26 @@ type DataStyle struct {
 }
 
 func (d *DataStyle) empty() bool {
-	return d.Symbol==0 && d.SymbolColor=="" && d.LineStyle==0 && d.LineColor=="" && d.Fill==0 && d.Size==0
+	return d.Symbol == 0 && d.SymbolColor == "" && d.LineStyle == 0 && d.LineColor == "" && d.Fill == 0 && d.Size == 0
 }
 
 
 // Style is a list of suitable default styles.
 var Style = []DataStyle{
 	DataStyle{Symbol: 'o', SymbolColor: "#cc0000", LineStyle: 0, LineColor: "#cc0000",
-	Fill: 0, Size: 1, Font: "Verdana", FontSize: 0, Alpha: 0},
+		Fill: 0, Size: 1, Font: "Verdana", FontSize: 0, Alpha: 0},
 	DataStyle{Symbol: '=', SymbolColor: "#00bb00", LineStyle: 1, LineColor: "#00bb00",
-	Fill: 0, Size: 1, Font: "Verdana", FontSize: 0, Alpha: 0},
+		Fill: 0, Size: 1, Font: "Verdana", FontSize: 0, Alpha: 0},
 	DataStyle{Symbol: '%', SymbolColor: "#0000dd", LineStyle: 2, LineColor: "#0000dd",
-	Fill: 0, Size: 1, Font: "Verdana", FontSize: 0, Alpha: 0},
+		Fill: 0, Size: 1, Font: "Verdana", FontSize: 0, Alpha: 0},
 	DataStyle{Symbol: '&', SymbolColor: "#996600", LineStyle: 3, LineColor: "#996600",
-	Fill: 0, Size: 1, Font: "Verdana", FontSize: 0, Alpha: 0},
+		Fill: 0, Size: 1, Font: "Verdana", FontSize: 0, Alpha: 0},
 	DataStyle{Symbol: '+', SymbolColor: "#bb00bb", LineStyle: 4, LineColor: "#bb00bb",
-	Fill: 0, Size: 1, Font: "Verdana", FontSize: 0, Alpha: 0},
+		Fill: 0, Size: 1, Font: "Verdana", FontSize: 0, Alpha: 0},
 	DataStyle{Symbol: 'X', SymbolColor: "#00aaaa", LineStyle: 5, LineColor: "#00aaaa",
-	Fill: 0, Size: 1, Font: "Verdana", FontSize: 0, Alpha: 0},
+		Fill: 0, Size: 1, Font: "Verdana", FontSize: 0, Alpha: 0},
 	DataStyle{Symbol: '*', SymbolColor: "#aaaa00", LineStyle: 6, LineColor: "#aaaa00",
-	Fill: 0, Size: 1, Font: "Verdana", FontSize: 0, Alpha: 0},
+		Fill: 0, Size: 1, Font: "Verdana", FontSize: 0, Alpha: 0},
 }
 
 
@@ -107,5 +108,5 @@ func AutoStyle() (style DataStyle) {
 	style.FontSize = Style[autostylecnt].FontSize
 	style.Alpha = Style[autostylecnt].Alpha
 	autostylecnt++
-	return 
+	return
 }

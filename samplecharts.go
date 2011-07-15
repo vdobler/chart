@@ -49,7 +49,8 @@ func main() {
 
 	pl := chart.ScatterChart{Title: "Scatter + Lines", Xlabel: "X-Value", Ylabel: "Y-Value"}
 	pl.Key.Pos = "itl"
-	pl.XRange.TicSetting.Delta = 5
+	// pl.XRange.TicSetting.Delta = 5
+	pl.XRange.TicSetting.Grid = 1
 	x := []float64{-4, -3.3, -1.8, -1, 0.2, 0.8, 2, 3.1, 4, 5.3, 6, 7, 8, 9}
 	y := []float64{22, 18, -3, 0, 0.5, 2, 45, 12, 16.5, 24, 30, 55, 60, 70}
 	pl.AddDataPair("Measurement", x, y, chart.AutoStyle())
@@ -69,7 +70,7 @@ func main() {
 			return 500
 		}
 		return x * x
-	}, chart.DataStyle{})
+	},chart.DataStyle{})
 	fmt.Printf("%s\n", pl.PlotTxt(100, 28))
 
 	sf, _ := os.Create("scatter.svg")

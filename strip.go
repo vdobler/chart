@@ -49,7 +49,7 @@ func (sc *StripChart) PlotTxt(w, h int) string {
 
 	if sc.Jitter {
 		// Set up ranging
-		_, _, height, topm, _, _, numytics := LayoutTxt(w, h, sc.Title, sc.Xlabel, sc.Ylabel, sc.XRange.TicSetting.Hide, sc.YRange.TicSetting.Hide, &sc.Key)
+		_, _, height, topm, _, _, numytics := LayoutTxt(w, h, sc.Title, sc.Xlabel, sc.Ylabel, sc.XRange.TicSetting.Hide, sc.YRange.TicSetting.Hide, &sc.Key, 1, 1)
 		sc.YRange.Setup(numytics, numytics+1, height, topm, true)
 
 		yj := math.Fabs(sc.YRange.Screen2Data(1) - sc.YRange.Screen2Data(2))

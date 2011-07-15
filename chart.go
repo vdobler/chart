@@ -46,6 +46,7 @@ type TicSetting struct {
 	Delta  float64   // Wanted step. 0 means auto 
 	TDelta TimeDelta // Same as Delta, used for Date/Time axis
 	Fmt    string    // special format string
+	Grid   int       // 0: none, 1: lines, 2: blocks
 
 }
 
@@ -653,7 +654,7 @@ func (key *Key) LayoutKeyTxt() (kb *TextBuf) {
 }
 
 
-func LayoutTxt(w, h int, title, xlabel, ylabel string, hidextics, hideytics bool, key *Key) (width, leftm, height, topm int, kb *TextBuf, numxtics, numytics int) {
+func LayoutTxt(w, h int, title, xlabel, ylabel string, hidextics, hideytics bool, key *Key, fw, fh int) (width, leftm, height, topm int, kb *TextBuf, numxtics, numytics int) {
 	if key.Pos == "" {
 		key.Pos = "itr"
 	}
@@ -665,30 +666,30 @@ func LayoutTxt(w, h int, title, xlabel, ylabel string, hidextics, hideytics bool
 		w = 10
 	}
 
-	width, leftm, height, topm = w-6, 2, h-1, 0
-	xlabsep, ylabsep := 1, 3
+	width, leftm, height, topm = w-6*fw, 2*fw, h-1*fh, 0
+	xlabsep, ylabsep := fh, 3*fw
 	if title != "" {
-		topm++
-		height--
+		topm += (5 * fh) / 2
+		height -= (5 * fh) / 2
 	}
 	if xlabel != "" {
-		height--
+		height -= (3 * fh) / 2
 	}
 	if !hidextics {
-		height--
-		xlabsep++
+		height -= (3 * fh) / 2
+		xlabsep += (3 * fh) / 2
 	}
 	if ylabel != "" {
-		leftm += 2
-		width -= 2
+		leftm += 2 * fh
+		width -= 2 * fh
 	}
 	if !hideytics {
-		leftm += 6
-		width -= 6
-		ylabsep += 6
+		leftm += 6 * fw
+		width -= 6 * fw
+		ylabsep += 6 * fw
 	}
 
-	if !key.Hide {
+	if !key.Hide { // TODO: buggy, not device independent
 		kb = key.LayoutKeyTxt()
 		if kb != nil {
 			kw, kh := kb.W, kb.H
@@ -751,22 +752,22 @@ func LayoutTxt(w, h int, title, xlabel, ylabel string, hidextics, hideytics bool
 	// fmt.Printf("width=%d, height=%d, leftm=%d, topm=%d\n", width, height, leftm, topm)
 
 	switch {
-	case width < 20:
+	case width/fw < 20:
 		numxtics = 2
-	case width < 30:
+	case width/fw < 30:
 		numxtics = 3
-	case width < 60:
+	case width/fw < 60:
 		numxtics = 4
-	case width < 80:
+	case width/fw < 80:
 		numxtics = 5
-	case width < 100:
+	case width/fw < 100:
 		numxtics = 7
 	default:
 		numxtics = 10
 	}
 	// fmt.Printf("Requesting %d,%d tics.\n", ntics,height/3)
 
-	numytics = h / 5
+	numytics = (h / fh) / 5
 
 	return
 }

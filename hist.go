@@ -66,7 +66,7 @@ func (c *HistChart) AddDataGeneric(name string, data []Value) {
 }
 
 func (hc *HistChart) PlotTxt(w, h int) string {
-	width, leftm, height, topm, kb, numxtics, numytics := LayoutTxt(w, h, hc.Title, hc.Xlabel, hc.Ylabel, hc.XRange.TicSetting.Hide, hc.YRange.TicSetting.Hide, &hc.Key)
+	width, leftm, height, topm, kb, numxtics, numytics := LayoutTxt(w, h, hc.Title, hc.Xlabel, hc.Ylabel, hc.XRange.TicSetting.Hide, hc.YRange.TicSetting.Hide, &hc.Key, 1, 1)
 
 	// Outside bound ranges for histograms are nicer
 	leftm, width = leftm+2, width-2

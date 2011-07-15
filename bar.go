@@ -110,7 +110,7 @@ func (c *BarChart) extremBarWidth() (smallest, widest float64) {
 
 
 func (c *BarChart) PlotTxt(w, h int) string {
-	width, leftm, height, topm, kb, numxtics, numytics := LayoutTxt(w, h, c.Title, c.Xlabel, c.Ylabel, c.XRange.TicSetting.Hide, c.YRange.TicSetting.Hide, &c.Key)
+	width, leftm, height, topm, kb, numxtics, numytics := LayoutTxt(w, h, c.Title, c.Xlabel, c.Ylabel, c.XRange.TicSetting.Hide, c.YRange.TicSetting.Hide, &c.Key, 1, 1)
 
 	// Outside bound ranges for histograms are nicer
 	leftm, width = leftm+2, width-2
