@@ -6,6 +6,7 @@ GOFILES=\
 	data.go\
 	util.go\
 	style.go\
+	graphics.go\
 	stat.go\
 	time.go\
 	text.go\

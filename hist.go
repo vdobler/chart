@@ -73,6 +73,8 @@ func (hc *HistChart) PlotTxt(w, h int) string {
 	topm, height = topm, height-1
 
 	hc.XRange.Setup(numxtics, numxtics+1, width, leftm, false)
+
+	// TODO(vodo) BinWidth might be input....
 	hc.BinWidth = hc.XRange.TicSetting.Delta
 	binCnt := int((hc.XRange.Max-hc.XRange.Min)/hc.BinWidth + 0.5)
 	hc.FirstBin = hc.XRange.Min + hc.BinWidth/2

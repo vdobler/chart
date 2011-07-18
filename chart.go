@@ -47,7 +47,7 @@ type TicSetting struct {
 	TDelta TimeDelta // Same as Delta, used for Date/Time axis
 	Fmt    string    // special format string
 	Grid   int       // 0: none, 1: lines, 2: blocks
-
+	Mirror int       // 0: mirror axis and tics, -1: don't mirror anything, 1: mirror axis only (no tics)
 }
 
 // Tic describs a single tic on an axis.
@@ -67,6 +67,7 @@ type Range struct {
 	ShowLimits       bool       // Display axis Min and Max on plot
 	ShowZero         bool       // Add line to show 0 of this axis
 	Tics             []Tic      // List of tics to display
+	Label            string     // Label of axis
 
 	Min, Max   float64    // Minium and Maximum of this axis/range.
 	TMin, TMax *time.Time // Same as Min/Max, but used for Date/Time axis

@@ -57,36 +57,47 @@ var Palette = map[string]string{"title": "#aa9933", "label": "#000000", "axis": 
 type DataStyle struct {
 	Symbol      int     // 0: no symbol; any codepoint: this symbol
 	SymbolColor string  // 
+	SymbolSize  float64 // 
 	LineStyle   int     // 0: solid, 1 dashed, 2 dotted, 3 dashdotdot, 4 longdash  5 longdot
 	LineColor   string  // 0: auto = same as SymbolColor
+	LineWidth   int     // 0: no line
 	Fill        float64 // 0: none, 1: same as line, 0.x: lighter fill
-	Size        float64 // 0: auto (=1)
 	Font        string  // "": default
 	FontSize    int     // -2: tiny, -1: small, 0: normal, 1: large, 2: huge
+	FontColor   string  // 
 	Alpha       float64
 }
 
+const (
+	SolidLine = iota
+	DashedLine
+	DottedLine
+	DashDotDotLine
+	LongDashLine
+	LongDotLine
+)
+
 func (d *DataStyle) empty() bool {
-	return d.Symbol == 0 && d.SymbolColor == "" && d.LineStyle == 0 && d.LineColor == "" && d.Fill == 0 && d.Size == 0
+	return d.Symbol == 0 && d.SymbolColor == "" && d.LineStyle == 0 && d.LineColor == "" && d.Fill == 0 && d.SymbolSize == 0
 }
 
 
 // Style is a list of suitable default styles.
 var Style = []DataStyle{
 	DataStyle{Symbol: 'o', SymbolColor: "#cc0000", LineStyle: 0, LineColor: "#cc0000",
-		Fill: 0, Size: 1, Font: "Verdana", FontSize: 0, Alpha: 0},
+		Fill: 0, SymbolSize: 1, Font: "Verdana", FontSize: 0, Alpha: 0},
 	DataStyle{Symbol: '=', SymbolColor: "#00bb00", LineStyle: 1, LineColor: "#00bb00",
-		Fill: 0, Size: 1, Font: "Verdana", FontSize: 0, Alpha: 0},
+		Fill: 0, SymbolSize: 1, Font: "Verdana", FontSize: 0, Alpha: 0},
 	DataStyle{Symbol: '%', SymbolColor: "#0000dd", LineStyle: 2, LineColor: "#0000dd",
-		Fill: 0, Size: 1, Font: "Verdana", FontSize: 0, Alpha: 0},
+		Fill: 0, SymbolSize: 1, Font: "Verdana", FontSize: 0, Alpha: 0},
 	DataStyle{Symbol: '&', SymbolColor: "#996600", LineStyle: 3, LineColor: "#996600",
-		Fill: 0, Size: 1, Font: "Verdana", FontSize: 0, Alpha: 0},
+		Fill: 0, SymbolSize: 1, Font: "Verdana", FontSize: 0, Alpha: 0},
 	DataStyle{Symbol: '+', SymbolColor: "#bb00bb", LineStyle: 4, LineColor: "#bb00bb",
-		Fill: 0, Size: 1, Font: "Verdana", FontSize: 0, Alpha: 0},
+		Fill: 0, SymbolSize: 1, Font: "Verdana", FontSize: 0, Alpha: 0},
 	DataStyle{Symbol: 'X', SymbolColor: "#00aaaa", LineStyle: 5, LineColor: "#00aaaa",
-		Fill: 0, Size: 1, Font: "Verdana", FontSize: 0, Alpha: 0},
+		Fill: 0, SymbolSize: 1, Font: "Verdana", FontSize: 0, Alpha: 0},
 	DataStyle{Symbol: '*', SymbolColor: "#aaaa00", LineStyle: 6, LineColor: "#aaaa00",
-		Fill: 0, Size: 1, Font: "Verdana", FontSize: 0, Alpha: 0},
+		Fill: 0, SymbolSize: 1, Font: "Verdana", FontSize: 0, Alpha: 0},
 }
 
 
@@ -103,7 +114,7 @@ func AutoStyle() (style DataStyle) {
 	style.LineColor = Style[ci].LineColor
 	style.LineStyle = Style[li].LineStyle
 	style.Fill = Style[autostylecnt].Fill
-	style.Size = Style[autostylecnt].Size
+	style.SymbolSize = Style[autostylecnt].Size
 	style.Font = Style[autostylecnt].Font
 	style.FontSize = Style[autostylecnt].FontSize
 	style.Alpha = Style[autostylecnt].Alpha
