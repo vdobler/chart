@@ -114,7 +114,7 @@ func AutoStyle() (style DataStyle) {
 	style.LineColor = Style[ci].LineColor
 	style.LineStyle = Style[li].LineStyle
 	style.Fill = Style[autostylecnt].Fill
-	style.SymbolSize = Style[autostylecnt].Size
+	style.SymbolSize = Style[autostylecnt].SymbolSize
 	style.Font = Style[autostylecnt].Font
 	style.FontSize = Style[autostylecnt].FontSize
 	style.Alpha = Style[autostylecnt].Alpha

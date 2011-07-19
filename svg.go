@@ -2,6 +2,7 @@ package chart
 
 import (
 	"fmt"
+	"github.com/ajstarks/svgo"
 )
 
 
@@ -13,8 +14,10 @@ type SvgGraphics struct {
 	fs int
 }
 
-func NewSvgGraphics(sp *svg.SVG, widht, height int, font string, fontsize int) *SvgGraphics {
-	s := SvgGraphics{svg: sp, w: width, h: height, font: font, fs, fontsize}
+func NewSvgGraphics(sp *svg.SVG, width, height int, font string, fontsize int) *SvgGraphics {
+	if font == "" { font ="Helvetica" }
+	if fontsize == 0 { fontsize = 12 }
+	s := SvgGraphics{svg: sp, w: width, h: height, font: font, fs: fontsize}
 	return &s
 }
 
@@ -29,7 +32,11 @@ func (sg *SvgGraphics) End() {
 	sg.svg.Gend()
 }
 	
-func (sg *SvgGraphics) Line(x0,y0, x1,y1, int, style DataStyle) {
+func (sg *SvgGraphics) FontMetrics() (int, int){
+	return int(0.8*float32(sg.fs)+.5), sg.fs
+}
+	
+func (sg *SvgGraphics) Line(x0,y0, x1,y1 int, style DataStyle) {
 	// TODO line style (e.g dashed)
 	s:=fmt.Sprintf("stroke:%s; stroke-width: %d", style.LineColor, style.LineWidth)
 	sg.svg.Line(x0,y1, x1,y1, s)
@@ -39,7 +46,7 @@ func (sg *SvgGraphics) Text(x, y int, t string, align string, rot int, style Dat
 	if len(align)==1 {
 		align = "c" + align
 	}
-	_, fh := sg.FontMetric()
+	_, fh := sg.FontMetrics()
 
 	x0, y0 := 0,0
 	// Hack because baseline alignments in svg often broken
@@ -48,25 +55,26 @@ func (sg *SvgGraphics) Text(x, y int, t string, align string, rot int, style Dat
 	case 't': y0 += fh
 	default: y0 += fh/2 // centered
 	}
-	s := fmt.Sprintf("transform=\"rotate(%d %d %d)\"; text-anchor:", x,y)
+	trans := fmt.Sprintf("transform=\"rotate(%d) translate(%d %d)\"", rot, x,y)
+	s := "text-anchor:"
 	switch align[1]{
 	case 'l': s += "begin"
 	case 'r': s += "end"
 	default: s += "middle"
 	}
 	if style.FontColor != "" {
-		s += "; stroke:" + style.Color
+		s += "; stroke:" + style.FontColor
 	}
 	
-	chart.Text(x0, y0, label, s)
+	sg.svg.Text(x0, y0, t, trans, s)
 }
 
 func (sg *SvgGraphics) Symbol(x, y, s int, style DataStyle) {
-	s := ""
+	st := ""
 	filled := "fill:solid"
 	empty := "fill:none"
 	if style.SymbolColor != "" {
-		s += "stroke:"+style.SymbolColor
+		st += "stroke:"+style.SymbolColor
 		filled = "fill:"+style.SymbolColor
 	}
 	f := style.SymbolSize
@@ -82,7 +90,7 @@ func (sg *SvgGraphics) Symbol(x, y, s int, style DataStyle) {
 	d := int(0.577*n*f + 0.5) // triangle short dist
 	e := int(0.866*n*f + 0.5) // diagonal
 
-	sg.svg.Gstyle(fmt.Sprintf("%s; stroke-width: %d", s, lw))
+	sg.svg.Gstyle(fmt.Sprintf("%s; stroke-width: %d", st, lw))
 	switch style.Symbol {
 	case '*':
 		sg.svg.Line(x-e, y-e, x+e, y+e)
@@ -129,8 +137,9 @@ func (sg *SvgGraphics) Symbol(x, y, s int, style DataStyle) {
 func (sg *SvgGraphics) Style(element string) DataStyle {
 	switch element {
 	case "axis": return DataStyle{LineColor: "#000000", LineWidth: 2, LineStyle: SolidLine}
-	case "zero": return DataStyle{LineColor: "#808080", LineWidth: 1, LineStyle: SolidLine}
+	case "zero": return DataStyle{LineColor: "#404040", LineWidth: 1, LineStyle: SolidLine}
 	case "tic": return DataStyle{LineColor: "#000000", LineWidth: 1, LineStyle: SolidLine}
+	case "grid": return DataStyle{LineColor: "#808080", LineWidth: 1, LineStyle: SolidLine}
 	}
 	return DataStyle{}
 }
@@ -139,7 +148,7 @@ func (sg *SvgGraphics) XAxis(xr Range, ys, yms int) {
 	GenericXAxis(sg, xr, ys, yms)
 }
 func (sg *SvgGraphics) YAxis(yr Range, xs, xms int) {
-	GenericYAxis(sg, xr, ys, yms)
+	GenericXAxis(sg, yr, xs, xms)
 }
 
 

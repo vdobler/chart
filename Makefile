@@ -1,5 +1,8 @@
 include $(GOROOT)/src/Make.inc
 
+DRIVERS=\
+	svg.go
+
 TARG=github.com/vdobler/chart
 GOFILES=\
 	chart.go\
@@ -16,7 +19,8 @@ GOFILES=\
 	hist.go\
 	bar.go\
 	cbar.go\
-	pie.go
+	pie.go\
+	$(DRIVERS)
 
 include $(GOROOT)/src/Make.pkg
 

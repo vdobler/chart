@@ -5,6 +5,7 @@ import (
 )
 
 
+// Graphics is the interface all chart drivers have to implement
 type Graphics interface {
 	AxisOrientation() (bool, bool) // yield axis orientation. true: normal
 	FontMetric() (int, int)        // character-width / height
@@ -16,81 +17,87 @@ type Graphics interface {
 	YAxis(r Range)
 	Title(text string)
 	Scatter(points []EPoint, style DataStyle) // Points, Lines and Line+Points
-	Boxes(boxes []Box, style DataStyle)       // Boxplots
-	Bars(bars []Bar, style DataStyle)         // any type of histogram
-	Ring(segments []Segment, style DataStyle) // 
+	Boxes(style DataStyle)       // Boxplots
+	Bars(style DataStyle)         // any type of histogram
+	Ring(style DataStyle) // 
 	Key(entries []Key)
 
 	End() // Done, cleanup
 }
 
 
-// BasicGrapic is an interface of the most basic graphic primitives
+// BasicGrapic is an interface of the most basic graphic primitives.
+// Any type which implements BasicGraphics can use generic implementations
+// of the Graphics methods.
 type BasicGraphics interface {
-	Line(x0, y0, x1, y1, int, style DataStyle)
-	Symbol(x, y, s int, style DataStyle)
+	FontMetrics() (int, int) // Return fontwidth and -height in pixel.
+	Line(x0, y0, x1, y1 int, style DataStyle) // Draw line from (x0,y0) to (x1,y1)
+	Symbol(x, y, s int, style DataStyle) // Put symnbol s at (x,y)
 	Text(x, y int, t string, align string, rot int, style DataStyle) // align: [[tcb]][lcr]
 	Style(element string) DataStyle                                  // retrieve style for element
 }
 
 
 // GenericAxis draws the axis r solely by graphic primitives of bg.
-
-func GenericXAxis(bg *BasicGraphics, r Range, y, ym int) {
+func GenericXAxis(bg BasicGraphics, rng Range, y, ym int) {
+	_, fontheight := bg.FontMetrics()
 	var ticLen int = 0
-	if !xrange.TicSetting.Hide {
-		ticLen = 5
+	if !rng.TicSetting.Hide {
+		ticLen = max(5, (fontheight-1)/2)
 	}
 
-	xa, xe := xrange.Data2Screen(xrange.Min), xrange.Data2Screen(xrange.Max)
+	// Axis itself, mirrord axis and zero
+	xa, xe := rng.Data2Screen(rng.Min), rng.Data2Screen(rng.Max)
 	bg.Line(xa, y, xe, y, bg.Style("axis"))
-	if mirror >= 1 {
+	if rng.TicSetting.Mirror >= 1 {
 		bg.Line(xa, ym, xe, ym, bg.Style("maxis"))
 	}
-	if xrange.ShowZero && xrange.Min < 0 && xrange.Max > 0 {
-		z := xrange.Data2Screen(0)
-		bg.Line(z, y, z, y1, bg.Style("zero"))
+	if rng.ShowZero && rng.Min < 0 && rng.Max > 0 {
+		z := rng.Data2Screen(0)
+		bg.Line(z, y, z, ym, bg.Style("zero"))
 	}
 
-	if label != "" {
-		yy := y + 5 + ticlen
-		if !xrange.TicSetting.Hide {
-			yy += 3*fontheight/2 + ticLen
-		}
-		bg.Text((xa+xe)/2, yy, label, "tc")
+	// Axis label and range limits
+ 	aly := y + 2*ticLen
+	if !rng.TicSetting.Hide {
+		aly += (3*fontheight)/2
 	}
-
-	for ticcnt, tic := range xrange.Tics {
-		x := xrange.Data2Screen(tic.Pos)
-		lx := xrange.Data2Screen(tic.LabelPos)
-		if ticcnt > 0 && ticcnt < len(xrange.Tics)-1 && xrange.TicSetting.Grid == 1 {
-			bg.Line(x, y-1, x, ym+1, bg.Style("tic"))
-		}
-		bg.Line(x, y-ticLen, x, y+ticLen, bg.Style("tic"))
-		if mirror >= 2 {
-			bg.Line(x, ym-ticLen, x, ym+ticLen, bg.Style("tic"))
-		}
-		if xrange.Time {
-			chart.Line(x, y+ticLen, x, y+2*ticLen, "stroke:black; stroke-width:2")
-			if tic.Align == -1 {
-				chart.Text(lx, y+fontheight+ticLen, tic.Label, "text-anchor:left")
-			} else {
-				chart.Text(lx, y+fontheight+ticLen, tic.Label, "text-anchor:middle")
-			}
+	if rng.ShowLimits {
+		st := bg.Style("rangelimit")
+		 if rng.Time {
+			bg.Text(xa, aly, rng.TMin.Format("2006-01-02 15:04:05"), "tl", 0, st)
+			bg.Text(xe, aly, rng.TMax.Format("2006-01-02 15:04:05"), "tr", 0, st)
 		} else {
-			chart.Text(lx, y+fontheight+ticLen, tic.Label, "text-anchor:middle")
+			bg.Text(xa, aly, fmt.Sprintf("%g", rng.Min), "tl", 0, st)
+			bg.Text(xe, aly, fmt.Sprintf("%g", rng.Max), "tr", 0, st)
 		}
 	}
-	if xrange.ShowLimits {
-		/*
-		 if xrange.Time {
-		 tb.Text(xa, y+2, xrange.TMin.Format("2006-01-02 15:04:05"), -1)
-		 tb.Text(xe, y+2, xrange.TMax.Format("2006-01-02 15:04:05"), 1)
-		 } else {
-		 tb.Text(xa, y+2, fmt.Sprintf("%g", xrange.Min), -1)
-		 tb.Text(xe, y+2, fmt.Sprintf("%g", xrange.Max), 1)
-		 }
-		*/
+	if rng.Label != "" { // draw label _after_ (=over) range limits
+		bg.Text((xa+xe)/2, aly, "  " + rng.Label + "  ", "tc", 0, bg.Style("label"))
+	}
+
+	// Tics, tic labels an grid lines
+	ticstyle := bg.Style("tic")
+	for ticcnt, tic := range rng.Tics {
+		x := rng.Data2Screen(tic.Pos)
+		lx := rng.Data2Screen(tic.LabelPos)
+		
+		// Grid
+		if ticcnt > 0 && ticcnt < len(rng.Tics)-1 && rng.TicSetting.Grid == 1 {
+			bg.Line(x, y-1, x, ym+1, bg.Style("grid"))
+		}
+
+		// Tics
+		bg.Line(x, y-ticLen, x, y+ticLen, ticstyle)
+		if rng.TicSetting.Mirror >= 2 {
+			bg.Line(x, ym-ticLen, x, ym+ticLen, ticstyle)
+		}
+		if rng.Time && tic.Align == -1 {
+			bg.Line(x, y+ticLen, x, y+2*ticLen, ticstyle)
+			bg.Text(lx, y+2*ticLen, tic.Label, "tl", 0, ticstyle)
+		} else {
+			bg.Text(lx, y+2*ticLen, tic.Label, "tc", 0, ticstyle)
+		}
 	}
 
 }

@@ -249,11 +249,11 @@ func (sc *ScatterChart) PlotSvg(w, h int, writer io.Writer) *svg.SVG {
 			if lineCol == "" {
 				lineCol = style.SymbolColor
 			}
-			lineWidth := 2 * style.Size
+			lineWidth := style.LineWidth
 			if lineWidth == 0 {
 				lineWidth = 2
 			}
-			st := fmt.Sprintf("stroke:%s; stroke-width:%d", lineCol, int(lineWidth+0.5))
+			st := fmt.Sprintf("stroke:%s; stroke-width:%d", lineCol, lineWidth)
 			chart.Gstyle(st)
 			for sx := leftm; sx < leftm+width; sx++ {
 				x := sc.XRange.Screen2Data(sx)
@@ -287,7 +287,7 @@ func (sc *ScatterChart) PlotSvg(w, h int, writer io.Writer) *svg.SVG {
 func SvgSymbol(svg *svg.SVG, x, y int, style DataStyle) {
 	s := style.Symbol
 	col := style.SymbolColor
-	f := style.Size
+	f := style.SymbolSize
 	if f == 0 {
 		f = 1
 	}

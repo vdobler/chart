@@ -4,6 +4,7 @@ import (
 	"chart"
 	"fmt"
 	"os"
+	"github.com/ajstarks/svgo"
 	// "rand"
 	// "time"
 )
@@ -76,6 +77,17 @@ func main() {
 	sf, _ := os.Create("scatter.svg")
 	pl.PlotSvg(600, 400, sf)
 	sf.Close()
+
+	s2f, _ := os.Create("scatter2.svg")
+	mysvg := svg.New(s2f)
+	mysvg.Start(800, 600)
+	mysvg.Title("My Plot")
+	svggraphics := chart.NewSvgGraphics(mysvg,800,600,"Arial", 12)
+	svggraphics.Begin()
+	svggraphics.XAxis(pl.XRange, 400, 100)
+	svggraphics.End()
+	mysvg.End()
+	s2f.Close()
 
 	fmt.Printf("%s\n", pl.PlotTxt(100, 28))
 
@@ -245,7 +257,7 @@ func main() {
 	lc.XRange.Log, lc.YRange.Log = true, true
 	lx := []float64{4e-2, 3e-1, 2e0, 1e1, 8e1, 7e2, 5e3}
 	ly := []float64{10, 30, 90, 270, 3 * 270, 9 * 270, 27 * 270}
-	lc.AddDataPair("Measurement", lx, ly, chart.DataStyle{Symbol: 'Z', SymbolColor: "#9966ff", Size: 1.5})
+	lc.AddDataPair("Measurement", lx, ly, chart.DataStyle{Symbol: 'Z', SymbolColor: "#9966ff", SymbolSize: 1.5})
 	fmt.Printf("%s\n", lc.PlotTxt(100, 25))
 
 	svgf, _ := os.Create("first.svg")
