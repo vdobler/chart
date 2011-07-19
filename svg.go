@@ -33,11 +33,15 @@ func (sg *SvgGraphics) Begin() {
 	if fs == 0 {
 		fs = 12
 	}
-	sg.svg.Gstyle(fmt.Sprintf("font-family: %s; font-size: %d", font, fs))
+	sg.svg.Gstyle(fmt.Sprintf("stroke:#000000; stroke-width:1; font-family: %s; font-size: %d", font, fs))
 }
 
 func (sg *SvgGraphics) End() {
 	sg.svg.Gend()
+}
+
+func (sg *SvgGraphics) Dimensions() (int, int) {
+	return sg.w, sg.h
 }
 
 func (sg *SvgGraphics) FontMetrics() (int, int) {
@@ -59,7 +63,13 @@ func (sg *SvgGraphics) Text(x, y int, t string, align string, rot int, style Dat
 	}
 	_, fh := sg.FontMetrics()
 
-	x0, y0 := 0, 0
+	trans := ""
+	x0, y0 := x, y
+	if rot != 0 {
+		x0, y0 = 0, 0
+		trans = fmt.Sprintf("transform=\"rotate(%d) translate(%d %d)\"", rot, x, y)
+	}
+
 	// Hack because baseline alignments in svg often broken
 	switch align[0] {
 	case 'b':
@@ -69,7 +79,6 @@ func (sg *SvgGraphics) Text(x, y int, t string, align string, rot int, style Dat
 	default:
 		y0 += fh / 2 // centered
 	}
-	trans := fmt.Sprintf("transform=\"rotate(%d) translate(%d %d)\"", rot, x, y)
 	s := "text-anchor:"
 	switch align[1] {
 	case 'l':
@@ -153,6 +162,8 @@ func (sg *SvgGraphics) Symbol(x, y, s int, style DataStyle) {
 
 func (sg *SvgGraphics) Style(element string) DataStyle {
 	switch element {
+	case "title":
+		return DataStyle{FontColor: "#000000", FontSize: int(float64(sg.fs)*1.2+0.5)}
 	case "axis":
 		return DataStyle{LineColor: "#000000", LineWidth: 2, LineStyle: SolidLine}
 	case "zero":
@@ -165,9 +176,15 @@ func (sg *SvgGraphics) Style(element string) DataStyle {
 	return DataStyle{}
 }
 
+func (sg *SvgGraphics) Title(text string) {
+	_, fh := sg.FontMetrics()
+	x, y := sg.w / 2, fh/2
+	sg.Text(x,y, text, "tc", 0, sg.Style("title"))
+} 
+
 func (sg *SvgGraphics) XAxis(xr Range, ys, yms int) {
 	GenericXAxis(sg, xr, ys, yms)
 }
 func (sg *SvgGraphics) YAxis(yr Range, xs, xms int) {
-	GenericXAxis(sg, yr, xs, xms)
+	GenericYAxis(sg, yr, xs, xms)
 }

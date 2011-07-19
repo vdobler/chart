@@ -81,14 +81,21 @@ func main() {
 	pl.XRange.ShowZero = true
 	pl.XRange.TicSetting.Mirror = 1
 	pl.XRange.TicSetting.Grid = 1
+	pl.XRange.Label = "X-Range"
+	pl.YRange.Label = "Y-Range"
 	s2f, _ := os.Create("scatter2.svg")
 	mysvg := svg.New(s2f)
 	mysvg.Start(800, 600)
 	mysvg.Title("My Plot")
+	mysvg.Rect(0,0,800,600, "fill: #ffffff")
 	svggraphics := chart.NewSvgGraphics(mysvg, 800, 600, "Arial", 12)
+	pl.Plot(svggraphics)
+	/*
 	svggraphics.Begin()
 	svggraphics.XAxis(pl.XRange, 400, 100)
+	svggraphics.YAxis(pl.YRange, 150, 600)
 	svggraphics.End()
+	 */
 	mysvg.End()
 	s2f.Close()
 

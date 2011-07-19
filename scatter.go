@@ -445,3 +445,78 @@ func SvgYRange(yrange Range, chart *svg.SVG, x, x1 int, label string, mirror int
 		}
 	}
 }
+
+
+func (sc *ScatterChart) Plot(g Graphics) {
+	fontwidth, fontheight := g.FontMetrics()
+	w, h := g.Dimensions()
+
+	width, leftm, height, topm, kb, numxtics, numytics := LayoutTxt(w, h, sc.Title, sc.Xlabel, sc.Ylabel, sc.XRange.TicSetting.Hide, sc.YRange.TicSetting.Hide, &sc.Key, fontwidth, fontheight)
+
+
+	g.Begin()
+
+	sc.XRange.Setup(numxtics, numxtics+2, width, leftm, false)
+	sc.YRange.Setup(numytics, numytics+1, height, topm, true)
+
+	if sc.Title != "" {
+		g.Title(sc.Title)
+	}
+
+	g.XAxis(sc.XRange, topm+height, topm)
+	g.YAxis(sc.YRange, leftm, leftm+width)
+
+	// Plot Data
+	nan := math.NaN()
+	for _, data := range sc.Data {
+		style := data.Style
+		if data.Samples != nil {
+			// Samples
+			for _, d := range data.Samples {
+				x := sc.XRange.Data2Screen(d.X)
+				y := sc.YRange.Data2Screen(d.Y)
+				// TODO: clip
+				if d.DeltaX != nan {
+					xl, _, xh, _ := d.boundingBox()
+					xa := sc.XRange.Data2Screen(xl)
+					xe := sc.XRange.Data2Screen(xh)
+					g.Line(xa, y, xe, y, style)
+				}
+				if d.DeltaY != nan {
+					_, yl, _, yh := d.boundingBox()
+					ya := sc.YRange.Data2Screen(yl)
+					ye := sc.YRange.Data2Screen(yh)
+					g.Line(x, ya, x, ye, style)
+				}
+				g.Symbol(x, y, style.Symbol, style)
+			}
+		} else if data.Func != nil {
+			// Functions. TODO(vodo) proper clipping
+			// symbol := Symbol[s%len(Symbol)]
+			var lastsy, lastsx int
+			var lastvalid bool
+			style.LineWidth = 2
+			for sx := leftm; sx < leftm+width; sx+=10 {
+				x := sc.XRange.Screen2Data(sx)
+				y := data.Func(x)
+				sy := sc.YRange.Data2Screen(y)
+				if y >= sc.YRange.Min && y <= sc.YRange.Max {
+					if lastvalid {
+						g.Line(lastsx, lastsy, sx, sy, style)
+					} else {
+						lastvalid = true
+					}
+					lastsx, lastsy = sx, sy
+				} else {
+					lastvalid = false
+				}
+			}
+		}
+	}
+
+	if kb != nil {
+		//	tb.Paste(sc.Key.X, sc.Key.Y, kb)
+	}
+
+	g.End()
+}
