@@ -78,11 +78,14 @@ func main() {
 	pl.PlotSvg(600, 400, sf)
 	sf.Close()
 
+	pl.XRange.ShowZero = true
+	pl.XRange.TicSetting.Mirror = 1
+	pl.XRange.TicSetting.Grid = 1
 	s2f, _ := os.Create("scatter2.svg")
 	mysvg := svg.New(s2f)
 	mysvg.Start(800, 600)
 	mysvg.Title("My Plot")
-	svggraphics := chart.NewSvgGraphics(mysvg,800,600,"Arial", 12)
+	svggraphics := chart.NewSvgGraphics(mysvg, 800, 600, "Arial", 12)
 	svggraphics.Begin()
 	svggraphics.XAxis(pl.XRange, 400, 100)
 	svggraphics.End()

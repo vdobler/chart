@@ -17,9 +17,9 @@ type Graphics interface {
 	YAxis(r Range)
 	Title(text string)
 	Scatter(points []EPoint, style DataStyle) // Points, Lines and Line+Points
-	Boxes(style DataStyle)       // Boxplots
-	Bars(style DataStyle)         // any type of histogram
-	Ring(style DataStyle) // 
+	Boxes(style DataStyle)                    // Boxplots
+	Bars(style DataStyle)                     // any type of histogram
+	Ring(style DataStyle)                     // 
 	Key(entries []Key)
 
 	End() // Done, cleanup
@@ -30,9 +30,9 @@ type Graphics interface {
 // Any type which implements BasicGraphics can use generic implementations
 // of the Graphics methods.
 type BasicGraphics interface {
-	FontMetrics() (int, int) // Return fontwidth and -height in pixel.
-	Line(x0, y0, x1, y1 int, style DataStyle) // Draw line from (x0,y0) to (x1,y1)
-	Symbol(x, y, s int, style DataStyle) // Put symnbol s at (x,y)
+	FontMetrics() (int, int)                                         // Return fontwidth and -height in pixel.
+	Line(x0, y0, x1, y1 int, style DataStyle)                        // Draw line from (x0,y0) to (x1,y1)
+	Symbol(x, y, s int, style DataStyle)                             // Put symnbol s at (x,y)
 	Text(x, y int, t string, align string, rot int, style DataStyle) // align: [[tcb]][lcr]
 	Style(element string) DataStyle                                  // retrieve style for element
 }
@@ -45,7 +45,7 @@ func GenericXAxis(bg BasicGraphics, rng Range, y, ym int) {
 	if !rng.TicSetting.Hide {
 		ticLen = max(5, (fontheight-1)/2)
 	}
-
+	ticLen = 10
 	// Axis itself, mirrord axis and zero
 	xa, xe := rng.Data2Screen(rng.Min), rng.Data2Screen(rng.Max)
 	bg.Line(xa, y, xe, y, bg.Style("axis"))
@@ -58,13 +58,13 @@ func GenericXAxis(bg BasicGraphics, rng Range, y, ym int) {
 	}
 
 	// Axis label and range limits
- 	aly := y + 2*ticLen
+	aly := y + 2*ticLen
 	if !rng.TicSetting.Hide {
-		aly += (3*fontheight)/2
+		aly += (3 * fontheight) / 2
 	}
 	if rng.ShowLimits {
 		st := bg.Style("rangelimit")
-		 if rng.Time {
+		if rng.Time {
 			bg.Text(xa, aly, rng.TMin.Format("2006-01-02 15:04:05"), "tl", 0, st)
 			bg.Text(xe, aly, rng.TMax.Format("2006-01-02 15:04:05"), "tr", 0, st)
 		} else {
@@ -73,7 +73,7 @@ func GenericXAxis(bg BasicGraphics, rng Range, y, ym int) {
 		}
 	}
 	if rng.Label != "" { // draw label _after_ (=over) range limits
-		bg.Text((xa+xe)/2, aly, "  " + rng.Label + "  ", "tc", 0, bg.Style("label"))
+		bg.Text((xa+xe)/2, aly, "  "+rng.Label+"  ", "tc", 0, bg.Style("label"))
 	}
 
 	// Tics, tic labels an grid lines
@@ -81,13 +81,15 @@ func GenericXAxis(bg BasicGraphics, rng Range, y, ym int) {
 	for ticcnt, tic := range rng.Tics {
 		x := rng.Data2Screen(tic.Pos)
 		lx := rng.Data2Screen(tic.LabelPos)
-		
+
 		// Grid
 		if ticcnt > 0 && ticcnt < len(rng.Tics)-1 && rng.TicSetting.Grid == 1 {
+			fmt.Printf("Gridline at x=%d\n", x)
 			bg.Line(x, y-1, x, ym+1, bg.Style("grid"))
 		}
 
 		// Tics
+		fmt.Printf("y=%d  y-tl=%d  y+tl=%d\n", y, y-ticLen, y+ticLen)
 		bg.Line(x, y-ticLen, x, y+ticLen, ticstyle)
 		if rng.TicSetting.Mirror >= 2 {
 			bg.Line(x, ym-ticLen, x, ym+ticLen, ticstyle)
