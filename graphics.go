@@ -22,9 +22,9 @@ type Graphics interface {
 	YAxis(yr Range, xs, xms int)
 	Title(text string)
 
-	Scatter(points []EPoint, style DataStyle) // Points, Lines and Line+Points
+	Scatter(points []EPoint, style DataStyle)      // Points, Lines and Line+Points
+	Boxes(boxes []Box, width int, style DataStyle) // Boxplots
 	/*
-	Boxes(style DataStyle)                    // Boxplots
 	Bars(style DataStyle)                     // any type of histogram
 	Ring(style DataStyle)                     // 
 	Key(entries []Key)
@@ -44,6 +44,12 @@ type BasicGraphics interface {
 	Style(element string) DataStyle                                  // retrieve style for element
 }
 
+func  GenericRect(bg BasicGraphics, x,y, w, h int, style DataStyle) {
+	bg.Line(x,y, x+w,y, style)
+	bg.Line(x+w,y, x+w,y+h, style)
+	bg.Line(x+w,y+h, x,y+h, style)
+	bg.Line(x,y+h, x,y, style)
+}
 
 // GenericAxis draws the axis r solely by graphic primitives of bg.
 func GenericXAxis(bg BasicGraphics, rng Range, y, ym int) {
@@ -205,4 +211,40 @@ func GenericScatter(bg BasicGraphics, points []EPoint, style DataStyle) {
 			bg.Symbol(int(p.X), int(p.Y), style.Symbol, style)
 		}
 	}
+}
+
+
+func GenericBoxes(bg BasicGraphics, boxes []Box, width int, style DataStyle) {
+	if width % 2 == 0 {
+		width += 1
+	}
+	hbw := (width-1)/2
+	for _, d := range boxes {
+		x := int(d.X)
+		q1, q3 := int(d.Q1), int(d.Q3)
+
+		GenericRect(bg, x-hbw, q1, width, q3-q1, style)
+		if !math.IsNaN(d.Med) {
+			med := int(d.Med)
+			bg.Line(x-hbw, med, x+hbw, med, style)
+		}
+
+		if !math.IsNaN(d.Avg) {
+			bg.Symbol(x, int(d.Avg), style.Symbol, style)
+		}
+
+		if !math.IsNaN(d.High) {
+			bg.Line(x, q3, x, int(d.High), style)
+		}
+
+		if !math.IsNaN(d.Low) {
+			bg.Line(x, q1, x, int(d.Low), style)
+		}
+
+		for _, y := range d.Outliers {
+			bg.Symbol(x, int(y), style.Symbol, style)
+		}
+
+	}
+
 }

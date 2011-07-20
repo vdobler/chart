@@ -174,3 +174,71 @@ func (c *BoxChart) PlotTxt(w, h int) string {
 
 	return tb.String()
 }
+
+func (c *BoxChart) Plot(g Graphics) {
+	fontwidth, fontheight := g.FontMetrics()
+	w, h := g.Dimensions()
+
+	width, leftm, height, topm, kb, numxtics, numytics := LayoutTxt(w, h, c.Title, c.Xlabel, c.Ylabel, c.XRange.TicSetting.Hide, c.YRange.TicSetting.Hide, &c.Key, fontwidth, fontheight)
+
+
+	g.Begin()
+
+	c.XRange.Setup(numxtics, numxtics+2, width, leftm, false)
+	c.YRange.Setup(numytics, numytics+1, height, topm, true)
+
+	if c.Title != "" {
+		g.Title(c.Title)
+	}
+
+	g.XAxis(c.XRange, topm+height, topm)
+	g.YAxis(c.YRange, leftm, leftm+width)
+
+	yf := c.YRange.Data2Screen
+	nan := math.NaN()
+	for _, data := range c.Data {
+		// Samples
+		nums := len(data.Samples)
+		bw := width / (2*nums - 1)
+
+		boxes := make([]Box, len(data.Samples))
+		for i, d := range data.Samples {
+			x := float64(c.XRange.Data2Screen(d.X))
+			q1, q3 := float64(yf(d.Q1)), float64(yf(d.Q3))
+			med, avg := nan, nan
+			high, low := nan, nan
+			if !math.IsNaN(d.Med) {
+				med = float64(yf(d.Med))
+			}
+			if !math.IsNaN(d.Avg) {
+				avg = float64(yf(d.Avg))
+			}
+			if !math.IsNaN(d.High) {
+				high = float64(yf(d.High))
+			}
+			if !math.IsNaN(d.Low) {
+				low = float64(yf(d.Low))
+			}
+
+			outliers := make([]float64, len(d.Outliers))
+			for j, ol := range d.Outliers {
+				outliers[j] = float64(c.YRange.Data2Screen(ol))
+			}
+			boxes[i].X = x
+			boxes[i].Q1 = q1
+			boxes[i].Q3 = q3
+			boxes[i].Med = med
+			boxes[i].Avg = avg
+			boxes[i].High = high
+			boxes[i].Low = low
+			boxes[i].Outliers = outliers
+		}
+		g.Boxes(boxes, bw, data.Style)
+	}
+
+	if kb != nil {
+		//	tb.Paste(sc.Key.X, sc.Key.Y, kb)
+	}
+
+	g.End()
+}

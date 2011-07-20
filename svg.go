@@ -192,3 +192,8 @@ func (sg *SvgGraphics) YAxis(yr Range, xs, xms int) {
 func (sg *SvgGraphics) Scatter(points []EPoint, style DataStyle) {
 	GenericScatter(sg, points, style)
 }
+
+func (sg *SvgGraphics) Boxes(boxes []Box, width int, style DataStyle) {
+	GenericBoxes(sg, boxes, width, style)
+}
+
