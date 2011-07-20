@@ -45,7 +45,7 @@ func (sg *SvgGraphics) Dimensions() (int, int) {
 }
 
 func (sg *SvgGraphics) FontMetrics() (int, int) {
-	return int(0.8*float32(sg.fs) + .5), sg.fs
+	return int(0.5*float32(sg.fs)), sg.fs
 }
 
 func (sg *SvgGraphics) Line(x0, y0, x1, y1 int, style DataStyle) {
@@ -77,7 +77,7 @@ func (sg *SvgGraphics) Text(x, y int, t string, align string, rot int, style Dat
 	case 't':
 		y0 += fh
 	default:
-		y0 += fh / 2 // centered
+		y0 += (fh-1) / 2 // centered
 	}
 	s := "text-anchor:"
 	switch align[1] {
@@ -172,8 +172,14 @@ func (sg *SvgGraphics) Style(element string) DataStyle {
 		return DataStyle{LineColor: "#000000", LineWidth: 1, LineStyle: SolidLine}
 	case "grid":
 		return DataStyle{LineColor: "#808080", LineWidth: 1, LineStyle: SolidLine}
+	case "key":
+		return DataStyle{LineColor: "#4040ff", LineWidth: 1, LineStyle: SolidLine}
 	}
-	return DataStyle{}
+	b := "#000000"
+	return DataStyle{Symbol: 'o', SymbolColor: b, SymbolSize: 1,
+	LineColor: b, LineWidth: 1, LineStyle: SolidLine,
+	Font: "Helvetica", FontSize: 12, FontColor: b, Fill: 0, Alpha: 0,	
+	}
 }
 
 func (sg *SvgGraphics) Title(text string) {

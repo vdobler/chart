@@ -1,30 +1,31 @@
 package chart
 
 import (
-	// "fmt"
+	"math"
 	"strings"
+	"fmt"
 )
 
 // Key encapsulates settings for keys/legends in a chart.
 //
 // Key placement os governed by Pos which may take the following values:
 //          otl  otc  otr      
-//         +--------------+ 
-//     olt |itl  itc  itr | ort
-//         |              |
-//     olc |icl  icc  icr | ort
-//         |              |
-//     olb |ibl  ibc  ibr | orb
-//         +--------------+ 
-//        obl  obc  obr
+//         +-------------+ 
+//     olt |itl  itc  itr| ort
+//         |             |
+//     olc |icl  icc  icr| ort
+//         |             |
+//     olb |ibl  ibc  ibr| orb
+//         +-------------+ 
+//          obl  obc  obr
 //
 type Key struct {
 	Hide    bool       // Don't show key/legend if true
 	Cols    int        // Number of colums to use. If <0 fill rows before colums
 	Border  int        // -1: off, 0: std, 1...:other styles
 	Pos     string     // default "" is "itr"
-	X, Y    int        // Coordiantes where to put in chart.
 	Entries []KeyEntry // List of entries in the legend
+	X, Y int
 }
 
 
@@ -240,11 +241,22 @@ func (key Key) Place() (matrix [][]*KeyEntry) {
 }
 
 
-func textviewlen(t string) int {
-	return len(t) // TODO(vodo) use utf8.CountRuneInString and honour different chars
+func textviewlen(t string) (length float64) {
+	n := 0
+	for _, rune := range t {
+		if w, ok :=  CharacterWidth[rune]; ok {
+			length += w
+		} else {
+			length += 23 // save above average
+		}
+		n++
+	}
+	length /= averageCharacterWidth
+	fmt.Printf("Length >%s<: %d runes = %.2f  (%d)\n", t, n, length, int(100*length/float64(n)))
+	return 
 }
 
-func textDim(t string) (w, h int) {
+func textDim(t string) (w float64, h int) {
 	lines := strings.Split(t, "\n", -1)
 	for _, t := range lines {
 		tvl := textviewlen(t)
@@ -292,7 +304,7 @@ func (key Key) Layout(bg BasicGraphics, m [][]*KeyEntry) (w, h int, colwidth, ro
 	totalw := 0
 	colwidth = make([]int, cols)
 	for c := 0; c < cols; c++ {
-		rw := 0
+		rw := 0.0
 		for r := 0; r < rows; r++ {
 			e := m[c][r]
 			if e == nil {
@@ -305,15 +317,23 @@ func (key Key) Layout(bg BasicGraphics, m [][]*KeyEntry) (w, h int, colwidth, ro
 				rw = w
 			}
 		}
-		colwidth[c] = rw
-		totalw += rw
+		irw := int(math.Ceil(rw+1))
+		colwidth[c] = irw
+		totalw += irw
 	}
 
 	// totalw/h are characters only and still in character-units
+	fmt.Printf("%d  %f\n", totalw, averageCharacterWidth)
 	totalw *= fontwidth                                     // scale to pixels
+	fmt.Printf("%d\n", totalw)
 	totalw += int(KeyColSep * float64((cols-1)*fontwidth))  // add space between columns
+	fmt.Printf("%d\n", totalw)
 	totalw += int(2 * KeyHorSep * float64(fontwidth))       // add space for left/right border
+	fmt.Printf("%d\n", totalw)
 	totalw += (KeySymbolWidth + KeySymbolSep) * cols        // place for symbol and symbol-text sep
+	fmt.Printf("%d\n", totalw)
+
+	totalh *= fontheight
 	totalh += int(KeyRowSep * float64((rows-1)*fontheight)) // add space between rows
 	totalh += int(2 * KeyVertSep * float64(fontheight))     // add border at top/bottom
 
@@ -328,7 +348,7 @@ func GenericKey(bg BasicGraphics, x, y int, key Key) {
 
 	GenericRect(bg, x, y, tw, th, style)
 	x += int(KeyHorSep * float64(fw))
-	y += int(KeyVertSep * float64(fh))
+	y += int(KeyVertSep * float64(fh)) + fh/2
 	for ci, col := range m {
 		yy := y
 
@@ -356,4 +376,24 @@ func GenericKey(bg BasicGraphics, x, y int, key Key) {
 
 		x += fw*cw[ci] + KeySymbolWidth + KeySymbolSep + int(KeyColSep*float64(fw))
 	}
+
+	text := "all"
+	tvl := int(float64(fw)*textviewlen(text)+0.5)
+	GenericRect(bg, 150, 300, tvl, 30, style)
+	bg.Text(150+tvl/2,315, text, "cc", 0, style)
+
+	text = "WWW"
+	tvl = int(float64(fw)*textviewlen(text)+0.5)
+	GenericRect(bg, 150, 340, tvl, 30, style)
+	bg.Text(150+tvl/2, 355, text, "cc", 0, style)
+
+	text = "Alles ,,, ein ||||, nur die lllll."
+	tvl = int(float64(fw)*textviewlen(text)+0.5)
+	GenericRect(bg, 150, 380, tvl, 30, style)
+	bg.Text(150+tvl/2, 395, text, "cc", 0, style)
+
+	text = "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW"
+	tvl = int(float64(fw)*textviewlen(text)+0.5)
+	GenericRect(bg, 150, 420, tvl, 30, style)
+	bg.Text(150+tvl/2, 435, text, "cc", 0, style)
 }

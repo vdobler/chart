@@ -30,6 +30,7 @@ type Graphics interface {
 	*/
 	Key(x, y int, key Key) // place key at x,y
 	End()                  // Done, cleanup
+	Style(element string) DataStyle                                  // retrieve style for element
 }
 
 

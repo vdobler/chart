@@ -97,8 +97,7 @@ func FmtTime(sec int64, step TimeDelta) string {
 }
 
 
-var Units = []string{" y", " z", " a", " f", " p", " n", " µ", "m",
-	" k", " M", " G", " T", " P", " E", " Z", " Y"}
+var Units = []string{" y", " z", " a", " f", " p", " n", " µ", "m", " k", " M", " G", " T", " P", " E", " Z", " Y"}
 
 func FmtFloat(f float64) string {
 	af := math.Fabs(f)
@@ -416,9 +415,9 @@ func (r *Range) fSetup(desiredNumberOfTics, maxNumberOfTics int, delta, mindelta
 //   (T)Min and (T)Max    lower and upper limit of axis, (T)-version for date/time axis
 //   Tics                 slice of tics to draw
 //   TicSetting.(T)Delta  actual tic delta
-//   Norm and InvNorm     TODO(vodo) not jet implemented
-//   Data2Screen
-//   Screen2Data
+//   Norm and InvNorm     mapping of [lower,upper]_data --> [0:1] and inverse
+//   Data2Screen          mapping of data to screen coordinates
+//   Screen2Data          inverse of Data2Screen
 // The parameters desired- and maxNumberOfTics are what the say.
 // sWidth and sOffset are screen-width and -offset and are used to set up the
 // Data-Screen conversion functions. If revert is true, than screen coordinates
@@ -473,36 +472,25 @@ func (r *Range) Setup(desiredNumberOfTics, maxNumberOfTics, sWidth, sOffset int,
 }
 
 
+// LayoutData encapsulates the layout of the graph area in the whole drawing area.
 type LayoutData struct {
-	Width, Left, Height, Top int // border of graph area
-	KeyX, KeyY               int
-	NumXtics, NumYtics       int
+	Width, Height    int // width and height of graph area
+	Left, Top        int // left and top margin
+	KeyX, KeyY               int // x and y coordiante of key
+	NumXtics, NumYtics       int // suggested numer of tics for both axis
 }
 
 
 // TODO: Key.X/Y have to go to explicit data
 func Layout(g Graphics, title, xlabel, ylabel string, hidextics, hideytics bool, key *Key) (ld LayoutData) {
-	fw, fs := g.FontMetrics()
+	fw, fh := g.FontMetrics()
 	w, h := g.Dimensions()
 
-	ld.Width, ld.Left, ld.Height, ld.Top, _, ld.NumXtics, ld.NumYtics = LayoutTxt(w, h, title, xlabel, ylabel, hidextics, hideytics, key, fw, fs)
-	ld.KeyX, ld.KeyY = key.X, key.Y
-	return
-}
-
-func LayoutTxt(w, h int, title, xlabel, ylabel string, hidextics, hideytics bool, key *Key, fw, fh int) (width, leftm, height, topm int, kb *TextBuf, numxtics, numytics int) {
 	if key.Pos == "" {
 		key.Pos = "itr"
 	}
 
-	if h < 5 {
-		h = 5
-	}
-	if w < 10 {
-		w = 10
-	}
-
-	width, leftm, height, topm = w-6*fw, 2*fw, h-1*fh, 0
+	width, leftm, height, topm := w-6*fw, 2*fw, h-2*fh, fh
 	xlabsep, ylabsep := fh, 3*fw
 	if title != "" {
 		topm += (5 * fh) / 2
@@ -513,7 +501,7 @@ func LayoutTxt(w, h int, title, xlabel, ylabel string, hidextics, hideytics bool
 	}
 	if !hidextics {
 		height -= (3 * fh) / 2
-		xlabsep += (3 * fh) / 2
+		xlabsep += (3 * fh) / 2 
 	}
 	if ylabel != "" {
 		leftm += 2 * fh
@@ -525,191 +513,84 @@ func LayoutTxt(w, h int, title, xlabel, ylabel string, hidextics, hideytics bool
 		ylabsep += 6 * fw
 	}
 
-	if !key.Hide { // TODO: buggy, not device independent
-		kb = key.LayoutKeyTxt()
-		if kb != nil {
-			kw, kh := kb.W, kb.H
-			switch key.Pos[:2] {
-			case "ol":
-				width, leftm = width-kw-2, leftm+kw
-				key.X = 0
-			case "or":
-				width = width - kw - 2
-				key.X = w - kw
-			case "ot":
-				height, topm = height-kh-2, topm+kh
-				key.Y = 1
-			case "ob":
-				height = height - kh - 2
-				key.Y = topm + height + 4
-			case "it":
-				key.Y = topm + 1
-			case "ic":
-				key.Y = topm + (height-kh)/2
-			case "ib":
-				key.Y = topm + height - kh
-
+	if key != nil && !key.Hide && len(key.Place()) > 0 { 
+		m := key.Place()
+		kw, kh, _, _ := key.Layout(g, m)
+		sepx, sepy := 2*(fw+fh)/2, 2*(fw+fh)/2
+		switch key.Pos[:2] {
+		case "ol":
+			width, leftm = width-kw-sepx, leftm+kw
+			ld.KeyX = sepx/2
+		case "or":
+			width = width - kw-sepx
+			ld.KeyX = w - kw -sepx/2
+		case "ot":
+			height, topm = height-kh-sepy, topm+kh
+			ld.KeyY = sepy/2
+		case "ob":
+			height = height - kh - sepy
+			ld.KeyY = h - kh - sepy/2
+		case "it":
+			ld.KeyY = topm + sepy
+		case "ic":
+			ld.KeyY = topm + (height-kh)/2
+		case "ib":
+			ld.KeyY = topm + height - kh - sepy
+			
+		}
+		
+		switch key.Pos[:2] {
+		case "ol", "or":
+			switch key.Pos[2] {
+			case 't':
+				ld.KeyY = topm
+			case 'c':
+				ld.KeyY = topm + (height-kh)/2
+			case 'b':
+				ld.KeyY = topm + height - kh 
 			}
-
-			switch key.Pos[:2] {
-			case "ol", "or":
-				switch key.Pos[2] {
-				case 't':
-					key.Y = topm
-				case 'c':
-					key.Y = topm + (height-kh)/2
-				case 'b':
-					key.Y = topm + height - kh + 1
-				}
-			case "ot", "ob":
-				switch key.Pos[2] {
-				case 'l':
-					key.X = leftm
-				case 'c':
-					key.X = leftm + (width-kw)/2
-				case 'r':
-					key.X = w - kw - 2
-				}
+		case "ot", "ob":
+			switch key.Pos[2] {
+			case 'l':
+				ld.KeyX = leftm
+			case 'c':
+				ld.KeyX = leftm + (width-kw)/2
+			case 'r':
+				ld.KeyX = w - kw - sepx
 			}
-			if key.Pos[0] == 'i' {
-				switch key.Pos[2] {
-				case 'l':
-					key.X = leftm + 2
-				case 'c':
-					key.X = leftm + (width-kw)/2
-				case 'r':
-					key.X = leftm + width - kw - 2
-				}
-
+		}
+		if key.Pos[0] == 'i' {
+			switch key.Pos[2] {
+			case 'l':
+				ld.KeyX = leftm + sepx
+			case 'c':
+				ld.KeyX = leftm + (width-kw)/2
+			case 'r':
+				ld.KeyX = leftm + width - kw - sepx
 			}
 		}
 	}
 
 	// fmt.Printf("width=%d, height=%d, leftm=%d, topm=%d\n", width, height, leftm, topm)
 
-	switch {
-	case width/fw < 20:
-		numxtics = 2
-	case width/fw < 30:
-		numxtics = 3
-	case width/fw < 60:
-		numxtics = 4
-	case width/fw < 80:
-		numxtics = 5
-	case width/fw < 100:
-		numxtics = 7
-	default:
-		numxtics = 10
+	// Number of tics
+	if width/fw <= 20 {
+		ld.NumXtics = 2
+	} else {
+		ld.NumXtics = width/(15*fw)
+		if ld.NumXtics > 25 {
+			ld.NumXtics = 25
+		}
 	}
-	// fmt.Printf("Requesting %d,%d tics.\n", ntics,height/3)
+	ld.NumYtics = height / (4*fh)
+	if ld.NumYtics > 20 {
+		ld.NumYtics = 20
+	}
 
-	numytics = (h / fh) / 5
+	ld.Width, ld.Height = width, height
+	ld.Left, ld.Top = leftm, topm
 
 	return
 }
 
 
-// Print xrange to tb at vertical position y.
-// Axis, tics, tic labels, axis label and range limits are drawn.
-// mirror: 0: no other axis, 1: axis without tics, 2: axis with tics,
-func TxtXRange(xrange Range, tb *TextBuf, y, y1 int, label string, mirror int) {
-	xa, xe := xrange.Data2Screen(xrange.Min), xrange.Data2Screen(xrange.Max)
-	for sx := xa; sx <= xe; sx++ {
-		tb.Put(sx, y, '-')
-		if mirror >= 1 {
-			tb.Put(sx, y1, '-')
-		}
-	}
-	if xrange.ShowZero && xrange.Min < 0 && xrange.Max > 0 {
-		z := xrange.Data2Screen(0)
-		for yy := y - 1; yy > y1+1; yy-- {
-			tb.Put(z, yy, ':')
-		}
-	}
-
-	if label != "" {
-		yy := y + 1
-		if !xrange.TicSetting.Hide {
-			yy++
-		}
-		tb.Text((xa+xe)/2, yy, label, 0)
-	}
-
-	for _, tic := range xrange.Tics {
-		x := xrange.Data2Screen(tic.Pos)
-		lx := xrange.Data2Screen(tic.LabelPos)
-		if xrange.Time {
-			tb.Put(x, y, '|')
-			if mirror >= 2 {
-				tb.Put(x, y1, '|')
-			}
-			tb.Put(x, y+1, '|')
-			if tic.Align == -1 {
-				tb.Text(lx+1, y+1, tic.Label, -1)
-			} else {
-				tb.Text(lx, y+1, tic.Label, 0)
-			}
-		} else {
-			tb.Put(x, y, '+')
-			if mirror >= 2 {
-				tb.Put(x, y1, '+')
-			}
-			tb.Text(lx, y+1, tic.Label, 0)
-		}
-		if xrange.ShowLimits {
-			if xrange.Time {
-				tb.Text(xa, y+2, xrange.TMin.Format("2006-01-02 15:04:05"), -1)
-				tb.Text(xe, y+2, xrange.TMax.Format("2006-01-02 15:04:05"), 1)
-			} else {
-				tb.Text(xa, y+2, fmt.Sprintf("%g", xrange.Min), -1)
-				tb.Text(xe, y+2, fmt.Sprintf("%g", xrange.Max), 1)
-			}
-		}
-	}
-}
-
-
-// Print yrange to tb at horizontal position x.
-// Axis, tics, tic labels, axis label and range limits are drawn.
-// mirror: 0: no other axis, 1: axis without tics, 2: axis with tics,
-func TxtYRange(yrange Range, tb *TextBuf, x, x1 int, label string, mirror int) {
-	ya, ye := yrange.Data2Screen(yrange.Min), yrange.Data2Screen(yrange.Max)
-	for sy := min(ya, ye); sy <= max(ya, ye); sy++ {
-		tb.Put(x, sy, '|')
-		if mirror >= 1 {
-			tb.Put(x1, sy, '|')
-		}
-	}
-	if yrange.ShowZero && yrange.Min < 0 && yrange.Max > 0 {
-		z := yrange.Data2Screen(0)
-		for xx := x + 1; xx < x1; xx += 2 {
-			tb.Put(xx, z, '-')
-		}
-	}
-
-	if label != "" {
-		tb.Text(1, (ya+ye)/2, label, 3)
-	}
-
-	for _, tic := range yrange.Tics {
-		y := yrange.Data2Screen(tic.Pos)
-		ly := yrange.Data2Screen(tic.LabelPos)
-		if yrange.Time {
-			tb.Put(x, y, '+')
-			if mirror >= 2 {
-				tb.Put(x1, y, '+')
-			}
-			if tic.Align == 0 { // centered tic
-				tb.Put(x-1, y, '-')
-				tb.Put(x-2, y, '-')
-			}
-			tb.Text(x, ly, tic.Label+" ", 1)
-		} else {
-			tb.Put(x, y, '+')
-			if mirror >= 2 {
-				tb.Put(x1, y, '+')
-			}
-			tb.Text(x-2, ly, tic.Label, 1)
-		}
-	}
-}
