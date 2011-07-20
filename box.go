@@ -181,7 +181,6 @@ func (c *BoxChart) Plot(g Graphics) {
 
 	width, leftm, height, topm, kb, numxtics, numytics := LayoutTxt(w, h, c.Title, c.Xlabel, c.Ylabel, c.XRange.TicSetting.Hide, c.YRange.TicSetting.Hide, &c.Key, fontwidth, fontheight)
 
-
 	g.Begin()
 
 	c.XRange.Setup(numxtics, numxtics+2, width, leftm, false)

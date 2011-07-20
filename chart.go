@@ -5,7 +5,6 @@ import (
 	"math"
 	"time"
 	//	"os"
-	"strings"
 )
 
 
@@ -474,200 +473,20 @@ func (r *Range) Setup(desiredNumberOfTics, maxNumberOfTics, sWidth, sOffset int,
 }
 
 
-// Key encapsulates settings for keys/legends in a chart.
-//
-// Key placement os governed by Pos which may take the following values:
-//          otl  otc  otr      
-//         +--------------+ 
-//     olt |itl  itc  itr | ort
-//         |              |
-//     olc |icl  icc  icr | ort
-//         |              |
-//     olb |ibl  ibc  ibr | orb
-//         +--------------+ 
-//        obl  obc  obr
-//
-type Key struct {
-	Hide    bool       // Don't show key/legend if true
-	Cols    int        // Number of colums to use. If <0 fill rows before colums
-	Border  int        // -1: off, 0: std, 1...:other styles
-	Pos     string     // default "" is "itr"
-	X, Y    int        // Coordiantes where to put in chart.
-	Entries []KeyEntry // List of entries in the legend
-}
-
-
-// KeyEntry encapsulates an antry in the key/legend.
-type KeyEntry struct {
-	Symbol int    // Symbol index to use
-	Linie  int    // Line Style
-	Text   string // Text to display
-}
-
-// Margins
-var KL_LRBorder int = 1 // before and after whole key
-var KL_SLSep int = 2    // space between symbol and test
-var KL_ColSep int = 2   // space between columns
-var KL_MLSep int = 1    // extra space between rows if multiline text are present
-
-func (key *Key) LayoutKeyTxt() (kb *TextBuf) {
-	// TODO(vodo) the following is ugly (and stinks)
-	if key.Hide {
-		return
-	}
-
-	// count real entries in num, see if multilines are present in haveml
-	num, haveml := 0, false
-	for _, e := range key.Entries {
-		if e.Text == "" {
-			continue
-		}
-		num++
-		lines := strings.Split(e.Text, "\n", -1)
-		if len(lines) > 1 {
-			haveml = true
-		}
-	}
-	if num == 0 {
-		return
-	} // no entries
-
-	rowfirst := false
-	cols := key.Cols
-	if cols < 0 {
-		cols = -cols
-		rowfirst = true
-	}
-	if cols == 0 {
-		cols = 1
-	}
-	if num < cols {
-		cols = num
-	}
-	rows := (num + cols - 1) / cols
-
-	// fmt.Printf("%d entries on %d columns: %d rows\n", num, cols, rows)
-
-	// Arrays with infos
-	width := make([][]int, cols)
-	for i := 0; i < cols; i++ {
-		width[i] = make([]int, rows)
-	}
-	height := make([][]int, cols)
-	for i := 0; i < cols; i++ {
-		height[i] = make([]int, rows)
-	}
-	symbol := make([][]int, cols)
-	for i := 0; i < cols; i++ {
-		symbol[i] = make([]int, rows)
-	}
-	text := make([][][]string, cols)
-	for i := 0; i < cols; i++ {
-		text[i] = make([][]string, rows)
-	}
-
-	// fill arrays
-	i := 0
-	for _, e := range key.Entries {
-		if e.Text == "" {
-			continue
-		}
-		var r, c int
-		if rowfirst {
-			r, c = i/cols, i%cols
-		} else {
-			c, r = i/rows, i%rows
-		}
-		lines := strings.Split(e.Text, "\n", -1)
-		ml := 0
-		for _, t := range lines {
-			if len(t) > ml { // TODO(vodo) use utf8.CountRuneInString and honour different chars
-				ml = len(t)
-			}
-		}
-		symbol[c][r] = e.Symbol // TODO(vodo) allow line symbols?
-		height[c][r] = len(lines)
-		width[c][r] = ml
-		text[c][r] = lines
-		i++
-	}
-	colwidth := make([]int, cols)
-	rowheight := make([]int, rows)
-	totalheight, totalwidth := 0, 0
-	for c := 0; c < cols; c++ {
-		max := 0
-		for r := 0; r < rows; r++ {
-			if width[c][r] > max {
-				max = width[c][r]
-			}
-		}
-		max += 2*KL_LRBorder + 1 + KL_SLSep // formt is " *  Label "
-		colwidth[c] = max
-		totalwidth += max
-	}
-	for r := 0; r < rows; r++ {
-		max := 0
-		for c := 0; c < cols; c++ {
-			if height[c][r] > max {
-				max = height[c][r]
-			}
-		}
-		rowheight[r] = max
-		totalheight += max
-	}
-
-	// width and height: + 2 for outer border/box
-	w := totalwidth + KL_ColSep*(cols-1) + 2
-	h := totalheight + 2
-	if haveml {
-		h += KL_MLSep * (rows - 1)
-	}
-	kb = NewTextBuf(w, h)
-	if key.Border != -1 {
-		kb.Rect(0, 0, w-1, h-1, key.Border+1, ' ')
-	}
-
-	// Produce box
-	x := 1
-	for c := 0; c < cols; c++ {
-		y := 1
-		for r := 0; r < rows; r++ {
-			if width[c][r] == 0 {
-				continue
-			}
-			xx := x + KL_LRBorder
-			if symbol[c][r] != -1 {
-				kb.Put(xx, y, symbol[c][r])
-				xx += 1 + KL_SLSep
-			}
-			for l, t := range text[c][r] {
-				kb.Text(xx, y+l, t, -1)
-			}
-			y += rowheight[r]
-			if haveml {
-				y += KL_MLSep
-			}
-		}
-		x += colwidth[c] + KL_ColSep
-	}
-
-	return
-}
-
 type LayoutData struct {
 	Width, Left, Height, Top int // border of graph area
-	KeyX, KeyY, int
-	NumXtics, NumYtics, int
+	KeyX, KeyY               int
+	NumXtics, NumYtics       int
 }
 
 
 // TODO: Key.X/Y have to go to explicit data
-func Layout(g Graphics, title, xlabel, ylabel string, hidextics, hideytics bool, key *Key,) (ld LayoutData) {
+func Layout(g Graphics, title, xlabel, ylabel string, hidextics, hideytics bool, key *Key) (ld LayoutData) {
 	fw, fs := g.FontMetrics()
-	w, h := g.g.Dimensions()
+	w, h := g.Dimensions()
 
-	ld.Width, ld.Left, ld.Height, ld.Top, _, ld.NumXtics, ld.NumYtics = LayoutTxt(w,h, title, xlabel, ylabel, hidextics, hideytics, key, fw, fs)
-	ld.KeyX, ld.KeyY = Key.X, Key.Y
+	ld.Width, ld.Left, ld.Height, ld.Top, _, ld.NumXtics, ld.NumYtics = LayoutTxt(w, h, title, xlabel, ylabel, hidextics, hideytics, key, fw, fs)
+	ld.KeyX, ld.KeyY = key.X, key.Y
 	return
 }
 

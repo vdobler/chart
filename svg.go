@@ -163,7 +163,7 @@ func (sg *SvgGraphics) Symbol(x, y, s int, style DataStyle) {
 func (sg *SvgGraphics) Style(element string) DataStyle {
 	switch element {
 	case "title":
-		return DataStyle{FontColor: "#000000", FontSize: int(float64(sg.fs)*1.2+0.5)}
+		return DataStyle{FontColor: "#000000", FontSize: int(float64(sg.fs)*1.2 + 0.5)}
 	case "axis":
 		return DataStyle{LineColor: "#000000", LineWidth: 2, LineStyle: SolidLine}
 	case "zero":
@@ -178,9 +178,9 @@ func (sg *SvgGraphics) Style(element string) DataStyle {
 
 func (sg *SvgGraphics) Title(text string) {
 	_, fh := sg.FontMetrics()
-	x, y := sg.w / 2, fh/2
-	sg.Text(x,y, text, "tc", 0, sg.Style("title"))
-} 
+	x, y := sg.w/2, fh/2
+	sg.Text(x, y, text, "tc", 0, sg.Style("title"))
+}
 
 func (sg *SvgGraphics) XAxis(xr Range, ys, yms int) {
 	GenericXAxis(sg, xr, ys, yms)
@@ -197,3 +197,6 @@ func (sg *SvgGraphics) Boxes(boxes []Box, width int, style DataStyle) {
 	GenericBoxes(sg, boxes, width, style)
 }
 
+func (sg *SvgGraphics) Key(x, y int, key Key) {
+	GenericKey(sg, x, y, key)
+}

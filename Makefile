@@ -9,6 +9,7 @@ GOFILES=\
 	data.go\
 	util.go\
 	style.go\
+	key.go\
 	graphics.go\
 	stat.go\
 	time.go\

@@ -8,8 +8,8 @@ import (
 
 // Graphics is the interface all chart drivers have to implement
 type Graphics interface {
-	Dimensions() (int, int)        // character-width / height
-	FontMetrics() (int, int)        // character-width / height
+	Dimensions() (int, int)  // character-width / height
+	FontMetrics() (int, int) // character-width / height
 
 	Line(x0, y0, x1, y1 int, style DataStyle)                        // Draw line from (x0,y0) to (x1,y1)
 	Symbol(x, y, s int, style DataStyle)                             // Put symnbol s at (x,y)
@@ -25,11 +25,11 @@ type Graphics interface {
 	Scatter(points []EPoint, style DataStyle)      // Points, Lines and Line+Points
 	Boxes(boxes []Box, width int, style DataStyle) // Boxplots
 	/*
-	Bars(style DataStyle)                     // any type of histogram
-	Ring(style DataStyle)                     // 
-	Key(entries []Key)
-*/
-	End() // Done, cleanup
+		Bars(style DataStyle)                     // any type of histogram
+		Ring(style DataStyle)                     // 
+	*/
+	Key(x, y int, key Key) // place key at x,y
+	End()                  // Done, cleanup
 }
 
 
@@ -44,11 +44,12 @@ type BasicGraphics interface {
 	Style(element string) DataStyle                                  // retrieve style for element
 }
 
-func  GenericRect(bg BasicGraphics, x,y, w, h int, style DataStyle) {
-	bg.Line(x,y, x+w,y, style)
-	bg.Line(x+w,y, x+w,y+h, style)
-	bg.Line(x+w,y+h, x,y+h, style)
-	bg.Line(x,y+h, x,y, style)
+func GenericRect(bg BasicGraphics, x, y, w, h int, style DataStyle) {
+	bg.Line(x, y, x+w, y, style)
+	bg.Line(x+w, y, x+w, y+h, style)
+	bg.Line(x+w, y+h, x, y+h, style)
+	bg.Line(x, y+h, x, y, style)
+	// TODO: filling
 }
 
 // GenericAxis draws the axis r solely by graphic primitives of bg.
@@ -97,12 +98,12 @@ func GenericXAxis(bg BasicGraphics, rng Range, y, ym int) {
 
 		// Grid
 		if ticcnt > 0 && ticcnt < len(rng.Tics)-1 && rng.TicSetting.Grid == 1 {
-			fmt.Printf("Gridline at x=%d\n", x)
+			// fmt.Printf("Gridline at x=%d\n", x)
 			bg.Line(x, y-1, x, ym+1, bg.Style("grid"))
 		}
 
 		// Tics
-		fmt.Printf("y=%d  y-tl=%d  y+tl=%d\n", y, y-ticLen, y+ticLen)
+		// fmt.Printf("y=%d  y-tl=%d  y+tl=%d\n", y, y-ticLen, y+ticLen)
 		bg.Line(x, y-ticLen, x, y+ticLen, ticstyle)
 		if rng.TicSetting.Mirror >= 2 {
 			bg.Line(x, ym-ticLen, x, ym+ticLen, ticstyle)
@@ -148,10 +149,10 @@ func GenericYAxis(bg BasicGraphics, rng Range, x, xm int) {
 			bg.Text(xa, aly, fmt.Sprintf("%g", rng.Min), "tl", 0, st)
 			bg.Text(xe, aly, fmt.Sprintf("%g", rng.Max), "tr", 0, st)
 		}
-		 */
+		*/
 	}
 	if rng.Label != "" {
-		y := (ya+ye)/2 
+		y := (ya + ye) / 2
 		bg.Text(alx, y, rng.Label, "bc", 90, bg.Style("label"))
 	}
 
@@ -184,21 +185,26 @@ func GenericScatter(bg BasicGraphics, points []EPoint, style DataStyle) {
 	for _, p := range points {
 		ebs := style
 		ebs.LineColor, ebs.LineWidth = ebs.FontColor, ebs.FontSize
-		if ebs.LineColor == "" { ebs.LineColor = "#808080" }
-		if ebs.LineWidth == 0 { ebs.LineWidth = 1 }
+		if ebs.LineColor == "" {
+			ebs.LineColor = "#404040"
+		}
+		if ebs.LineWidth == 0 {
+			ebs.LineWidth = 1
+		}
 		xl, yl, xh, yh := p.boundingBox()
+		// fmt.Printf("Draw %d: %f %f-%f\n", i, p.DeltaX, xl,xh)
 		if !math.IsNaN(p.DeltaX) {
-			bg.Line(int(xl), int(p.Y), int(xh), int(p.X), style)
+			bg.Line(int(xl), int(p.Y), int(xh), int(p.Y), ebs)
 		}
 		if !math.IsNaN(p.DeltaY) {
-			bg.Line(int(p.X), int(yl), int(p.X), int(yh), style)
+			bg.Line(int(p.X), int(yl), int(p.X), int(yh), ebs)
 		}
 	}
 
 	// Second pass: Line
-	if style.LineStyle != 0 && len(points)>0 {
+	if style.LineStyle != 0 && len(points) > 0 {
 		lastx, lasty := points[0].X, points[0].Y
-		for i:=1; i<len(points); i++ {
+		for i := 1; i < len(points); i++ {
 			x, y := points[i].X, points[i].Y
 			bg.Line(int(lastx), int(lasty), int(x), int(y), style)
 			lastx, lasty = x, y
@@ -215,10 +221,10 @@ func GenericScatter(bg BasicGraphics, points []EPoint, style DataStyle) {
 
 
 func GenericBoxes(bg BasicGraphics, boxes []Box, width int, style DataStyle) {
-	if width % 2 == 0 {
+	if width%2 == 0 {
 		width += 1
 	}
-	hbw := (width-1)/2
+	hbw := (width - 1) / 2
 	for _, d := range boxes {
 		x := int(d.X)
 		q1, q3 := int(d.Q1), int(d.Q3)

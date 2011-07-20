@@ -32,7 +32,7 @@ func (sc *ScatterChart) AddFunc(name string, f func(float64) float64, style Data
 		style = AutoStyle()
 	}
 	sc.Data = append(sc.Data, ScatterChartData{name, style, nil, f})
-	ke := KeyEntry{Symbol: style.Symbol, Text: name}
+	ke := KeyEntry{Text: name, Style: style}
 	sc.Key.Entries = append(sc.Key.Entries, ke)
 }
 
@@ -43,7 +43,7 @@ func (sc *ScatterChart) AddData(name string, data []EPoint, style DataStyle) {
 		style = AutoStyle()
 	}
 	sc.Data = append(sc.Data, ScatterChartData{name, style, data, nil})
-	ke := KeyEntry{Symbol: style.Symbol, Text: name}
+	ke := KeyEntry{Style: style, Text: name}
 	sc.Key.Entries = append(sc.Key.Entries, ke)
 	if sc.XRange.DataMin == 0 && sc.XRange.DataMax == 0 && sc.YRange.DataMin == 0 && sc.YRange.DataMax == 0 {
 		sc.XRange.DataMin = data[0].X
@@ -451,13 +451,18 @@ func (sc *ScatterChart) Plot(g Graphics) {
 	fontwidth, fontheight := g.FontMetrics()
 	w, h := g.Dimensions()
 
-	width, leftm, height, topm, kb, numxtics, numytics := LayoutTxt(w, h, sc.Title, sc.Xlabel, sc.Ylabel, sc.XRange.TicSetting.Hide, sc.YRange.TicSetting.Hide, &sc.Key, fontwidth, fontheight)
+	width, leftm, height, topm, _, numxtics, numytics := LayoutTxt(w, h, sc.Title, sc.Xlabel, sc.Ylabel, sc.XRange.TicSetting.Hide, sc.YRange.TicSetting.Hide, &sc.Key, fontwidth, fontheight)
 
+	layout := Layout(g, sc.Title, sc.XRange.Label, sc.YRange.Label,
+		sc.XRange.TicSetting.Hide, sc.YRange.TicSetting.Hide, &sc.Key)
 
-	g.Begin()
+	width, height = layout.Width, layout.Height
+	topm, leftm = layout.Top, layout.Left
 
 	sc.XRange.Setup(numxtics, numxtics+2, width, leftm, false)
 	sc.YRange.Setup(numytics, numytics+1, height, topm, true)
+
+	g.Begin()
 
 	if sc.Title != "" {
 		g.Title(sc.Title)
@@ -480,14 +485,15 @@ func (sc *ScatterChart) Plot(g Graphics) {
 				dx, dy := nan, nan
 				var xo, yo float64
 				// TODO: clip
-				if d.DeltaX != nan {
+				if !math.IsNaN(d.DeltaX) {
 					dx = float64(xf(d.DeltaX) - xf(0)) // TODO: abs?
 					xo = float64(xf(d.OffX) - xf(0))
 				}
-				if d.DeltaY != nan {
+				if !math.IsNaN(d.DeltaY) {
 					dy = float64(yf(d.DeltaY) - yf(0)) // TODO: abs?
 					yo = float64(yf(d.OffY) - yf(0))
 				}
+				// fmt.Printf("Point %d: %f\n", i, dx)
 				p := EPoint{X: float64(x), Y: float64(y), DeltaX: dx, DeltaY: dy, OffX: xo, OffY: yo}
 				points = append(points, p)
 			}
@@ -496,7 +502,7 @@ func (sc *ScatterChart) Plot(g Graphics) {
 			// Functions. TODO(vodo) proper clipping
 			points := make([]EPoint, 0, width/10)
 
-			for sx := leftm; sx < leftm+width; sx+=10 {
+			for sx := leftm; sx < leftm+width; sx += 10 {
 				x := sc.XRange.Screen2Data(sx)
 				y := data.Func(x)
 				if y >= sc.YRange.Min && y <= sc.YRange.Max {
@@ -522,8 +528,8 @@ func (sc *ScatterChart) Plot(g Graphics) {
 		}
 	}
 
-	if kb != nil {
-		//	tb.Paste(sc.Key.X, sc.Key.Y, kb)
+	if !sc.Key.Hide {
+		g.Key(50, 50, sc.Key)
 	}
 
 	g.End()

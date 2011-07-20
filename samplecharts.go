@@ -54,7 +54,7 @@ func main() {
 	pl.XRange.TicSetting.Grid = 1
 	x := []float64{-4, -3.3, -1.8, -1, 0.2, 0.8, 2, 3.1, 4, 5.3, 6, 7, 8, 9}
 	y := []float64{22, 18, -3, 0, 0.5, 2, 45, 12, 16.5, 24, 30, 55, 60, 70}
-	pl.AddDataPair("Measurement", x, y, chart.AutoStyle())
+	pl.AddDataPair("Measurement", x, y, chart.DataStyle{Symbol: '#', SymbolColor: "#0000ff", LineStyle: 0})
 	last := len(pl.Data) - 1
 	pl.Data[last].Samples[6].DeltaX = 2.5
 	pl.Data[last].Samples[6].OffX = 0.5
@@ -62,7 +62,7 @@ func main() {
 	pl.Data[last].Samples[6].OffY = 2
 	pl.AddData("Volker", []chart.EPoint{chart.EPoint{-4, 40, 0, 0, 0, 0}, chart.EPoint{-3, 45, 0, 0, 0, 0},
 		chart.EPoint{-2, 35, 0, 0, 0, 0}},
-		chart.AutoStyle())
+		chart.DataStyle{Symbol: '0', SymbolColor: "#ff00ff", LineStyle: 1, LineWidth: 1})
 	pl.AddFunc("Theory", func(x float64) float64 {
 		if x > 5.25 && x < 5.75 {
 			return 75
@@ -71,7 +71,7 @@ func main() {
 			return 500
 		}
 		return x * x
-	},chart.DataStyle{Symbol:0, LineWidth: 2, LineColor: "#a00000", LineStyle: 1})
+	},chart.DataStyle{Symbol: 0, LineWidth: 2, LineColor: "#a00000", LineStyle: 1})
 	fmt.Printf("%s\n", pl.PlotTxt(100, 28))
 
 	sf, _ := os.Create("scatter.svg")
@@ -87,17 +87,19 @@ func main() {
 	mysvg := svg.New(s2f)
 	mysvg.Start(800, 600)
 	mysvg.Title("My Plot")
-	mysvg.Rect(0,0,800,600, "fill: #ffffff")
+	mysvg.Rect(0, 0, 800, 600, "fill: #ffffff")
 	svggraphics := chart.NewSvgGraphics(mysvg, 800, 600, "Arial", 12)
 	pl.Plot(svggraphics)
 	/*
-	svggraphics.Begin()
-	svggraphics.XAxis(pl.XRange, 400, 100)
-	svggraphics.YAxis(pl.YRange, 150, 600)
-	svggraphics.End()
-	 */
+		svggraphics.Begin()
+		svggraphics.XAxis(pl.XRange, 400, 100)
+		svggraphics.YAxis(pl.YRange, 150, 600)
+		svggraphics.End()
+	*/
 	mysvg.End()
 	s2f.Close()
+
+	goto ende
 
 	fmt.Printf("%s\n", pl.PlotTxt(100, 28))
 
@@ -273,4 +275,6 @@ func main() {
 	svgf, _ := os.Create("first.svg")
 	lc.PlotSvg(600, 400, svgf)
 	svgf.Close()
+
+ende:
 }
