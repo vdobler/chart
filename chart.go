@@ -654,6 +654,22 @@ func (key *Key) LayoutKeyTxt() (kb *TextBuf) {
 	return
 }
 
+type LayoutData struct {
+	Width, Left, Height, Top int // border of graph area
+	KeyX, KeyY, int
+	NumXtics, NumYtics, int
+}
+
+
+// TODO: Key.X/Y have to go to explicit data
+func Layout(g Graphics, title, xlabel, ylabel string, hidextics, hideytics bool, key *Key,) (ld LayoutData) {
+	fw, fs := g.FontMetrics()
+	w, h := g.g.Dimensions()
+
+	ld.Width, ld.Left, ld.Height, ld.Top, _, ld.NumXtics, ld.NumYtics = LayoutTxt(w,h, title, xlabel, ylabel, hidextics, hideytics, key, fw, fs)
+	ld.KeyX, ld.KeyY = Key.X, Key.Y
+	return
+}
 
 func LayoutTxt(w, h int, title, xlabel, ylabel string, hidextics, hideytics bool, key *Key, fw, fh int) (width, leftm, height, topm int, kb *TextBuf, numxtics, numytics int) {
 	if key.Pos == "" {
