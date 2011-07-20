@@ -71,7 +71,7 @@ func main() {
 			return 500
 		}
 		return x * x
-	},chart.DataStyle{})
+	},chart.DataStyle{Symbol:0, LineWidth: 2, LineColor: "#a00000", LineStyle: 1})
 	fmt.Printf("%s\n", pl.PlotTxt(100, 28))
 
 	sf, _ := os.Create("scatter.svg")

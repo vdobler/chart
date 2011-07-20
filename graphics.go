@@ -2,6 +2,7 @@ package chart
 
 import (
 	"fmt"
+	"math"
 )
 
 
@@ -21,8 +22,8 @@ type Graphics interface {
 	YAxis(yr Range, xs, xms int)
 	Title(text string)
 
-	/*
 	Scatter(points []EPoint, style DataStyle) // Points, Lines and Line+Points
+	/*
 	Boxes(style DataStyle)                    // Boxplots
 	Bars(style DataStyle)                     // any type of histogram
 	Ring(style DataStyle)                     // 
@@ -162,6 +163,46 @@ func GenericYAxis(bg BasicGraphics, rng Range, x, xm int) {
 			bg.Text(x-ticLen, ly, tic.Label, "cr", 90, ticstyle)
 		} else {
 			bg.Text(x-2*ticLen, ly, tic.Label, "cr", 0, ticstyle)
+		}
+	}
+}
+
+
+// GenericScatter draws the given points according to style.
+// style.FontColor is used as color of error bars and style.FontSize is used
+// as the length of the endmarks of the error bars. Both have suitable defaults
+// if the FontXyz are not set. Point coordinates and errors must be provided 
+// in screen coordinates.
+func GenericScatter(bg BasicGraphics, points []EPoint, style DataStyle) {
+	// First pass: Error bars
+	for _, p := range points {
+		ebs := style
+		ebs.LineColor, ebs.LineWidth = ebs.FontColor, ebs.FontSize
+		if ebs.LineColor == "" { ebs.LineColor = "#808080" }
+		if ebs.LineWidth == 0 { ebs.LineWidth = 1 }
+		xl, yl, xh, yh := p.boundingBox()
+		if !math.IsNaN(p.DeltaX) {
+			bg.Line(int(xl), int(p.Y), int(xh), int(p.X), style)
+		}
+		if !math.IsNaN(p.DeltaY) {
+			bg.Line(int(p.X), int(yl), int(p.X), int(yh), style)
+		}
+	}
+
+	// Second pass: Line
+	if style.LineStyle != 0 && len(points)>0 {
+		lastx, lasty := points[0].X, points[0].Y
+		for i:=1; i<len(points); i++ {
+			x, y := points[i].X, points[i].Y
+			bg.Line(int(lastx), int(lasty), int(x), int(y), style)
+			lastx, lasty = x, y
+		}
+	}
+
+	// Third pass: symbols
+	if style.Symbol != 0 {
+		for _, p := range points {
+			bg.Symbol(int(p.X), int(p.Y), style.Symbol, style)
 		}
 	}
 }

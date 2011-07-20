@@ -188,3 +188,7 @@ func (sg *SvgGraphics) XAxis(xr Range, ys, yms int) {
 func (sg *SvgGraphics) YAxis(yr Range, xs, xms int) {
 	GenericYAxis(sg, yr, xs, xms)
 }
+
+func (sg *SvgGraphics) Scatter(points []EPoint, style DataStyle) {
+	GenericScatter(sg, points, style)
+}

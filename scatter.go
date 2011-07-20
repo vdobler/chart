@@ -468,49 +468,57 @@ func (sc *ScatterChart) Plot(g Graphics) {
 
 	// Plot Data
 	nan := math.NaN()
+	xf, yf := sc.XRange.Data2Screen, sc.YRange.Data2Screen
 	for _, data := range sc.Data {
 		style := data.Style
 		if data.Samples != nil {
 			// Samples
+			points := make([]EPoint, 0, len(data.Samples))
 			for _, d := range data.Samples {
-				x := sc.XRange.Data2Screen(d.X)
-				y := sc.YRange.Data2Screen(d.Y)
+				x := xf(d.X)
+				y := yf(d.Y)
+				dx, dy := nan, nan
+				var xo, yo float64
 				// TODO: clip
 				if d.DeltaX != nan {
-					xl, _, xh, _ := d.boundingBox()
-					xa := sc.XRange.Data2Screen(xl)
-					xe := sc.XRange.Data2Screen(xh)
-					g.Line(xa, y, xe, y, style)
+					dx = float64(xf(d.DeltaX) - xf(0)) // TODO: abs?
+					xo = float64(xf(d.OffX) - xf(0))
 				}
 				if d.DeltaY != nan {
-					_, yl, _, yh := d.boundingBox()
-					ya := sc.YRange.Data2Screen(yl)
-					ye := sc.YRange.Data2Screen(yh)
-					g.Line(x, ya, x, ye, style)
+					dy = float64(yf(d.DeltaY) - yf(0)) // TODO: abs?
+					yo = float64(yf(d.OffY) - yf(0))
 				}
-				g.Symbol(x, y, style.Symbol, style)
+				p := EPoint{X: float64(x), Y: float64(y), DeltaX: dx, DeltaY: dy, OffX: xo, OffY: yo}
+				points = append(points, p)
 			}
+			g.Scatter(points, style)
 		} else if data.Func != nil {
 			// Functions. TODO(vodo) proper clipping
-			// symbol := Symbol[s%len(Symbol)]
-			var lastsy, lastsx int
-			var lastvalid bool
-			style.LineWidth = 2
+			points := make([]EPoint, 0, width/10)
+
 			for sx := leftm; sx < leftm+width; sx+=10 {
 				x := sc.XRange.Screen2Data(sx)
 				y := data.Func(x)
-				sy := sc.YRange.Data2Screen(y)
 				if y >= sc.YRange.Min && y <= sc.YRange.Max {
-					if lastvalid {
-						g.Line(lastsx, lastsy, sx, sy, style)
-					} else {
-						lastvalid = true
-					}
-					lastsx, lastsy = sx, sy
+					sy := yf(y)
+					p := EPoint{X: float64(sx), Y: float64(sy), DeltaX: nan, DeltaY: nan}
+					points = append(points, p)
 				} else {
-					lastvalid = false
+					// TODO: buggy
+					if y <= sc.YRange.Min {
+						sy := yf(sc.YRange.Min)
+						p := EPoint{X: float64(sx), Y: float64(sy), DeltaX: nan, DeltaY: nan}
+						points = append(points, p)
+					} else { // y > sc.YRange.Max 
+						sy := yf(sc.YRange.Max)
+						p := EPoint{X: float64(sx), Y: float64(sy), DeltaX: nan, DeltaY: nan}
+						points = append(points, p)
+					}
+					g.Scatter(points, style)
+					points = make([]EPoint, 0, width/10)
 				}
 			}
+			g.Scatter(points, style)
 		}
 	}
 
