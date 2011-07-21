@@ -58,14 +58,14 @@ func (sg *SvgGraphics) FontMetrics(style DataStyle) (fw float32, fh int, mono bo
 	case "Helvetica":
 		fw, mono = 0.5*float32(fh), false
 	case "Times":
-		fw, mono = 0.55*float32(fh), false
+		fw, mono = 0.51*float32(fh), false
 	case "Courier":
-		fw, mono = 0.65*float32(fh), true
+		fw, mono = 0.62*float32(fh), true
 	default:
 		fw, mono = 0.75*float32(fh), false
 	}
 
-	fmt.Printf("FontMetric of %s/%d: %.1f x %d  %t\n", style.Font, style.FontSize, fw, fh, mono)
+	// fmt.Printf("FontMetric of %s/%d: %.1f x %d  %t\n", style.Font, style.FontSize, fw, fh, mono)
 	return
 }
 
