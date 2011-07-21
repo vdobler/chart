@@ -165,7 +165,6 @@ func (sc *ScatterChart) PlotTxt(w, h int) string {
 }
 
 
-
 // Plot outputs the scatter chart sc to g.
 func (sc *ScatterChart) Plot(g Graphics) {
 	layout := Layout(g, sc.Title, sc.XRange.Label, sc.YRange.Label,

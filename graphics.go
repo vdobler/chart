@@ -5,15 +5,32 @@ import (
 	"math"
 )
 
-
-// Graphics is the interface all chart drivers have to implement
-type Graphics interface {
-	Dimensions() (int, int)  // character-width / height
-	FontMetrics() (int, int) // character-width / height
-
+// BasicGrapic is an interface of the most basic graphic primitives.
+// Any type which implements BasicGraphics can use generic implementations
+// of the Graphics methods.
+type BasicGraphics interface {
+	FontMetrics(style DataStyle) (fw float32, fh int, mono bool)     // Return fontwidth and -height in pixel and iff
+	TextLen(t string, style DataStyle) int                           // length=width of t in screen units
 	Line(x0, y0, x1, y1 int, style DataStyle)                        // Draw line from (x0,y0) to (x1,y1)
 	Symbol(x, y, s int, style DataStyle)                             // Put symnbol s at (x,y)
 	Text(x, y int, t string, align string, rot int, style DataStyle) // align: [[tcb]][lcr]
+	Style(element string) DataStyle                                  // retrieve style for element
+}
+
+
+// Graphics is the interface all chart drivers have to implement
+type Graphics interface {
+	BasicGraphics
+	/*
+		FontMetrics(style DataStyle) (fw int, fh int, mono bool)  // Return fontwidth and -height in pixel and iff
+
+		Line(x0, y0, x1, y1 int, style DataStyle)                        // Draw line from (x0,y0) to (x1,y1)
+		Symbol(x, y, s int, style DataStyle)                             // Put symnbol s at (x,y)
+		Text(x, y int, t string, align string, rot int, style DataStyle) // align: [[tcb]][lcr]
+		Style(element string) DataStyle                                  // retrieve style for element
+	*/
+
+	Dimensions() (int, int) // character-width / height
 
 	Begin() // start of chart drawing
 	// All stuff is preprocessed: sanitized, clipped, strings formated, integer coords,
@@ -30,32 +47,58 @@ type Graphics interface {
 	*/
 	Key(x, y int, key Key) // place key at x,y
 	End()                  // Done, cleanup
-	Style(element string) DataStyle                                  // retrieve style for element
 }
 
 
-// BasicGrapic is an interface of the most basic graphic primitives.
-// Any type which implements BasicGraphics can use generic implementations
-// of the Graphics methods.
-type BasicGraphics interface {
-	FontMetrics() (int, int)                                         // Return fontwidth and -height in pixel.
-	Line(x0, y0, x1, y1 int, style DataStyle)                        // Draw line from (x0,y0) to (x1,y1)
-	Symbol(x, y, s int, style DataStyle)                             // Put symnbol s at (x,y)
-	Text(x, y int, t string, align string, rot int, style DataStyle) // align: [[tcb]][lcr]
-	Style(element string) DataStyle                                  // retrieve style for element
+func GenericFontMetrics(bg BasicGraphics, style DataStyle) (fw float32, fh int, mono bool) {
+	fh = style.FontSize
+	fw = 0.65 * float32(fh)
+	mono = true
+	return
+}
+
+
+func GenericTextLen(bg BasicGraphics, t string, style DataStyle) (width int) {
+	// TODO: how handle newlines?  same way like Text does
+	fw, _, mono := bg.FontMetrics(style)
+	if mono {
+		for _ = range t {
+			width++
+		}
+		width = int(float32(width)*fw + 0.5)
+	} else {
+		var length float32
+		for _, rune := range t {
+			if w, ok := CharacterWidth[rune]; ok {
+				length += w
+			} else {
+				length += 20 // save above average
+			}
+		}
+		length /= averageCharacterWidth
+		length *= fw
+		width = int(length + 0.5)
+	}
+	return
 }
 
 func GenericRect(bg BasicGraphics, x, y, w, h int, style DataStyle) {
+	if style.Fill != 0 {
+		// TODO: calculate color from fill
+		fs := DataStyle{LineWidth: 1, LineColor: "#ffffff", LineStyle: SolidLine, Alpha: 0}
+		for i := 1; i < h-1; i++ {
+			bg.Line(x+1, y+i, x+w-1, y+i, fs)
+		}
+	}
 	bg.Line(x, y, x+w, y, style)
 	bg.Line(x+w, y, x+w, y+h, style)
 	bg.Line(x+w, y+h, x, y+h, style)
 	bg.Line(x, y+h, x, y, style)
-	// TODO: filling
 }
 
 // GenericAxis draws the axis r solely by graphic primitives of bg.
 func GenericXAxis(bg BasicGraphics, rng Range, y, ym int) {
-	_, fontheight := bg.FontMetrics()
+	_, fontheight, _ := bg.FontMetrics(bg.Style("axis"))
 	var ticLen int = 0
 	if !rng.TicSetting.Hide {
 		ticLen = min(10, max(4, (fontheight-1)/2))
@@ -121,10 +164,10 @@ func GenericXAxis(bg BasicGraphics, rng Range, y, ym int) {
 
 // GenericAxis draws the axis r solely by graphic primitives of bg.
 func GenericYAxis(bg BasicGraphics, rng Range, x, xm int) {
-	fontwidth, fontheight := bg.FontMetrics()
+	fontwidth, fontheight, _ := bg.FontMetrics(bg.Style("key"))
 	var ticLen int = 0
 	if !rng.TicSetting.Hide {
-		ticLen = min(10, max(4, fontwidth))
+		ticLen = min(10, max(4, int(fontwidth)))
 	}
 
 	// Axis itself, mirrord axis and zero

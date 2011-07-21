@@ -36,7 +36,7 @@ func NextSymbol(s int) int {
 	return s + 1
 }
 
-var CharacterWidth = map[int]float64{'a': 16.8, 'b': 17.0, 'c': 15.2, 'd': 16.8, 'e': 16.8, 'f': 8.5, 'g': 17.0,
+var CharacterWidth = map[int]float32{'a': 16.8, 'b': 17.0, 'c': 15.2, 'd': 16.8, 'e': 16.8, 'f': 8.5, 'g': 17.0,
 	'h': 16.8, 'i': 5.9, 'j': 5.9, 'k': 16.8, 'l': 6.9, 'm': 25.5, 'n': 16.8, 'o': 16.8, 'p': 17.0, 'q': 17.0,
 	'r': 10.2, 's': 15.2, 't': 8.4, 'u': 16.8, 'v': 15.4, 'w': 22.2, 'x': 15.2, 'y': 15.2, 'z': 15.2,
 	'A': 20.2, 'B': 20.2, 'C': 22.2, 'D': 22.2, 'E': 20.2, 'F': 18.6, 'G': 23.5, 'H': 22.0, 'I': 8.2, 'J': 15.2,
@@ -47,7 +47,7 @@ var CharacterWidth = map[int]float64{'a': 16.8, 'b': 17.0, 'c': 15.2, 'd': 16.8,
 	'(': 10.2, ')': 10.2, '=': 18.0, '?': 16.8, '!': 8.5, '[': 8.2, ']': 8.2, '{': 10.2, '}': 10.2, '$': 16.8,
 	'<': 18.0, '>': 18.0, '§': 16.8, '°': 12.2, '^': 14.2, '~': 18.0,
 }
-var averageCharacterWidth float64
+var averageCharacterWidth float32
 
 func init() {
 	n := 0
@@ -55,7 +55,7 @@ func init() {
 		averageCharacterWidth += w
 		n++
 	}
-	averageCharacterWidth /= float64(n)
+	averageCharacterWidth /= float32(n)
 	averageCharacterWidth = 15
 }
 

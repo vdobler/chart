@@ -474,24 +474,24 @@ func (r *Range) Setup(desiredNumberOfTics, maxNumberOfTics, sWidth, sOffset int,
 
 // LayoutData encapsulates the layout of the graph area in the whole drawing area.
 type LayoutData struct {
-	Width, Height    int // width and height of graph area
-	Left, Top        int // left and top margin
-	KeyX, KeyY               int // x and y coordiante of key
-	NumXtics, NumYtics       int // suggested numer of tics for both axis
+	Width, Height      int // width and height of graph area
+	Left, Top          int // left and top margin
+	KeyX, KeyY         int // x and y coordiante of key
+	NumXtics, NumYtics int // suggested numer of tics for both axis
 }
 
 
 // TODO: Key.X/Y have to go to explicit data
 func Layout(g Graphics, title, xlabel, ylabel string, hidextics, hideytics bool, key *Key) (ld LayoutData) {
-	fw, fh := g.FontMetrics()
+	fw, fh, _ := g.FontMetrics(g.Style("key"))
 	w, h := g.Dimensions()
 
 	if key.Pos == "" {
 		key.Pos = "itr"
 	}
 
-	width, leftm, height, topm := w-6*fw, 2*fw, h-2*fh, fh
-	xlabsep, ylabsep := fh, 3*fw
+	width, leftm, height, topm := w-int(6*fw), int(2*fw), h-2*fh, fh
+	xlabsep, ylabsep := fh, int(3*fw)
 	if title != "" {
 		topm += (5 * fh) / 2
 		height -= (5 * fh) / 2
@@ -501,32 +501,32 @@ func Layout(g Graphics, title, xlabel, ylabel string, hidextics, hideytics bool,
 	}
 	if !hidextics {
 		height -= (3 * fh) / 2
-		xlabsep += (3 * fh) / 2 
+		xlabsep += (3 * fh) / 2
 	}
 	if ylabel != "" {
 		leftm += 2 * fh
 		width -= 2 * fh
 	}
 	if !hideytics {
-		leftm += 6 * fw
-		width -= 6 * fw
-		ylabsep += 6 * fw
+		leftm += int(6 * fw)
+		width -= int(6 * fw)
+		ylabsep += int(6 * fw)
 	}
 
-	if key != nil && !key.Hide && len(key.Place()) > 0 { 
+	if key != nil && !key.Hide && len(key.Place()) > 0 {
 		m := key.Place()
 		kw, kh, _, _ := key.Layout(g, m)
-		sepx, sepy := 2*(fw+fh)/2, 2*(fw+fh)/2
+		sepx, sepy := int(fw)+fh, int(fw)+fh
 		switch key.Pos[:2] {
 		case "ol":
 			width, leftm = width-kw-sepx, leftm+kw
-			ld.KeyX = sepx/2
+			ld.KeyX = sepx / 2
 		case "or":
-			width = width - kw-sepx
-			ld.KeyX = w - kw -sepx/2
+			width = width - kw - sepx
+			ld.KeyX = w - kw - sepx/2
 		case "ot":
 			height, topm = height-kh-sepy, topm+kh
-			ld.KeyY = sepy/2
+			ld.KeyY = sepy / 2
 		case "ob":
 			height = height - kh - sepy
 			ld.KeyY = h - kh - sepy/2
@@ -536,9 +536,9 @@ func Layout(g Graphics, title, xlabel, ylabel string, hidextics, hideytics bool,
 			ld.KeyY = topm + (height-kh)/2
 		case "ib":
 			ld.KeyY = topm + height - kh - sepy
-			
+
 		}
-		
+
 		switch key.Pos[:2] {
 		case "ol", "or":
 			switch key.Pos[2] {
@@ -547,7 +547,7 @@ func Layout(g Graphics, title, xlabel, ylabel string, hidextics, hideytics bool,
 			case 'c':
 				ld.KeyY = topm + (height-kh)/2
 			case 'b':
-				ld.KeyY = topm + height - kh 
+				ld.KeyY = topm + height - kh
 			}
 		case "ot", "ob":
 			switch key.Pos[2] {
@@ -574,15 +574,15 @@ func Layout(g Graphics, title, xlabel, ylabel string, hidextics, hideytics bool,
 	// fmt.Printf("width=%d, height=%d, leftm=%d, topm=%d\n", width, height, leftm, topm)
 
 	// Number of tics
-	if width/fw <= 20 {
+	if width/int(fw) <= 20 {
 		ld.NumXtics = 2
 	} else {
-		ld.NumXtics = width/(15*fw)
+		ld.NumXtics = width / int(15*fw)
 		if ld.NumXtics > 25 {
 			ld.NumXtics = 25
 		}
 	}
-	ld.NumYtics = height / (4*fh)
+	ld.NumYtics = height / (4 * fh)
 	if ld.NumYtics > 20 {
 		ld.NumYtics = 20
 	}
@@ -592,5 +592,3 @@ func Layout(g Graphics, title, xlabel, ylabel string, hidextics, hideytics bool,
 
 	return
 }
-
-

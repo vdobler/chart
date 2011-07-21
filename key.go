@@ -1,7 +1,6 @@
 package chart
 
 import (
-	"math"
 	"strings"
 	"fmt"
 )
@@ -25,7 +24,7 @@ type Key struct {
 	Border  int        // -1: off, 0: std, 1...:other styles
 	Pos     string     // default "" is "itr"
 	Entries []KeyEntry // List of entries in the legend
-	X, Y int
+	X, Y    int
 }
 
 
@@ -241,10 +240,10 @@ func (key Key) Place() (matrix [][]*KeyEntry) {
 }
 
 
-func textviewlen(t string) (length float64) {
+func textviewlen(t string) (length float32) {
 	n := 0
 	for _, rune := range t {
-		if w, ok :=  CharacterWidth[rune]; ok {
+		if w, ok := CharacterWidth[rune]; ok {
 			length += w
 		} else {
 			length += 23 // save above average
@@ -252,11 +251,11 @@ func textviewlen(t string) (length float64) {
 		n++
 	}
 	length /= averageCharacterWidth
-	fmt.Printf("Length >%s<: %d runes = %.2f  (%d)\n", t, n, length, int(100*length/float64(n)))
-	return 
+	fmt.Printf("Length >%s<: %d runes = %.2f  (%d)\n", t, n, length, int(100*length/float32(n)))
+	return
 }
 
-func textDim(t string) (w float64, h int) {
+func textDim(t string) (w float32, h int) {
 	lines := strings.Split(t, "\n", -1)
 	for _, t := range lines {
 		tvl := textviewlen(t)
@@ -269,16 +268,16 @@ func textDim(t string) (w float64, h int) {
 }
 
 var (
-	KeyColSep      float64 = 3.0
-	KeyHorSep      float64 = 2.0
+	KeyColSep      float32 = 3.0
+	KeyHorSep      float32 = 2.0
 	KeySymbolWidth int     = 30
 	KeySymbolSep   int     = 10
-	KeyRowSep      = 0.75
-	KeyVertSep     = 0.5
+	KeyRowSep      float32 = 0.75
+	KeyVertSep     float32 = 0.5
 )
 
 func (key Key) Layout(bg BasicGraphics, m [][]*KeyEntry) (w, h int, colwidth, rowheight []int) {
-	fontwidth, fontheight := bg.FontMetrics()
+	fontwidth, fontheight, _ := bg.FontMetrics(bg.Style("key"))
 	cols, rows := len(m), len(m[0])
 
 	// Find total width and height
@@ -304,7 +303,7 @@ func (key Key) Layout(bg BasicGraphics, m [][]*KeyEntry) (w, h int, colwidth, ro
 	totalw := 0
 	colwidth = make([]int, cols)
 	for c := 0; c < cols; c++ {
-		rw := 0.0
+		var rw float32
 		for r := 0; r < rows; r++ {
 			e := m[c][r]
 			if e == nil {
@@ -317,38 +316,38 @@ func (key Key) Layout(bg BasicGraphics, m [][]*KeyEntry) (w, h int, colwidth, ro
 				rw = w
 			}
 		}
-		irw := int(math.Ceil(rw+1))
+		irw := int(rw + 0.75)
 		colwidth[c] = irw
 		totalw += irw
 	}
 
 	// totalw/h are characters only and still in character-units
 	fmt.Printf("%d  %f\n", totalw, averageCharacterWidth)
-	totalw *= fontwidth                                     // scale to pixels
+	totalw = int(float32(totalw) * fontwidth) // scale to pixels
 	fmt.Printf("%d\n", totalw)
-	totalw += int(KeyColSep * float64((cols-1)*fontwidth))  // add space between columns
+	totalw += int(KeyColSep * (float32(cols-1) * fontwidth)) // add space between columns
 	fmt.Printf("%d\n", totalw)
-	totalw += int(2 * KeyHorSep * float64(fontwidth))       // add space for left/right border
+	totalw += int(2 * KeyHorSep * fontwidth) // add space for left/right border
 	fmt.Printf("%d\n", totalw)
-	totalw += (KeySymbolWidth + KeySymbolSep) * cols        // place for symbol and symbol-text sep
+	totalw += (KeySymbolWidth + KeySymbolSep) * cols // place for symbol and symbol-text sep
 	fmt.Printf("%d\n", totalw)
 
 	totalh *= fontheight
-	totalh += int(KeyRowSep * float64((rows-1)*fontheight)) // add space between rows
-	totalh += int(2 * KeyVertSep * float64(fontheight))     // add border at top/bottom
+	totalh += int(KeyRowSep * float32((rows-1)*fontheight)) // add space between rows
+	totalh += int(2 * KeyVertSep * float32(fontheight))     // add border at top/bottom
 
 	return totalw, totalh, colwidth, rowheight
 }
 
 func GenericKey(bg BasicGraphics, x, y int, key Key) {
 	m := key.Place()
-	fw, fh := bg.FontMetrics()
+	fw, fh, _ := bg.FontMetrics(bg.Style("key"))
 	tw, th, cw, rh := key.Layout(bg, m)
 	style := bg.Style("key")
 
 	GenericRect(bg, x, y, tw, th, style)
-	x += int(KeyHorSep * float64(fw))
-	y += int(KeyVertSep * float64(fh)) + fh/2
+	x += int(KeyHorSep * fw)
+	y += int(KeyVertSep*float32(fh)) + fh/2
 	for ci, col := range m {
 		yy := y
 
@@ -371,29 +370,9 @@ func GenericKey(bg BasicGraphics, x, y int, key Key) {
 				}
 				bg.Text(x+KeySymbolWidth+KeySymbolSep, yy, t, "cl", 0, e.Style)
 			}
-			yy += fh*rh[ri] + int(KeyRowSep*float64(fh))
+			yy += fh*rh[ri] + int(KeyRowSep*float32(fh))
 		}
 
-		x += fw*cw[ci] + KeySymbolWidth + KeySymbolSep + int(KeyColSep*float64(fw))
+		x += int(fw*float32(cw[ci])) + KeySymbolWidth + KeySymbolSep + int(KeyColSep*fw)
 	}
-
-	text := "all"
-	tvl := int(float64(fw)*textviewlen(text)+0.5)
-	GenericRect(bg, 150, 300, tvl, 30, style)
-	bg.Text(150+tvl/2,315, text, "cc", 0, style)
-
-	text = "WWW"
-	tvl = int(float64(fw)*textviewlen(text)+0.5)
-	GenericRect(bg, 150, 340, tvl, 30, style)
-	bg.Text(150+tvl/2, 355, text, "cc", 0, style)
-
-	text = "Alles ,,, ein ||||, nur die lllll."
-	tvl = int(float64(fw)*textviewlen(text)+0.5)
-	GenericRect(bg, 150, 380, tvl, 30, style)
-	bg.Text(150+tvl/2, 395, text, "cc", 0, style)
-
-	text = "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW"
-	tvl = int(float64(fw)*textviewlen(text)+0.5)
-	GenericRect(bg, 150, 420, tvl, 30, style)
-	bg.Text(150+tvl/2, 435, text, "cc", 0, style)
 }

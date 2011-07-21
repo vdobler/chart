@@ -269,4 +269,44 @@ func main() {
 	fmt.Printf("%s\n", lc.PlotTxt(100, 25))
 
 ende:
+
+	if true {
+		s2f, _ := os.Create("text.svg")
+		mysvg := svg.New(s2f)
+		mysvg.Start(1600, 800)
+		mysvg.Title("My Plot")
+		mysvg.Rect(0, 0, 2000, 800, "fill: #ffffff")
+		sgr := chart.NewSvgGraphics(mysvg, 2000, 800, "Arial", 18)
+		sgr.Begin()
+
+		texts := []string{"ill", "WWW", "Some normal text.", "Illi, is. illigalli: ill!", "OO WORKSHOOPS OMWWW BMWWMB"}
+		fonts := []string{"Arial", "Helvetica", "Times", "Courier" /* "Calibri", "Palatino" */ }
+		sizes := []int{8, 12, 16, 20}
+		style := chart.DataStyle{FontColor: "#000000", Alpha: 0, LineColor: "#ff0000", LineWidth: 2}
+		ls := chart.DataStyle{FontColor: "#000a0", Font: "Arial", FontSize: 12, Alpha: 0, LineColor: "#000000", LineWidth: 1}
+
+		x, y := 20, 40
+		for _, t := range texts {
+			for _, f := range fonts {
+				for _, s := range sizes {
+					style.Font, style.FontSize = f, s
+					tvl := sgr.TextLen(t, style)
+					sgr.Text(x+tvl/2, y-2, t, "cc", 0, style)
+					sgr.Line(x, y, x+tvl, y, style)
+					sgr.Text(x+tvl+10, y-2, f, "cl", 0, ls)
+					y += 30
+					if y > 760 {
+						y = 40
+						x += 300
+					}
+				}
+			}
+		}
+
+		sgr.End()
+		mysvg.End()
+		s2f.Close()
+
+	}
+
 }

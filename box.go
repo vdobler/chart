@@ -176,10 +176,10 @@ func (c *BoxChart) PlotTxt(w, h int) string {
 }
 
 func (c *BoxChart) Plot(g Graphics) {
-	fontwidth, fontheight := g.FontMetrics()
+	fontwidth, fontheight, _ := g.FontMetrics(g.Style("axis")) // TODO: use different
 	w, h := g.Dimensions()
 
-	width, leftm, height, topm, kb, numxtics, numytics := LayoutTxt(w, h, c.Title, c.Xlabel, c.Ylabel, c.XRange.TicSetting.Hide, c.YRange.TicSetting.Hide, &c.Key, fontwidth, fontheight)
+	width, leftm, height, topm, kb, numxtics, numytics := LayoutTxt(w, h, c.Title, c.Xlabel, c.Ylabel, c.XRange.TicSetting.Hide, c.YRange.TicSetting.Hide, &c.Key, int(fontwidth+0.75), fontheight)
 
 	g.Begin()
 

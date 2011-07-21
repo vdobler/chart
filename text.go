@@ -189,7 +189,6 @@ func (tb *TextBuf) String() string {
 }
 
 
-
 func LayoutTxt(w, h int, title, xlabel, ylabel string, hidextics, hideytics bool, key *Key, fw, fh int) (width, leftm, height, topm int, kb *TextBuf, numxtics, numytics int) {
 	if key.Pos == "" {
 		key.Pos = "itr"
