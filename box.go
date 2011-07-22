@@ -33,7 +33,8 @@ func (c *BoxChart) AddSet(x float64, data []float64, outlier bool) {
 
 	if len(c.Data) == 0 {
 		c.Data = make([]BoxChartData, 1)
-		c.Data[0] = BoxChartData{Name: "", Style: DataStyle{}}
+		st := DataStyle{LineColor: "#000000", LineWidth: 1, LineStyle: SolidLine}
+		c.Data[0] = BoxChartData{Name: "", Style: st}
 	}
 
 	if len(c.Data) == 1 && len(c.Data[0].Samples) == 0 {
@@ -75,16 +76,16 @@ func (c *BoxChart) AddSet(x float64, data []float64, outlier bool) {
 }
 
 // Add a new (empty) data set to chart. Fill this last data set with AddSet()
-func (c *BoxChart) NextDataSet(name string) {
+func (c *BoxChart) NextDataSet(name string, style DataStyle) {
 	s := Symbol[len(c.Data)%len(Symbol)]
-	c.Data = append(c.Data, BoxChartData{name, DataStyle{}, nil})
+	c.Data = append(c.Data, BoxChartData{name, style, nil})
 	c.Key.Entries = append(c.Key.Entries, KeyEntry{Symbol: s, Text: name})
 }
 
 // Add data boxes to chart.
-func (c *BoxChart) AddData(name string, data []Box) {
+func (c *BoxChart) AddData(name string, data []Box, style DataStyle) {
 	s := Symbol[len(c.Data)%len(Symbol)]
-	c.Data = append(c.Data, BoxChartData{name, DataStyle{}, data})
+	c.Data = append(c.Data, BoxChartData{name, style, data})
 	c.Key.Entries = append(c.Key.Entries, KeyEntry{Symbol: s, Text: name})
 	// TODO(vodo) min, max
 }

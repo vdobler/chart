@@ -4,50 +4,234 @@ import (
 	"chart"
 	"fmt"
 	"os"
+	"math"
 	"github.com/ajstarks/svgo"
-	// "rand"
+	"rand"
 	// "time"
 )
 
-func main() {
+var (
+	data1 = []float64{15e-7, 30e-7, 35e-7, 50e-7, 70e-7, 75e-7, 80e-7, 32e-7, 35e-7, 70e-7, 65e-7}
+	data10 = []float64{34567, 35432, 37888, 39991, 40566, 42123, 44678}
 
-	data1 := []float64{15e-7, 30e-7, 35e-7, 50e-7, 70e-7, 75e-7, 80e-7, 32e-7, 35e-7, 70e-7, 65e-7}
-	data10 := []float64{34567, 35432, 37888, 39991, 40566, 42123, 44678}
-	/*
-		data2 := []float64{10e-7, 11e-7, 12e-7, 22e-7, 25e-7, 33e-7}
-		data3 := []float64{50e-7, 55e-7, 55e-7, 60e-7, 50e-7, 65e-7, 60e-7, 65e-7, 55e-7, 50e-7}
+	data2 = []float64{10e-7, 11e-7, 12e-7, 22e-7, 25e-7, 33e-7}
+	data3 = []float64{50e-7, 55e-7, 55e-7, 60e-7, 50e-7, 65e-7, 60e-7, 65e-7, 55e-7, 50e-7}
+)
 
-		sc := chart.StripChart{Jitter: true}
-		sc.Title = "Sample Strip Chart"
-		sc.Xlabel = "x - Value"
 
-		sc.AddData("Sample A und aaa und ccc", data1)
-		sc.AddData("Sample B", data2)
-		sc.AddData("Sample C", data3)
 
-		for _, pos := range []string{"itl", "itc", "itr", "icl", "icc", "icr", "ibl", "ibc", "ibr",
-			"otl", "otc", "otr", "olt", "olc", "olb", "obl", "obc", "obr", "ort", "orc", "orb"} {
-			sc.Key.Pos = pos
-			fmt.Printf("\nKey.Pos = %s\n", pos)
-			fmt.Printf("%s\n", sc.PlotTxt(100, 30))
+//
+// Some sample strip charts
+//
+func stripChart() {
+	file, _ := os.Create("xstrip1.svg")
+	thesvg := svg.New(file)
+	thesvg.Start(800, 600)
+	thesvg.Title("Srip Chart")
+	thesvg.Rect(0, 0, 800, 600, "fill: #ffffff")
+	svggraphics := chart.NewSvgGraphics(thesvg, 400, 300, "Arial", 12)
+
+	c := chart.StripChart{}
+
+	c.AddData("Sample A", data1)
+	c.AddData("Sample B", data2)
+	c.AddData("Sample C", data3)
+
+	c.Title = "Sample Strip Chart"
+	c.XRange.Label = "X - Axis"
+	c.Key.Pos = "icr"
+	c.Plot(svggraphics)
+
+	thesvg.Gtransform("translate(400 0)")
+	c.Jitter = true
+	c.Plot(svggraphics)
+	thesvg.Gend()
+
+	thesvg.Gtransform("translate(0 300)")
+	c.Key.Hide = true
+	c.Plot(svggraphics)
+	thesvg.Gend()
+
+	thesvg.Gtransform("translate(400 300)")
+	c.Jitter = false
+	c.Plot(svggraphics)
+	thesvg.Gend()
+
+	thesvg.End()
+	file.Close()
+}
+
+
+//
+// All different key styles
+// 
+func keyStyles() {
+	file, _ := os.Create("xkey1.svg")
+	thesvg := svg.New(file)
+	w, h := 400, 300
+	nw, nh := 6,6
+	thesvg.Start(nw*w, nh*h)
+	thesvg.Title("Key Placements")
+	thesvg.Rect(0, 0, nw*w, nh*h, "fill: #ffffff")
+
+	svggraphics := chart.NewSvgGraphics(thesvg, w, h, "Arial", 10)
+	p := chart.ScatterChart{Title: "Key Placement"}
+	p.XRange.TicSetting.Mirror, p.YRange.TicSetting.Mirror = 1, 1
+	p.XRange.MinMode.Fixed, p.XRange.MaxMode.Fixed = true, true
+	p.XRange.MinMode.Value, p.XRange.MaxMode.Value = -5, 5
+	p.XRange.Min, p.XRange.Max = -5, 5
+	p.XRange.TicSetting.Delta = 2
+
+	p.YRange.MinMode.Fixed, p.YRange.MaxMode.Fixed = true, true
+	p.YRange.MinMode.Value, p.YRange.MaxMode.Value = -5, 5
+	p.YRange.Min, p.YRange.Max = -5, 5
+	p.YRange.TicSetting.Delta = 3
+
+	p.AddFunc("Sin", func(x float64) float64 { return math.Sin(x) }, chart.DataStyle{LineColor: "#a00000", LineWidth: 1, LineStyle: 1})
+	p.AddFunc("Cos", func(x float64) float64 { return math.Cos(x) }, chart.DataStyle{LineColor: "#00a000", LineWidth: 1, LineStyle: 1})
+	p.AddFunc("Tan", func(x float64) float64 { return math.Tan(x) }, chart.DataStyle{LineColor: "#0000a0", LineWidth: 1, LineStyle: 1})
+
+	x, y := 0, 0
+	for _, pos := range []string{"itl", "itc", "itr", "icl", "icc", "icr", "ibl", "ibc", "ibr",
+		"otl", "otc", "otr", "olt", "olc", "olb", "obl", "obc", "obr", "ort", "orc", "orb"} {
+		p.Key.Pos = pos
+		p.Title = "Key Placement: " + pos
+		thesvg.Gtransform(fmt.Sprintf("translate(%d %d)", x, y))
+		p.Plot(svggraphics)
+		thesvg.Gend()
+		
+		x += w
+		if x+w > nw*w {
+			x, y = 0, y + h
 		}
-	*/
+	 }
 
-	p := chart.ScatterChart{Title: "Sample Scatter Chart", Xlabel: "X-Value", Ylabel: "Y-Value"}
+	p.Key.Pos = "itl"
+	p.AddFunc("Log", func(x float64) float64 { return math.Log(x) }, chart.DataStyle{LineColor: "#ff6060", LineWidth: 1, LineStyle: 1})
+	p.AddFunc("Exp", func(x float64) float64 { return math.Exp(x) }, chart.DataStyle{LineColor: "#60ff60", LineWidth: 1, LineStyle: 1})
+	p.AddFunc("Atan", func(x float64) float64 { return math.Atan(x) }, chart.DataStyle{LineColor: "#6060ff", LineWidth: 1, LineStyle: 1})
+	p.AddFunc("Y1", func(x float64) float64 { return math.Y1(x) }, chart.DataStyle{LineColor: "#d0d000", LineWidth: 1, LineStyle: 1})
+
+	for _, cols := range []int{ -4,-3,-2,-1,0,1,2,3,4} {
+		p.Key.Cols = cols
+		p.Title = fmt.Sprintf("Key Cols: %d", cols)
+		thesvg.Gtransform(fmt.Sprintf("translate(%d %d)", x, y))
+		p.Plot(svggraphics)
+		thesvg.Gend()
+		
+		x += w
+		if x+w > nw*w {
+			x, y = 0, y + h
+		}
+	}
+
+	thesvg.End()
+	file.Close()
+}	
+
+
+//
+// Scatter plots with different tic/grid settings
+//
+func scatterTics() {
+	file, _ := os.Create("xscatter1.svg")
+	thesvg := svg.New(file)
+	thesvg.Start(800, 600)
+	thesvg.Title("Srip Chart")
+	thesvg.Rect(0, 0, 800, 600, "fill: #ffffff")
+	svggraphics := chart.NewSvgGraphics(thesvg, 400, 300, "Arial", 12)
+
+	p := chart.ScatterChart{Title: "Sample Scatter Chart"}
 	p.AddDataPair("Sample A", data10, data1, chart.DataStyle{})
-	fmt.Printf("%s\n", p.PlotTxt(100, 25))
+	p.XRange.TicSetting.Delta = 5000
+	p.XRange.Label = "X - Value"
+	p.YRange.Label = "Y - Value"
 
-	/*
-		p.XRange.TicSetting.Hide, p.YRange.TicSetting.Hide = true, true
-		fmt.Printf("%s\n", p.PlotTxt(100, 25))
+	p.Plot(svggraphics)
 
-		p.Xlabel, p.Ylabel = "", ""
-		fmt.Printf("%s\n", p.PlotTxt(100, 25))
+	thesvg.Gtransform("translate(400 0)")
+	p.XRange.TicSetting.Hide, p.YRange.TicSetting.Hide = true, true
+	p.Plot(svggraphics)
+	thesvg.Gend()
 
-		p.XRange.TicSetting.Hide, p.YRange.TicSetting.Hide = false, false
-		fmt.Printf("%s\n", p.PlotTxt(100, 25))
-	*/
+	thesvg.Gtransform("translate(0 300)")
+	p.YRange.TicSetting.Hide = false
+	p.XRange.TicSetting.Grid, p.YRange.TicSetting.Grid = 1, 1
+	p.Plot(svggraphics)
+	thesvg.Gend()
 
+	thesvg.Gtransform("translate(400 300)")
+	p.XRange.TicSetting.Hide, p.YRange.TicSetting.Hide = false, false
+	p.XRange.TicSetting.Mirror, p.YRange.TicSetting.Mirror = 1, 2
+	p.Plot(svggraphics)
+	thesvg.Gend()
+
+	thesvg.End()
+	file.Close()
+}
+
+
+//
+// Full fletched scatter plots
+//
+func fancyScatter() {
+
+
+}
+
+
+
+//
+// Box Charts
+//
+func boxChart() {
+	file, _ := os.Create("xbox1.svg")
+	thesvg := svg.New(file)
+	thesvg.Start(800, 600)
+	thesvg.Title("Srip Chart")
+	thesvg.Rect(0, 0, 800, 600, "fill: #ffffff")
+	svggraphics := chart.NewSvgGraphics(thesvg, 400, 300, "Arial", 12)
+
+	p := chart.BoxChart{Title: "Box Chart"}
+	p.XRange.Label, p.YRange.Label = "Value", "Count"
+
+	for x := 10; x <= 50; x += 5 {
+		points := make([]float64, 70)
+		a := rand.Float64() * 10
+		v := rand.Float64()*5 + 2
+		for i := 0; i < len(points); i++ {
+			x := rand.NormFloat64()*v + a
+			points[i] = x
+		}
+		p.AddSet(float64(x), points, true)
+	}
+
+	p.NextDataSet("Hallo", chart.DataStyle{LineColor: "#00c000", LineWidth: 1, LineStyle: chart.SolidLine})
+	for x := 12; x <= 50; x += 10 {
+		points := make([]float64, 60)
+		a := rand.Float64()*15 + 30
+		v := rand.Float64()*5 + 2
+		for i := 0; i < len(points); i++ {
+			x := rand.NormFloat64()*v + a
+			points[i] = x
+		}
+		p.AddSet(float64(x), points, true)
+	}
+	
+	p.Plot(svggraphics)
+
+	thesvg.End()
+	file.Close()
+}
+
+func main() {
+	stripChart()
+	scatterTics()
+
+	keyStyles()
+
+	boxChart()
+	
 	pl := chart.ScatterChart{Title: "Scatter + Lines", Xlabel: "X-Value", Ylabel: "Y-Value"}
 	pl.Key.Pos = "itl"
 	// pl.XRange.TicSetting.Delta = 5
@@ -98,9 +282,9 @@ func main() {
 	mysvg.End()
 	s2f.Close()
 
+
 	goto ende
 
-	fmt.Printf("%s\n", pl.PlotTxt(100, 28))
 
 	/*
 		 steps := []int64{ 1, 5, 7, 8, 10, 30, 50, 100, 150, 300, 500, 800, 1000, 1500, 3000, 5000,8000, 10000, 15000, 20000, 30000, 50000, 70000, 100000, 200000, 400000, 800000, 1200000, 1800000, 2000000, 2200000, 2500000, 3000000, 5000000, 9000000, 2 * 9000000, 4 * 9000000 }
@@ -192,35 +376,6 @@ func main() {
 		hc.Key.Pos = "irt"
 		fmt.Printf("%s\n", hc.PlotTxt(124, 30))
 
-		//
-		// Box Charts
-		//
-		bc := chart.BoxChart{Title: "Box Chart", Xlabel: "Value", Ylabel: "Count"}
-
-		for x := 10; x <= 50; x += 5 {
-			p := make([]float64, 70)
-			a := rand.Float64() * 10
-			v := rand.Float64()*5 + 2
-			for i := 0; i < len(p); i++ {
-				x := rand.NormFloat64()*v + a
-				p[i] = x
-			}
-			bc.AddSet(float64(x), p, true)
-		}
-		fmt.Printf("%s\n", bc.PlotTxt(100, 25))
-
-		bc.NextDataSet("Hallo")
-		for x := 12; x <= 50; x += 10 {
-			p := make([]float64, 60)
-			a := rand.Float64()*15 + 30
-			v := rand.Float64()*5 + 2
-			for i := 0; i < len(p); i++ {
-				x := rand.NormFloat64()*v + a
-				p[i] = x
-			}
-			bc.AddSet(float64(x), p, true)
-		}
-		fmt.Printf("%s\n", bc.PlotTxt(100, 25))
 	*/
 
 	// Bar chart

@@ -215,11 +215,16 @@ func (sc *ScatterChart) Plot(g Graphics) {
 			g.Scatter(points, style)
 		} else if data.Func != nil {
 			// Functions. TODO(vodo) proper clipping
-			points := make([]EPoint, 0, width/10)
+			step := 8
+			if width/step < 20 { step = 4 }
+			if width/step < 20 { step = 2 }
+			if width/step < 10 { step = 1 }
+			points := make([]EPoint, 0, width/step)
 
-			for sx := leftm; sx < leftm+width; sx += 10 {
+			for sx := leftm; sx < leftm+width; sx += step {
 				x := sc.XRange.Screen2Data(sx)
 				y := data.Func(x)
+				// TODO: half sample width if too f''(x) too big
 				if y >= sc.YRange.Min && y <= sc.YRange.Max {
 					sy := yf(y)
 					p := EPoint{X: float64(sx), Y: float64(sy), DeltaX: nan, DeltaY: nan}

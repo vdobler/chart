@@ -90,20 +90,18 @@ func (sg *SvgGraphics) Text(x, y int, t string, align string, rot int, style Dat
 	_, fh, _ := sg.FontMetrics(style)
 
 	trans := ""
-	x0, y0 := x, y
 	if rot != 0 {
-		x0, y0 = 0, 0
-		trans = fmt.Sprintf("transform=\"rotate(%d) translate(%d %d)\"", rot, x, y)
+		trans = fmt.Sprintf("transform=\"rotate(%d %d %d)\"", -rot, x, y)
 	}
 
 	// Hack because baseline alignments in svg often broken
 	switch align[0] {
 	case 'b':
-		y0 += 0
+		y += 0
 	case 't':
-		y0 += fh
+		y += fh
 	default:
-		y0 += (fh - 1) / 2 // centered
+		y += (4*fh)/10 // centered
 	}
 	s := "text-anchor:"
 	switch align[1] {
@@ -124,7 +122,7 @@ func (sg *SvgGraphics) Text(x, y int, t string, align string, rot int, style Dat
 		s += fmt.Sprintf("; font-size: %d", style.FontSize)
 	}
 
-	sg.svg.Text(x0, y0, t, trans, s)
+	sg.svg.Text(x, y, t, trans, s)
 }
 
 func (sg *SvgGraphics) Symbol(x, y, s int, style DataStyle) {

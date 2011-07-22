@@ -277,12 +277,12 @@ func textDim(t string) (w float32, h int) {
 }
 
 var (
-	KeyColSep      float32 = 2.0
 	KeyHorSep      float32 = 1.5
+	KeyVertSep     float32 = 0.5
+	KeyColSep      float32 = 2.0
 	KeySymbolWidth int     = 30
 	KeySymbolSep   int     = 10
 	KeyRowSep      float32 = 0.75
-	KeyVertSep     float32 = 0.5
 )
 
 func (key Key) Layout(bg BasicGraphics, m [][]*KeyEntry) (w, h int, colwidth, rowheight []int) {
