@@ -30,6 +30,7 @@ func stripChart() {
 	thesvg.Title("Srip Chart")
 	thesvg.Rect(0, 0, 800, 600, "fill: #ffffff")
 	svggraphics := chart.NewSvgGraphics(thesvg, 400, 300, "Arial", 12)
+	txtgraphics := chart.NewTextGraphics(80,25)
 
 	c := chart.StripChart{}
 
@@ -41,20 +42,28 @@ func stripChart() {
 	c.XRange.Label = "X - Axis"
 	c.Key.Pos = "icr"
 	c.Plot(svggraphics)
+	c.Plot(txtgraphics)
+	fmt.Printf("%s\n", txtgraphics.String())
 
 	thesvg.Gtransform("translate(400 0)")
 	c.Jitter = true
 	c.Plot(svggraphics)
+	c.Plot(txtgraphics)
+	fmt.Printf("%s\n", txtgraphics.String())
 	thesvg.Gend()
 
 	thesvg.Gtransform("translate(0 300)")
 	c.Key.Hide = true
 	c.Plot(svggraphics)
+	c.Plot(txtgraphics)
+	fmt.Printf("%s\n", txtgraphics.String())
 	thesvg.Gend()
 
 	thesvg.Gtransform("translate(400 300)")
 	c.Jitter = false
 	c.Plot(svggraphics)
+	c.Plot(txtgraphics)
+	fmt.Printf("%s\n", txtgraphics.String())
 	thesvg.Gend()
 
 	thesvg.End()
@@ -175,8 +184,57 @@ func scatterTics() {
 // Full fletched scatter plots
 //
 func fancyScatter() {
+	pl := chart.ScatterChart{Title: "Scatter + Lines", Xlabel: "X-Value", Ylabel: "Y-Value"}
+	pl.Key.Pos = "itl"
+	// pl.XRange.TicSetting.Delta = 5
+	pl.XRange.TicSetting.Grid = 1
+	x := []float64{-4, -3.3, -1.8, -1, 0.2, 0.8, 1.8, 3.1, 4, 5.3, 6, 7, 8, 9}
+	y := []float64{22, 18, -3, 0, 0.5, 2, 45, 12, 16.5, 24, 30, 55, 60, 70}
+	pl.AddDataPair("Mmnt", x, y, chart.DataStyle{Symbol: '#', SymbolColor: "#0000ff", LineStyle: 0})
+	last := len(pl.Data) - 1
+	pl.Data[last].Samples[6].DeltaX = 2.5
+	pl.Data[last].Samples[6].OffX = 0.5
+	pl.Data[last].Samples[6].DeltaY = 16
+	pl.Data[last].Samples[6].OffY = 2
+	pl.AddData("abcde", []chart.EPoint{chart.EPoint{-4, 40, 0, 0, 0, 0}, chart.EPoint{-3, 45, 0, 0, 0, 0},
+		chart.EPoint{-2, 35, 0, 0, 0, 0}},
+		chart.DataStyle{Symbol: '0', SymbolColor: "#ff00ff", LineStyle: 1, LineWidth: 1})
+	pl.AddFunc("wxyz", func(x float64) float64 {
+		if x > 5.25 && x < 5.75 {
+			return 75
+		}
+		if x > 7.25 && x < 7.75 {
+			return 500
+		}
+		return x * x
+	},chart.DataStyle{Symbol: 0, LineWidth: 2, LineColor: "#a00000", LineStyle: 1})
+	pl.AddFunc("30", func(x float64) float64 { return 30 },
+		chart.DataStyle{Symbol: 0, LineWidth: 1, LineColor: "#00a000", LineStyle: 1})
+	pl.AddFunc("7777", func(x float64) float64 { return 7 },
+		chart.DataStyle{Symbol: 0, LineWidth: 1, LineColor: "#0000a0", LineStyle: 1})
 
 
+	pl.XRange.ShowZero = true
+	pl.XRange.TicSetting.Mirror = 1
+	pl.YRange.TicSetting.Mirror = 1
+	pl.XRange.TicSetting.Grid = 1
+	pl.XRange.Label = "X-Range"
+	pl.YRange.Label = "Y-Range"
+	pl.Key.Cols = 2
+	pl.Key.Pos = "orb"
+
+	s2f, _ := os.Create("xscatter2.svg")
+	mysvg := svg.New(s2f)
+	mysvg.Start(1000, 600)
+	mysvg.Title("My Plot")
+	mysvg.Rect(0, 0, 1000, 600, "fill: #ffffff")
+	svggraphics := chart.NewSvgGraphics(mysvg, 1000, 600, "Arial", 18)
+	txtgraphics := chart.NewTextGraphics(100,30)
+	pl.Plot(svggraphics)
+	pl.Plot(txtgraphics)
+	fmt.Printf("%s\n", txtgraphics.String())
+	mysvg.End()
+	s2f.Close()
 }
 
 
@@ -226,63 +284,16 @@ func boxChart() {
 
 func main() {
 	stripChart()
+
+	/*
 	scatterTics()
 
 	keyStyles()
 
 	boxChart()
 	
-	pl := chart.ScatterChart{Title: "Scatter + Lines", Xlabel: "X-Value", Ylabel: "Y-Value"}
-	pl.Key.Pos = "itl"
-	// pl.XRange.TicSetting.Delta = 5
-	pl.XRange.TicSetting.Grid = 1
-	x := []float64{-4, -3.3, -1.8, -1, 0.2, 0.8, 1.8, 3.1, 4, 5.3, 6, 7, 8, 9}
-	y := []float64{22, 18, -3, 0, 0.5, 2, 45, 12, 16.5, 24, 30, 55, 60, 70}
-	pl.AddDataPair("Mmnt", x, y, chart.DataStyle{Symbol: '#', SymbolColor: "#0000ff", LineStyle: 0})
-	last := len(pl.Data) - 1
-	pl.Data[last].Samples[6].DeltaX = 2.5
-	pl.Data[last].Samples[6].OffX = 0.5
-	pl.Data[last].Samples[6].DeltaY = 16
-	pl.Data[last].Samples[6].OffY = 2
-	pl.AddData("abcde", []chart.EPoint{chart.EPoint{-4, 40, 0, 0, 0, 0}, chart.EPoint{-3, 45, 0, 0, 0, 0},
-		chart.EPoint{-2, 35, 0, 0, 0, 0}},
-		chart.DataStyle{Symbol: '0', SymbolColor: "#ff00ff", LineStyle: 1, LineWidth: 1})
-	pl.AddFunc("wxyz", func(x float64) float64 {
-		if x > 5.25 && x < 5.75 {
-			return 75
-		}
-		if x > 7.25 && x < 7.75 {
-			return 500
-		}
-		return x * x
-	},chart.DataStyle{Symbol: 0, LineWidth: 2, LineColor: "#a00000", LineStyle: 1})
-	pl.AddFunc("30", func(x float64) float64 { return 30 },
-		chart.DataStyle{Symbol: 0, LineWidth: 1, LineColor: "#00a000", LineStyle: 1})
-	pl.AddFunc("7777", func(x float64) float64 { return 7 },
-		chart.DataStyle{Symbol: 0, LineWidth: 1, LineColor: "#0000a0", LineStyle: 1})
-
-	fmt.Printf("%s\n", pl.PlotTxt(80, 20))
-
-	pl.XRange.ShowZero = true
-	pl.XRange.TicSetting.Mirror = 1
-	pl.YRange.TicSetting.Mirror = 1
-	pl.XRange.TicSetting.Grid = 1
-	pl.XRange.Label = "X-Range"
-	pl.YRange.Label = "Y-Range"
-	pl.Key.Cols = 2
-	pl.Key.Pos = "orb"
-
-	s2f, _ := os.Create("scatter.svg")
-	mysvg := svg.New(s2f)
-	mysvg.Start(1000, 600)
-	mysvg.Title("My Plot")
-	mysvg.Rect(0, 0, 1000, 600, "fill: #ffffff")
-	svggraphics := chart.NewSvgGraphics(mysvg, 1000, 600, "Arial", 18)
-	pl.Plot(svggraphics)
-	mysvg.End()
-	s2f.Close()
-
-
+	fancyScatter()
+*/
 	goto ende
 
 

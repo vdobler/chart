@@ -412,3 +412,188 @@ func TxtYRange(yrange Range, tb *TextBuf, x, x1 int, label string, mirror int) {
 		}
 	}
 }
+
+
+
+// TextGraphics
+type TextGraphics struct {
+	tb *TextBuf
+	w, h int
+}
+func NewTextGraphics(w,h int) *TextGraphics {
+	tg := TextGraphics{}
+	tg.tb = NewTextBuf(w,h)
+	tg.w, tg.h = w, h
+	return &tg
+}
+
+
+func (g *TextGraphics) Begin() {
+	g.tb = NewTextBuf(g.w,g.h)
+}
+
+func (g *TextGraphics) End() {}
+func (g *TextGraphics) Dimensions() (int, int) {
+	return g.w, g.h
+}
+func (g *TextGraphics) FontMetrics(style DataStyle) (fw float32, fh int, mono bool) {
+	return 1, 1, true
+}
+
+func (g *TextGraphics) TextLen(t string, style DataStyle) int {
+	return len(t)
+}
+
+
+func (g *TextGraphics) Line(x0, y0, x1, y1 int, style DataStyle) {
+	g.tb.Line(x0, y0, x1, y1, '*')
+}
+
+func (g *TextGraphics) Text(x, y int, t string, align string, rot int, style DataStyle) {
+	// align: -1: left; 0: centered; 1: right; 2: top, 3: center, 4: bottom
+	if len(align) == 2 { align = align[1:] }
+	a := 0
+	if rot == 0 {
+		if align=="l" { a = -1 }
+		if align=="c" { a = 0 }
+		if align=="r" { a = 1 }
+	} else {
+		if align=="l" { a = 2 }
+		if align=="c" { a = 3 }
+		if align=="r" { a = 4 }
+	}
+	g.tb.Text(x, y, t, a)
+}
+
+func (g *TextGraphics) Style(element string) DataStyle {
+	b := "#000000"
+	return DataStyle{Symbol: 'o', SymbolColor: b, LineColor: b, LineWidth:1, LineStyle: SolidLine}
+}
+func (g *TextGraphics) String() string {
+	return g.tb.String()
+}
+
+func (g *TextGraphics) Symbol(x, y, s int, style DataStyle) {
+	g.tb.Put(x,y,s)
+}
+func (g *TextGraphics) Title(text string) {
+	x, y := g.w/2, 0
+	g.Text(x, y, text, "tc", 0, DataStyle{})
+}
+
+func (g *TextGraphics) XAxis(xrange Range, y, y1 int) {
+	mirror := xrange.TicSetting.Mirror
+	xa, xe := xrange.Data2Screen(xrange.Min), xrange.Data2Screen(xrange.Max)
+	for sx := xa; sx <= xe; sx++ {
+		g.tb.Put(sx, y, '-')
+		if mirror >= 1 {
+			g.tb.Put(sx, y1, '-')
+		}
+	}
+	if xrange.ShowZero && xrange.Min < 0 && xrange.Max > 0 {
+		z := xrange.Data2Screen(0)
+		for yy := y - 1; yy > y1+1; yy-- {
+			g.tb.Put(z, yy, ':')
+		}
+	}
+
+	if xrange.Label != "" {
+		yy := y + 1
+		if !xrange.TicSetting.Hide {
+			yy++
+		}
+		g.tb.Text((xa+xe)/2, yy, xrange.Label, 0)
+	}
+
+	for _, tic := range xrange.Tics {
+		x := xrange.Data2Screen(tic.Pos)
+		lx := xrange.Data2Screen(tic.LabelPos)
+		if xrange.Time {
+			g.tb.Put(x, y, '|')
+			if mirror >= 2 {
+				g.tb.Put(x, y1, '|')
+			}
+			g.tb.Put(x, y+1, '|')
+			if tic.Align == -1 {
+				g.tb.Text(lx+1, y+1, tic.Label, -1)
+			} else {
+				g.tb.Text(lx, y+1, tic.Label, 0)
+			}
+		} else {
+			g.tb.Put(x, y, '+')
+			if mirror >= 2 {
+				g.tb.Put(x, y1, '+')
+			}
+			g.tb.Text(lx, y+1, tic.Label, 0)
+		}
+		if xrange.ShowLimits {
+			if xrange.Time {
+				g.tb.Text(xa, y+2, xrange.TMin.Format("2006-01-02 15:04:05"), -1)
+				g.tb.Text(xe, y+2, xrange.TMax.Format("2006-01-02 15:04:05"), 1)
+			} else {
+				g.tb.Text(xa, y+2, fmt.Sprintf("%g", xrange.Min), -1)
+				g.tb.Text(xe, y+2, fmt.Sprintf("%g", xrange.Max), 1)
+			}
+		}
+	}
+
+	// GenericXAxis(g, xr, ys, yms)
+}
+func (g *TextGraphics) YAxis(yrange Range, x, x1 int) {
+	label := yrange.Label
+	mirror := yrange.TicSetting.Mirror
+	ya, ye := yrange.Data2Screen(yrange.Min), yrange.Data2Screen(yrange.Max)
+	for sy := min(ya, ye); sy <= max(ya, ye); sy++ {
+		g.tb.Put(x, sy, '|')
+		if mirror >= 1 {
+			g.tb.Put(x1, sy, '|')
+		}
+	}
+	if yrange.ShowZero && yrange.Min < 0 && yrange.Max > 0 {
+		z := yrange.Data2Screen(0)
+		for xx := x + 1; xx < x1; xx += 2 {
+			g.tb.Put(xx, z, '-')
+		}
+	}
+
+	if label != "" {
+		g.tb.Text(1, (ya+ye)/2, label, 3)
+	}
+
+	for _, tic := range yrange.Tics {
+		y := yrange.Data2Screen(tic.Pos)
+		ly := yrange.Data2Screen(tic.LabelPos)
+		if yrange.Time {
+			g.tb.Put(x, y, '+')
+			if mirror >= 2 {
+				g.tb.Put(x1, y, '+')
+			}
+			if tic.Align == 0 { // centered tic
+				g.tb.Put(x-1, y, '-')
+				g.tb.Put(x-2, y, '-')
+			}
+			g.tb.Text(x, ly, tic.Label+" ", 1)
+		} else {
+			g.tb.Put(x, y, '+')
+			if mirror >= 2 {
+				g.tb.Put(x1, y, '+')
+			}
+			g.tb.Text(x-2, ly, tic.Label, 1)
+		}
+	}
+}
+
+func (g *TextGraphics) Scatter(points []EPoint, style DataStyle) {
+	GenericScatter(g, points, style)
+}
+
+func (g *TextGraphics) Boxes(boxes []Box, width int, style DataStyle) {
+	GenericBoxes(g, boxes, width, style)
+}
+
+func (g *TextGraphics) Key(x, y int, key Key) {
+	GenericKey(g, x, y, key)
+}
+
+
+

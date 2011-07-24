@@ -280,8 +280,8 @@ var (
 	KeyHorSep      float32 = 1.5
 	KeyVertSep     float32 = 0.5
 	KeyColSep      float32 = 2.0
-	KeySymbolWidth int     = 30
-	KeySymbolSep   int     = 10
+	KeySymbolWidth float32 = 4
+	KeySymbolSep   float32 = 1
 	KeyRowSep      float32 = 0.75
 )
 
@@ -336,7 +336,7 @@ func (key Key) Layout(bg BasicGraphics, m [][]*KeyEntry) (w, h int, colwidth, ro
 	totalw = int(float32(totalw) * fontwidth)                // scale to pixels
 	totalw += int(KeyColSep * (float32(cols-1) * fontwidth)) // add space between columns
 	totalw += int(2 * KeyHorSep * fontwidth)                 // add space for left/right border
-	totalw += (KeySymbolWidth + KeySymbolSep) * cols         // place for symbol and symbol-text sep
+	totalw += int((KeySymbolWidth + KeySymbolSep)*fontwidth) * cols         // place for symbol and symbol-text sep
 
 	totalh *= fontheight
 	totalh += int(KeyRowSep * float32((rows-1)*fontheight)) // add space between rows
@@ -368,12 +368,12 @@ func GenericKey(bg BasicGraphics, x, y int, key Key) {
 			} else {
 				// normal entry
 				if l > 0 {
-					bg.Line(x, yy, x+KeySymbolWidth, yy, e.Style)
+					bg.Line(x, yy, x+int(KeySymbolWidth*fw), yy, e.Style)
 				}
 				if s > 0 {
-					bg.Symbol(x+KeySymbolWidth/2, yy, s, e.Style)
+					bg.Symbol(x+int(KeySymbolWidth*fw)/2, yy, s, e.Style)
 				}
-				bg.Text(x+KeySymbolWidth+KeySymbolSep, yy, t, "cl", 0, e.Style)
+				bg.Text(x+int(fw*(KeySymbolWidth+KeySymbolSep)), yy, t, "cl", 0, e.Style)
 			}
 			{
 				/*
@@ -390,6 +390,6 @@ func GenericKey(bg BasicGraphics, x, y int, key Key) {
 			yy += fh*rh[ri] + int(KeyRowSep*float32(fh))
 		}
 
-		x += KeySymbolWidth + KeySymbolSep + int(fw*float32(cw[ci])) + int(KeyColSep*fw)
+		x += int((KeySymbolWidth + KeySymbolSep + KeyColSep + float32(cw[ci])) *fw) 
 	}
 }

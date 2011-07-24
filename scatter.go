@@ -219,7 +219,8 @@ func (sc *ScatterChart) Plot(g Graphics) {
 			if width/step < 20 { step = 4 }
 			if width/step < 20 { step = 2 }
 			if width/step < 10 { step = 1 }
-			points := make([]EPoint, 0, width/step)
+			pcap := max(4, width/step)
+			points := make([]EPoint, 0, pcap)
 
 			for sx := leftm; sx < leftm+width; sx += step {
 				x := sc.XRange.Screen2Data(sx)
