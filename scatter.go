@@ -216,9 +216,15 @@ func (sc *ScatterChart) Plot(g Graphics) {
 		} else if data.Func != nil {
 			// Functions. TODO(vodo) proper clipping
 			step := 8
-			if width/step < 20 { step = 4 }
-			if width/step < 20 { step = 2 }
-			if width/step < 10 { step = 1 }
+			if width/step < 20 {
+				step = 4
+			}
+			if width/step < 20 {
+				step = 2
+			}
+			if width/step < 10 {
+				step = 1
+			}
 			pcap := max(4, width/step)
 			points := make([]EPoint, 0, pcap)
 

@@ -101,7 +101,7 @@ func (sg *SvgGraphics) Text(x, y int, t string, align string, rot int, style Dat
 	case 't':
 		y += fh
 	default:
-		y += (4*fh)/10 // centered
+		y += (4 * fh) / 10 // centered
 	}
 	s := "text-anchor:"
 	switch align[1] {
@@ -191,7 +191,7 @@ func (sg *SvgGraphics) Symbol(x, y, s int, style DataStyle) {
 }
 
 func (sg *SvgGraphics) Rect(x, y, w, h int, style DataStyle) {
-	GenericRect(sg, x,y,w,h, style) // TODO
+	GenericRect(sg, x, y, w, h, style) // TODO
 }
 
 func (sg *SvgGraphics) Style(element string) DataStyle {

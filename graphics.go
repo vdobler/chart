@@ -285,7 +285,7 @@ func GenericBoxes(bg BasicGraphics, boxes []Box, width int, style DataStyle) {
 		x := int(d.X)
 		q1, q3 := int(d.Q1), int(d.Q3)
 
-		GenericRect(bg, x-hbw, q1, width, q3-q1, style)
+		bg.Rect(x-hbw, q1, width, q3-q1, style)
 		if !math.IsNaN(d.Med) {
 			med := int(d.Med)
 			bg.Line(x-hbw, med, x+hbw, med, style)

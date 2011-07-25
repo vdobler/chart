@@ -91,7 +91,7 @@ func (sc *StripChart) Plot(g Graphics) {
 	sc.ScatterChart.YRange.MinMode.Value = 0.5
 	sc.ScatterChart.YRange.MaxMode.Fixed = true
 	sc.ScatterChart.YRange.MaxMode.Value = float64(len(sc.ScatterChart.Data)) + 0.5
-	
+
 	if sc.Jitter {
 		// Set up ranging
 		layout := Layout(g, sc.Title, sc.XRange.Label, sc.YRange.Label,
@@ -100,26 +100,26 @@ func (sc *StripChart) Plot(g Graphics) {
 		_, height := layout.Width, layout.Height
 		topm, _ := layout.Top, layout.Left
 		_, numytics := layout.NumXtics, layout.NumYtics
-		
+
 		sc.YRange.Setup(numytics, numytics+1, height, topm, true)
-		
+
 		// amplitude of jitter: not too smal to be visible and useful, not to
 		// big to be ugly or even overlapp other
-		
+
 		null := sc.YRange.Screen2Data(0)
-		absmin := 1.4 * math.Fabs(sc.YRange.Screen2Data(1) - null ) // would be one pixel
-		tenpc := math.Fabs(sc.YRange.Screen2Data(height) - null)/10 // 10 percent of graph area
-		smplcnt := len(sc.ScatterChart.Data) + 1 //  as samples are borders
+		absmin := 1.4 * math.Fabs(sc.YRange.Screen2Data(1)-null)           // would be one pixel
+		tenpc := math.Fabs(sc.YRange.Screen2Data(height)-null) / 10        // 10 percent of graph area
+		smplcnt := len(sc.ScatterChart.Data) + 1                           //  as samples are borders
 		noverlp := math.Fabs(sc.YRange.Screen2Data(height/smplcnt) - null) // do not overlapp other sample
-			
+
 		yj := noverlp
 		if tenpc < yj {
 			yj = tenpc
 		}
-		if yj < absmin { 
-			yj = absmin 
+		if yj < absmin {
+			yj = absmin
 		}
-		
+
 		// yjs := sc.YRange.Data2Screen(yj) - sc.YRange.Data2Screen(0)
 		// fmt.Printf("yj = %.2f : in screen = %d\n", yj, yjs)
 		for _, data := range sc.ScatterChart.Data {

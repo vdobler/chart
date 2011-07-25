@@ -11,13 +11,12 @@ import (
 )
 
 var (
-	data1 = []float64{15e-7, 30e-7, 35e-7, 50e-7, 70e-7, 75e-7, 80e-7, 32e-7, 35e-7, 70e-7, 65e-7}
+	data1  = []float64{15e-7, 30e-7, 35e-7, 50e-7, 70e-7, 75e-7, 80e-7, 32e-7, 35e-7, 70e-7, 65e-7}
 	data10 = []float64{34567, 35432, 37888, 39991, 40566, 42123, 44678}
 
 	data2 = []float64{10e-7, 11e-7, 12e-7, 22e-7, 25e-7, 33e-7}
 	data3 = []float64{50e-7, 55e-7, 55e-7, 60e-7, 50e-7, 65e-7, 60e-7, 65e-7, 55e-7, 50e-7}
 )
-
 
 
 //
@@ -30,7 +29,7 @@ func stripChart() {
 	thesvg.Title("Srip Chart")
 	thesvg.Rect(0, 0, 800, 600, "fill: #ffffff")
 	svggraphics := chart.NewSvgGraphics(thesvg, 400, 300, "Arial", 12)
-	txtgraphics := chart.NewTextGraphics(80,25)
+	txtgraphics := chart.NewTextGraphics(80, 25)
 
 	c := chart.StripChart{}
 
@@ -80,7 +79,7 @@ func keyStyles() {
 	file, _ := os.Create("xkey1.svg")
 	thesvg := svg.New(file)
 	w, h := 400, 300
-	nw, nh := 6,6
+	nw, nh := 6, 6
 	thesvg.Start(nw*w, nh*h)
 	thesvg.Title("Key Placements")
 	thesvg.Rect(0, 0, nw*w, nh*h, "fill: #ffffff")
@@ -110,12 +109,12 @@ func keyStyles() {
 		thesvg.Gtransform(fmt.Sprintf("translate(%d %d)", x, y))
 		p.Plot(svggraphics)
 		thesvg.Gend()
-		
+
 		x += w
 		if x+w > nw*w {
-			x, y = 0, y + h
+			x, y = 0, y+h
 		}
-	 }
+	}
 
 	p.Key.Pos = "itl"
 	p.AddFunc("Log", func(x float64) float64 { return math.Log(x) }, chart.DataStyle{LineColor: "#ff6060", LineWidth: 1, LineStyle: 1})
@@ -123,22 +122,22 @@ func keyStyles() {
 	p.AddFunc("Atan", func(x float64) float64 { return math.Atan(x) }, chart.DataStyle{LineColor: "#6060ff", LineWidth: 1, LineStyle: 1})
 	p.AddFunc("Y1", func(x float64) float64 { return math.Y1(x) }, chart.DataStyle{LineColor: "#d0d000", LineWidth: 1, LineStyle: 1})
 
-	for _, cols := range []int{ -4,-3,-2,-1,0,1,2,3,4} {
+	for _, cols := range []int{-4, -3, -2, -1, 0, 1, 2, 3, 4} {
 		p.Key.Cols = cols
 		p.Title = fmt.Sprintf("Key Cols: %d", cols)
 		thesvg.Gtransform(fmt.Sprintf("translate(%d %d)", x, y))
 		p.Plot(svggraphics)
 		thesvg.Gend()
-		
+
 		x += w
 		if x+w > nw*w {
-			x, y = 0, y + h
+			x, y = 0, y+h
 		}
 	}
 
 	thesvg.End()
 	file.Close()
-}	
+}
 
 
 //
@@ -215,7 +214,6 @@ func fancyScatter() {
 	pl.AddFunc("7777", func(x float64) float64 { return 7 },
 		chart.DataStyle{Symbol: 0, LineWidth: 1, LineColor: "#0000a0", LineStyle: 1})
 
-
 	pl.XRange.ShowZero = true
 	pl.XRange.TicSetting.Mirror = 1
 	pl.YRange.TicSetting.Mirror = 1
@@ -231,14 +229,13 @@ func fancyScatter() {
 	mysvg.Title("My Plot")
 	mysvg.Rect(0, 0, 1000, 600, "fill: #ffffff")
 	svggraphics := chart.NewSvgGraphics(mysvg, 1000, 600, "Arial", 18)
-	txtgraphics := chart.NewTextGraphics(100,30)
+	txtgraphics := chart.NewTextGraphics(100, 30)
 	pl.Plot(svggraphics)
 	pl.Plot(txtgraphics)
 	fmt.Printf("%s\n", txtgraphics.String())
 	mysvg.End()
 	s2f.Close()
 }
-
 
 
 //
@@ -277,11 +274,14 @@ func boxChart() {
 		}
 		p.AddSet(float64(x), points, true)
 	}
-	
-	p.Plot(svggraphics)
 
+	p.Plot(svggraphics)
 	thesvg.End()
 	file.Close()
+
+	txtgraphics := chart.NewTextGraphics(100, 60)
+	p.Plot(txtgraphics)
+	fmt.Printf("%s\n", txtgraphics.String())
 }
 
 func main() {
@@ -292,11 +292,10 @@ func main() {
 	keyStyles()
 
 	boxChart()
-	
+
 	fancyScatter()
 
 	goto ende
-
 
 	/*
 		 steps := []int64{ 1, 5, 7, 8, 10, 30, 50, 100, 150, 300, 500, 800, 1000, 1500, 3000, 5000,8000, 10000, 15000, 20000, 30000, 50000, 70000, 100000, 200000, 400000, 800000, 1200000, 1800000, 2000000, 2200000, 2500000, 3000000, 5000000, 9000000, 2 * 9000000, 4 * 9000000 }

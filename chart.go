@@ -312,10 +312,10 @@ func (r *Range) tSetup(desiredNumberOfTics, maxNumberOfTics int, delta, mindelta
 	}
 
 	/*
-	fmt.Printf("Range:\n  Data:  %s  to  %s\n  --->   %s  to  %s\n  Tic-Delta: %s\n  Tics:  %s  to  %s\n",
-		f2d(r.DataMin), f2d(r.DataMax), f2d(r.Min), f2d(r.Max), td,
-		ftic.Format("2006-01-02 15:04:05 (Mon)"), ltic.Format("2006-01-02 15:04:05 (Mon)"))
-*/
+		fmt.Printf("Range:\n  Data:  %s  to  %s\n  --->   %s  to  %s\n  Tic-Delta: %s\n  Tics:  %s  to  %s\n",
+			f2d(r.DataMin), f2d(r.DataMax), f2d(r.Min), f2d(r.Max), td,
+			ftic.Format("2006-01-02 15:04:05 (Mon)"), ltic.Format("2006-01-02 15:04:05 (Mon)"))
+	*/
 	// Set up tics
 	r.Tics = make([]Tic, 0)
 	step := int64(td.Seconds())

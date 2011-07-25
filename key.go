@@ -2,7 +2,7 @@ package chart
 
 import (
 	"strings"
-	// "fmt"
+	"fmt"
 )
 
 // Key encapsulates settings for keys/legends in a chart.
@@ -333,14 +333,18 @@ func (key Key) Layout(bg BasicGraphics, m [][]*KeyEntry) (w, h int, colwidth, ro
 	}
 
 	// totalw/h are characters only and still in character-units
-	totalw = int(float32(totalw) * fontwidth)                // scale to pixels
-	totalw += int(KeyColSep * (float32(cols-1) * fontwidth)) // add space between columns
-	totalw += int(2 * KeyHorSep * fontwidth)                 // add space for left/right border
-	totalw += int((KeySymbolWidth + KeySymbolSep)*fontwidth) * cols         // place for symbol and symbol-text sep
+	totalw = int(float32(totalw) * fontwidth)                     // scale to pixels
+	totalw += int(KeyColSep * (float32(cols-1) * fontwidth))      // add space between columns
+	totalw += int(2 * KeyHorSep * fontwidth)                      // add space for left/right border
+	totalw += int((KeySymbolWidth+KeySymbolSep)*fontwidth) * cols // place for symbol and symbol-text sep
 
 	totalh *= fontheight
 	totalh += int(KeyRowSep * float32((rows-1)*fontheight)) // add space between rows
-	totalh += int(2 * KeyVertSep * float32(fontheight))     // add border at top/bottom
+	vsep := KeyVertSep * float32(fontheight)
+	if vsep < 1 {
+		vsep = 1
+	} // make sure there _is_ room (as KeyVertSep < 1)
+	totalh += int(2 * vsep) // add border at top/bottom
 
 	return totalw, totalh, colwidth, rowheight
 }
@@ -352,7 +356,12 @@ func GenericKey(bg BasicGraphics, x, y int, key Key) {
 	style := bg.Style("key")
 	bg.Rect(x, y, tw, th, style)
 	x += int(KeyHorSep * fw)
-	y += int(KeyVertSep*float32(fh)) + fh/2
+	vsep := KeyVertSep * float32(fh)
+	if vsep < 1 {
+		vsep = 1
+	} // make sure there _is_ room (as KeyVertSep < 1)
+	fmt.Printf("Key: y = %d  after  %d\n", y, y+int(vsep)+fh/2)
+	y += int(vsep) + fh/2
 	for ci, col := range m {
 		yy := y
 
@@ -390,6 +399,6 @@ func GenericKey(bg BasicGraphics, x, y int, key Key) {
 			yy += fh*rh[ri] + int(KeyRowSep*float32(fh))
 		}
 
-		x += int((KeySymbolWidth + KeySymbolSep + KeyColSep + float32(cw[ci])) *fw) 
+		x += int((KeySymbolWidth + KeySymbolSep + KeyColSep + float32(cw[ci])) * fw)
 	}
 }

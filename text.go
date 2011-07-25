@@ -2,6 +2,7 @@ package chart
 
 import (
 	"fmt"
+	"math"
 )
 
 // Different edge styles for boxes
@@ -414,22 +415,22 @@ func TxtYRange(yrange Range, tb *TextBuf, x, x1 int, label string, mirror int) {
 }
 
 
-
 // TextGraphics
 type TextGraphics struct {
-	tb *TextBuf
+	tb   *TextBuf
 	w, h int
 }
-func NewTextGraphics(w,h int) *TextGraphics {
+
+func NewTextGraphics(w, h int) *TextGraphics {
 	tg := TextGraphics{}
-	tg.tb = NewTextBuf(w,h)
+	tg.tb = NewTextBuf(w, h)
 	tg.w, tg.h = w, h
 	return &tg
 }
 
 
 func (g *TextGraphics) Begin() {
-	g.tb = NewTextBuf(g.w,g.h)
+	g.tb = NewTextBuf(g.w, g.h)
 }
 
 func (g *TextGraphics) End() {}
@@ -451,34 +452,48 @@ func (g *TextGraphics) Line(x0, y0, x1, y1 int, style DataStyle) {
 
 func (g *TextGraphics) Text(x, y int, t string, align string, rot int, style DataStyle) {
 	// align: -1: left; 0: centered; 1: right; 2: top, 3: center, 4: bottom
-	if len(align) == 2 { align = align[1:] }
+	if len(align) == 2 {
+		align = align[1:]
+	}
 	a := 0
 	if rot == 0 {
-		if align=="l" { a = -1 }
-		if align=="c" { a = 0 }
-		if align=="r" { a = 1 }
+		if align == "l" {
+			a = -1
+		}
+		if align == "c" {
+			a = 0
+		}
+		if align == "r" {
+			a = 1
+		}
 	} else {
-		if align=="l" { a = 2 }
-		if align=="c" { a = 3 }
-		if align=="r" { a = 4 }
+		if align == "l" {
+			a = 2
+		}
+		if align == "c" {
+			a = 3
+		}
+		if align == "r" {
+			a = 4
+		}
 	}
 	g.tb.Text(x, y, t, a)
 }
 
 func (g *TextGraphics) Rect(x, y, w, h int, style DataStyle) {
-	g.tb.Rect(x,y,w,h, 1, ' ') // TODO use info from style
+	g.tb.Rect(x, y, w, h, 1, ' ') // TODO use info from style
 }
 
 func (g *TextGraphics) Style(element string) DataStyle {
 	b := "#000000"
-	return DataStyle{Symbol: 'o', SymbolColor: b, LineColor: b, LineWidth:1, LineStyle: SolidLine}
+	return DataStyle{Symbol: 'o', SymbolColor: b, LineColor: b, LineWidth: 1, LineStyle: SolidLine}
 }
 func (g *TextGraphics) String() string {
 	return g.tb.String()
 }
 
 func (g *TextGraphics) Symbol(x, y, s int, style DataStyle) {
-	g.tb.Put(x,y,s)
+	g.tb.Put(x, y, s)
 }
 func (g *TextGraphics) Title(text string) {
 	x, y := g.w/2, 0
@@ -592,12 +607,51 @@ func (g *TextGraphics) Scatter(points []EPoint, style DataStyle) {
 }
 
 func (g *TextGraphics) Boxes(boxes []Box, width int, style DataStyle) {
-	GenericBoxes(g, boxes, width, style)
+	if width%2 == 0 {
+		width += 1
+	}
+	hbw := (width - 1) / 2
+	if style.Symbol == 0 {
+		style.Symbol = '*'
+	}
+
+	for _, box := range boxes {
+		x := int(box.X)
+		q1, q3 := int(box.Q1), int(box.Q3)
+		g.tb.Rect(x-hbw, q1, 2*hbw, q3-q1, 0, ' ')
+		if !math.IsNaN(box.Med) {
+			med := int(box.Med)
+			g.tb.Put(x-hbw, med, '+')
+			for i := 0; i < hbw; i++ {
+				g.tb.Put(x-i, med, '-')
+				g.tb.Put(x+i, med, '-')
+			}
+			g.tb.Put(x+hbw, med, '+')
+		}
+
+		if !math.IsNaN(box.Avg) && style.Symbol != 0 {
+			g.tb.Put(x, int(box.Avg), style.Symbol)
+		}
+
+		if !math.IsNaN(box.High) {
+			for y := int(box.High); y < q3; y++ {
+				g.tb.Put(x, y, '|')
+			}
+		}
+
+		if !math.IsNaN(box.Low) {
+			for y := int(box.Low); y > q1; y-- {
+				g.tb.Put(x, y, '|')
+			}
+		}
+
+		for _, ol := range box.Outliers {
+			y := int(ol)
+			g.tb.Put(x, y, style.Symbo)
+		}
+	}
 }
 
 func (g *TextGraphics) Key(x, y int, key Key) {
 	GenericKey(g, x, y, key)
 }
-
-
-
