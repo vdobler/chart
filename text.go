@@ -465,6 +465,10 @@ func (g *TextGraphics) Text(x, y int, t string, align string, rot int, style Dat
 	g.tb.Text(x, y, t, a)
 }
 
+func (g *TextGraphics) Rect(x, y, w, h int, style DataStyle) {
+	g.tb.Rect(x,y,w,h, 1, ' ') // TODO use info from style
+}
+
 func (g *TextGraphics) Style(element string) DataStyle {
 	b := "#000000"
 	return DataStyle{Symbol: 'o', SymbolColor: b, LineColor: b, LineWidth:1, LineStyle: SolidLine}

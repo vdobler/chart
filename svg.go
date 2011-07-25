@@ -190,6 +190,10 @@ func (sg *SvgGraphics) Symbol(x, y, s int, style DataStyle) {
 
 }
 
+func (sg *SvgGraphics) Rect(x, y, w, h int, style DataStyle) {
+	GenericRect(sg, x,y,w,h, style) // TODO
+}
+
 func (sg *SvgGraphics) Style(element string) DataStyle {
 	switch element {
 	case "title":

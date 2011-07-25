@@ -350,7 +350,7 @@ func GenericKey(bg BasicGraphics, x, y int, key Key) {
 	fw, fh, _ := bg.FontMetrics(bg.Style("key"))
 	tw, th, cw, rh := key.Layout(bg, m)
 	style := bg.Style("key")
-	GenericRect(bg, x, y, tw, th, style)
+	bg.Rect(x, y, tw, th, style)
 	x += int(KeyHorSep * fw)
 	y += int(KeyVertSep*float32(fh)) + fh/2
 	for ci, col := range m {
