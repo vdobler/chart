@@ -34,11 +34,11 @@ func stripChart() {
 
 	c := chart.StripChart{}
 
-	c.AddData("Sample A", data1)
-	c.AddData("Sample B", data2)
-	c.AddData("Sample C", data3)
+	c.AddData("Sample A", data1, chart.DataStyle{})
+	c.AddData("Sample B", data2, chart.DataStyle{})
+	c.AddData("Sample C", data3, chart.DataStyle{})
 
-	c.Title = "Sample Strip Chart"
+	c.Title = "Sample Strip Chart (no Jitter)"
 	c.XRange.Label = "X - Axis"
 	c.Key.Pos = "icr"
 	c.Plot(svggraphics)
@@ -47,6 +47,7 @@ func stripChart() {
 
 	thesvg.Gtransform("translate(400 0)")
 	c.Jitter = true
+	c.Title = "Sample Strip Chart (with Jitter)"
 	c.Plot(svggraphics)
 	c.Plot(txtgraphics)
 	fmt.Printf("%s\n", txtgraphics.String())
@@ -61,6 +62,7 @@ func stripChart() {
 
 	thesvg.Gtransform("translate(400 300)")
 	c.Jitter = false
+	c.Title = "Sample Strip Chart (no Jitter)"
 	c.Plot(svggraphics)
 	c.Plot(txtgraphics)
 	fmt.Printf("%s\n", txtgraphics.String())
