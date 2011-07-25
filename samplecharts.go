@@ -287,7 +287,6 @@ func boxChart() {
 func main() {
 	stripChart()
 
-	/*
 	scatterTics()
 
 	keyStyles()
@@ -295,7 +294,7 @@ func main() {
 	boxChart()
 	
 	fancyScatter()
-*/
+
 	goto ende
 
 

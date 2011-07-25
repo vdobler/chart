@@ -14,6 +14,7 @@ type BasicGraphics interface {
 	Line(x0, y0, x1, y1 int, style DataStyle)                        // Draw line from (x0,y0) to (x1,y1)
 	Symbol(x, y, s int, style DataStyle)                             // Put symnbol s at (x,y)
 	Text(x, y int, t string, align string, rot int, style DataStyle) // align: [[tcb]][lcr]
+	Rect(x, y, w, h int, style DataStyle)                            // draw (w x h) rectangle at (x,y)
 	Style(element string) DataStyle                                  // retrieve style for element
 }
 
