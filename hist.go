@@ -16,7 +16,7 @@ type HistChartData struct {
 
 
 type HistChart struct {
-	XRange, YRange Range
+	XRange, YRange Range // Lower limit of YRange is fixed and not available for input
 	Title          string
 	Xlabel, Ylabel string
 	Key            Key
@@ -32,9 +32,8 @@ type HistChart struct {
 }
 
 func (c *HistChart) AddData(name string, data []float64, style DataStyle) {
-	s := Symbol[len(c.Data)%len(Symbol)]
 	c.Data = append(c.Data, HistChartData{name, style, data})
-	c.Key.Entries = append(c.Key.Entries, KeyEntry{Symbol: s, Text: name})
+	c.Key.Entries = append(c.Key.Entries, KeyEntry{Text: name, Style: style})
 
 	if len(c.Data) == 1 { // first data set 
 		c.XRange.DataMin = data[0]
@@ -239,36 +238,11 @@ func (c *HistChart) widthFactor() (gf, sf float64) {
 }
 
 
-func (c *HistChart) Plot(g Graphics) {
-	layout := Layout(g, c.Title, c.XRange.Label, c.YRange.Label,
-		c.XRange.TicSetting.Hide, c.YRange.TicSetting.Hide, &c.Key)
-	fw, fh, _ := g.FontMetrics(DataStyle{})
-	fw += 0
+func (c *HistChart) binify(binStart, binWidth float64, binCnt int) (counts [][]int, max int) {
+	x2bin := func(x float64) int { return int((x - binStart) / binWidth) }
 
-	width, height := layout.Width, layout.Height
-	topm, leftm := layout.Top, layout.Left
-	numxtics, numytics := layout.NumXtics, layout.NumYtics
-
-	// Outside bound ranges for histograms are nicer
-	// leftm, width = leftm+int(2*fw), width-int(2*fw)
-	// topm, height = topm, height-int(1*fh)
-
-	c.XRange.Setup(2*numxtics, 2*numxtics+5, width, leftm, false)
-
-	// TODO(vodo) a) BinWidth might be input, alignment to tics should be nice, binCnt, ...
-	c.BinWidth = c.XRange.TicSetting.Delta
-	if c.BinWidth == 0 {
-		c.BinWidth = 1
-	}
-	binCnt := int((c.XRange.Max-c.XRange.Min)/c.BinWidth + 0.5)
-	c.FirstBin = c.XRange.Min + c.BinWidth/2
-	binStart := c.XRange.Min
-	fmt.Printf("%d bins from %.2f width %.2f\n", binCnt, binStart, c.BinWidth)
-
-	x2bin := func(x float64) int { return int((x - binStart) / c.BinWidth) }
-
-	counts := make([][]int, len(c.Data)) // counts[d][b] is count of bin b in dataset d
-	max := 0
+	counts = make([][]int, len(c.Data)) // counts[d][b] is count of bin b in dataset d
+	max = 0
 	for i, data := range c.Data {
 		count := make([]int, binCnt)
 		for _, x := range data.Samples {
@@ -299,6 +273,40 @@ func (c *HistChart) Plot(g Graphics) {
 		}
 		fmt.Printf("Re-Maxed to count: %d\n", max)
 	}
+	return
+}
+
+
+func (c *HistChart) Plot(g Graphics) {
+	layout := Layout(g, c.Title, c.XRange.Label, c.YRange.Label,
+		c.XRange.TicSetting.Hide, c.YRange.TicSetting.Hide, &c.Key)
+	fw, fh, _ := g.FontMetrics(DataStyle{})
+	fw += 0
+
+	width, height := layout.Width, layout.Height
+	topm, leftm := layout.Top, layout.Left
+	numxtics, numytics := layout.NumXtics, layout.NumYtics
+
+	// Outside bound ranges for histograms are nicer
+	leftm, width = leftm+int(2*fw), width-int(2*fw)
+	topm, height = topm, height-int(1*fh)
+
+	c.XRange.Setup(2*numxtics, 2*numxtics+5, width, leftm, false)
+
+	// TODO(vodo) a) BinWidth might be input, alignment to tics should be nice, binCnt, ...
+	if c.BinWidth == 0 {
+		c.BinWidth = c.XRange.TicSetting.Delta
+	}
+	if c.BinWidth == 0 {
+		c.BinWidth = 1
+	}
+	binCnt := int((c.XRange.Max-c.XRange.Min)/c.BinWidth + 0.5)
+	c.FirstBin = c.XRange.Min + c.BinWidth/2
+	binStart := c.XRange.Min // BUG: if min not on tic: ugly
+	fmt.Printf("%d bins from %.2f width %.2f\n", binCnt, binStart, c.BinWidth)
+	counts, max := c.binify(binStart, c.BinWidth, binCnt)
+
+	// Fix lower end of y axis
 	c.YRange.DataMax = float64(max)
 	c.YRange.DataMin = 0
 	c.YRange.MinMode.Fixed = true
@@ -334,11 +342,13 @@ func (c *HistChart) Plot(g Graphics) {
 	fmt.Printf("gf=%.3f, sf=%.3f, bw=%.3f   ===>  ww=%.2f,   w=%.2f,  s=%.2f\n", gf, sf, c.BinWidth, ww, w, s)
 	for d := numSets - 1; d >= 0; d-- {
 		bars := make([]Barinfo, binCnt)
+		ws := 0
 		for b := 0; b < binCnt; b++ {
 			xb := binStart + (float64(b)+0.5)*c.BinWidth
 			x := xb - ww/2 + float64(d)*(s+w)
 			xs := xf(x)
 			xss := xf(x + w)
+			ws = xss - xs
 			bars[b].x, bars[b].w = xs, xss-xs
 			off := 0
 			if c.Stacked {
@@ -350,7 +360,18 @@ func (c *HistChart) Plot(g Graphics) {
 			bars[b].y, bars[b].h = a, abs(a-aa)
 		}
 		g.Bars(bars, c.Data[d].Style)
-		// TODO: whitelining?
+		if !c.Stacked && sf < 0 && gf != 0 && fh > 1 {
+			// Whitelining
+			lw := 1
+			if ws > 25 {
+				lw = 2
+			}
+			white := DataStyle{LineColor: "#ffffff", LineWidth: lw, LineStyle: SolidLine}
+			for _, b := range bars {
+				g.Line(b.x, b.y-1, b.x+b.w+1, b.y-1, white)
+				g.Line(b.x+b.w+1, b.y-1, b.x+b.w+1, b.y+b.h, white)
+			}
+		}
 	}
 
 	if !c.Key.Hide {

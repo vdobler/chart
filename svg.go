@@ -33,7 +33,7 @@ func (sg *SvgGraphics) Begin() {
 	if fs == 0 {
 		fs = 12
 	}
-	sg.svg.Gstyle(fmt.Sprintf("stroke:#000000; stroke-width:1; font-family: %s; font-size: %d", font, fs))
+	sg.svg.Gstyle(fmt.Sprintf("stroke:#000000; stroke-width:1; font-family: %s; font-size: %d; opacity: 1; fill-opacity: 1", font, fs))
 }
 
 func (sg *SvgGraphics) End() {
@@ -79,7 +79,9 @@ func (sg *SvgGraphics) Line(x0, y0, x1, y1 int, style DataStyle) {
 	if style.LineColor != "" {
 		s = fmt.Sprintf("stroke:%s; ", style.LineColor)
 	}
-	s += fmt.Sprintf("stroke-width: %d", style.LineWidth)
+	s += fmt.Sprintf("stroke-width: %d; ", style.LineWidth)
+	s += fmt.Sprintf("opacity: %.2f; ", 1-style.Alpha)
+
 	sg.svg.Line(x0, y0, x1, y1, s)
 }
 
@@ -191,7 +193,21 @@ func (sg *SvgGraphics) Symbol(x, y, s int, style DataStyle) {
 }
 
 func (sg *SvgGraphics) Rect(x, y, w, h int, style DataStyle) {
-	GenericRect(sg, x, y, w, h, style) // TODO
+	var s string
+	fc := style.LineColor
+	if fc != "" {
+		s = fmt.Sprintf("stroke:%s; ", fc)
+	} else {
+		fc = "#808080"
+	}
+	s += fmt.Sprintf("stroke-width: %d; ", style.LineWidth)
+	s += fmt.Sprintf("opacity: %.2f; ", 1-style.Alpha)
+	if style.Fill != 0 {
+		opa := style.Fill
+		s += fmt.Sprintf("fill: %s; fill-opacity: %.2f", fc, opa)
+	}
+	sg.svg.Rect(x, y, w, h, s)
+	// GenericRect(sg, x, y, w, h, style) // TODO
 }
 
 func (sg *SvgGraphics) Style(element string) DataStyle {
