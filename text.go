@@ -647,11 +647,15 @@ func (g *TextGraphics) Boxes(boxes []Box, width int, style DataStyle) {
 
 		for _, ol := range box.Outliers {
 			y := int(ol)
-			g.tb.Put(x, y, style.Symbo)
+			g.tb.Put(x, y, style.Symbol)
 		}
 	}
 }
 
 func (g *TextGraphics) Key(x, y int, key Key) {
 	GenericKey(g, x, y, key)
+}
+
+func (g *TextGraphics) Bars(bars []Barinfo, style DataStyle) {
+	GenericBars(g, bars, style)
 }

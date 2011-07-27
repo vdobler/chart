@@ -240,3 +240,7 @@ func (sg *SvgGraphics) Boxes(boxes []Box, width int, style DataStyle) {
 func (sg *SvgGraphics) Key(x, y int, key Key) {
 	GenericKey(sg, x, y, key)
 }
+
+func (sg *SvgGraphics) Bars(bars []Barinfo, style DataStyle) {
+	GenericBars(sg, bars, style)
+}

@@ -42,14 +42,19 @@ type Graphics interface {
 
 	Scatter(points []EPoint, style DataStyle)      // Points, Lines and Line+Points
 	Boxes(boxes []Box, width int, style DataStyle) // Boxplots
+	Bars(bars []Barinfo, style DataStyle)          // any type of histogram
 	/*
-		Bars(style DataStyle)                     // any type of histogram
 		Ring(style DataStyle)                     // 
 	*/
 	Key(x, y int, key Key) // place key at x,y
 	End()                  // Done, cleanup
 }
 
+type Barinfo struct {
+	x, y, w, h int
+	lx, ly     int
+	t          string
+}
 
 func GenericFontMetrics(bg BasicGraphics, style DataStyle) (fw float32, fh int, mono bool) {
 	fh = style.FontSize
@@ -309,4 +314,10 @@ func GenericBoxes(bg BasicGraphics, boxes []Box, width int, style DataStyle) {
 
 	}
 
+}
+
+func GenericBars(bg BasicGraphics, bars []Barinfo, style DataStyle) {
+	for _, b := range bars {
+		bg.Rect(b.x, b.y, b.w, b.h, style)
+	}
 }

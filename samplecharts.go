@@ -284,6 +284,69 @@ func boxChart() {
 	fmt.Printf("%s\n", txtgraphics.String())
 }
 
+func gauss(n int, s, a, l, u float64) []float64 {
+	points := make([]float64, n)
+	for i := 0; i < len(points); i++ {
+		x := rand.NormFloat64()*s + a
+		if x < l {
+			x = l
+		} else if x > u {
+			x = u
+		}
+		points[i] = x
+	}
+	return points
+}
+
+//
+// Box Charts
+//
+func histChart(name, title string, stacked bool) {
+	file, _ := os.Create(name)
+	thesvg := svg.New(file)
+	thesvg.Start(800, 600)
+	thesvg.Title(title)
+	thesvg.Rect(0, 0, 800, 600, "fill: #ffffff")
+	svggraphics := chart.NewSvgGraphics(thesvg, 400, 300, "Arial", 12)
+	txtgraphics := chart.NewTextGraphics(120, 30)
+
+	hc := chart.HistChart{Title: title, Xlabel: "Value", Ylabel: "Count", ShowVal: true, Stacked: stacked}
+	hc.Key.Hide = true
+	points := gauss(150, 10, 20, 0, 50)
+	hc.AddData("Sample 1", points, chart.DataStyle{LineColor: "#ff0000", LineWidth: 1, LineStyle: 1})
+	hc.Plot(svggraphics)
+	hc.Plot(txtgraphics)
+	fmt.Printf("%s\n", txtgraphics.String())
+
+	points2 := gauss(80, 4, 37, 0, 50)
+	hc.AddData("Sample 2", points2, chart.DataStyle{LineColor: "#00ff00", LineWidth: 1, LineStyle: 1})
+	thesvg.Gtransform("translate(400 0)")
+	hc.Plot(svggraphics)
+	hc.Plot(txtgraphics)
+	fmt.Printf("%s\n", txtgraphics.String())
+	thesvg.Gend()
+
+	thesvg.Gtransform("translate(0 300)")
+	points3 := gauss(60, 15, 0, 0, 50)
+	hc.AddData("Sample 3", points3, chart.DataStyle{LineColor: "#0000ff", LineWidth: 1, LineStyle: 1})
+	hc.Plot(svggraphics)
+	hc.Plot(txtgraphics)
+	fmt.Printf("%s\n", txtgraphics.String())
+	thesvg.Gend()
+
+	thesvg.Gtransform("translate(400 300)")
+	points4 := gauss(40, 30, 15, 0, 50)
+	hc.AddData("Sample 4", points4, chart.DataStyle{LineColor: "#000000", LineWidth: 1, LineStyle: 1})
+	hc.Plot(svggraphics)
+	hc.Plot(txtgraphics)
+	fmt.Printf("%s\n", txtgraphics.String())
+	thesvg.Gend()
+
+	thesvg.End()
+	file.Close()
+}
+
+
 func main() {
 	stripChart()
 
@@ -294,6 +357,9 @@ func main() {
 	boxChart()
 
 	fancyScatter()
+
+	histChart("xhist2.svg", "Histogram", true)
+	histChart("xhist1.svg", "Histogram", false)
 
 	goto ende
 
@@ -331,61 +397,6 @@ func main() {
 			tl.AddDataPair("Sample", v, t)
 			fmt.Printf("%s\n", tl.PlotTxt(100, 25))
 		}
-
-		hc := chart.HistChart{Title: "Histogram", Xlabel: "Value", Ylabel: "Count", ShowVal: true}
-		points := make([]float64, 150)
-		for i := 0; i < len(points); i++ {
-			x := rand.NormFloat64()*10 + 20
-			if x < 0 {
-				x = 0
-			} else if x > 50 {
-				x = 50
-			}
-			points[i] = x
-		}
-		hc.AddData("Sample 1\nfrom today\nand yesterday ", points)
-		fmt.Printf("%s\n", hc.PlotTxt(120, 20))
-
-		points2 := make([]float64, 80)
-		for i := 0; i < len(points2); i++ {
-			x := rand.NormFloat64()*4 + 37
-			if x < 0 {
-				x = 0
-			} else if x > 50 {
-				x = 50
-			}
-			points2[i] = x
-		}
-		hc.AddData("Sample 2\ntomorrow", points2)
-		fmt.Printf("%s\n", hc.PlotTxt(120, 20))
-
-		hc.Stacked = true
-		fmt.Printf("%s\n", hc.PlotTxt(120, 20))
-
-		points3 := make([]float64, 60)
-		for i := 0; i < len(points3); i++ {
-			x := rand.NormFloat64() * 15
-			if x < 0 {
-				x = 0
-			} else if x > 50 {
-				x = 50
-			}
-			points3[i] = x
-		}
-		hc.AddData("Sample 3", points3)
-		fmt.Printf("%s\n", hc.PlotTxt(120, 30))
-		hc.Stacked = false
-		fmt.Printf("%s\n", hc.PlotTxt(120, 30))
-
-		hc.AddData("Sample 4\nhuhu", points3)
-		hc.Stacked = true
-		fmt.Printf("%s\n", hc.PlotTxt(120, 30))
-		hc.Key.Cols = 2
-		hc.Key.Pos = "ort"
-		fmt.Printf("%s\n", hc.PlotTxt(120, 30))
-		hc.Key.Cols = -3
-		hc.Key.Pos = "irt"
-		fmt.Printf("%s\n", hc.PlotTxt(124, 30))
 
 	*/
 
