@@ -87,7 +87,7 @@ func SixvalInt(data []int, p int) (min, lq, med, avg, uq, max int) {
 
 	avg = sum / n
 
-	sort.SortInts(data)
+	sort.Ints(data)
 
 	if n%2 == 1 {
 		med = data[(n-1)/2]
@@ -141,7 +141,7 @@ func SixvalFloat64(data []float64, p int) (min, lq, med, avg, uq, max float64) {
 	avg += corr / float64(n)
 
 	// Median
-	sort.Sort(sort.Float64Array(data))
+	sort.Float64s(data)
 	if n%2 == 1 {
 		med = data[(n-1)/2]
 	} else {

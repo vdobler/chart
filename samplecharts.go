@@ -208,7 +208,7 @@ func fancyScatter() {
 			return 500
 		}
 		return x * x
-	},chart.DataStyle{Symbol: 0, LineWidth: 2, LineColor: "#a00000", LineStyle: 1})
+	}, chart.DataStyle{Symbol: 0, LineWidth: 2, LineColor: "#a00000", LineStyle: 1})
 	pl.AddFunc("30", func(x float64) float64 { return 30 },
 		chart.DataStyle{Symbol: 0, LineWidth: 1, LineColor: "#00a000", LineStyle: 1})
 	pl.AddFunc("7777", func(x float64) float64 { return 7 },
@@ -349,7 +349,7 @@ func histChart(name, title string, stacked bool) {
 
 
 //
-// Box Charts
+// Bar Charts
 //
 func barChart() {
 	file, _ := os.Create("xbar1.svg")
@@ -365,8 +365,8 @@ func barChart() {
 	barc.AddDataPair("Amount",
 		[]float64{-10, 10, 20, 30, 35, 40, 50},
 		[]float64{90, 120, 180, 205, 230, 150, 190},
-		chart.DataStyle{Symbol: 'o', LineColor: "#ff0000", Fill: 0.5, Alpha: 0, 
-	                        LineStyle: chart.SolidLine, LineWidth:2 })
+		chart.DataStyle{Symbol: 'o', LineColor: "#ff0000", Fill: 0.5, Alpha: 0,
+			LineStyle: chart.SolidLine, LineWidth: 2})
 	barc.Plot(svggraphics)
 	barc.Plot(txtgraphics)
 	fmt.Printf("%s\n", txtgraphics.String())
@@ -375,15 +375,14 @@ func barChart() {
 	barc.AddDataPair("Test",
 		[]float64{-5, 15, 25, 35, 45, 55},
 		[]float64{110, 80, 95, 80, 120, 140},
-		chart.DataStyle{Symbol: '#', LineColor: "#00ff00", Fill: 1, Alpha: 0, 
-	        LineStyle: chart.SolidLine, LineWidth:0})
+		chart.DataStyle{Symbol: '#', LineColor: "#00ff00", Fill: 1, Alpha: 0,
+			LineStyle: chart.SolidLine, LineWidth: 0})
 	thesvg.Gtransform("translate(400 0)")
 	barc.Plot(svggraphics)
 	barc.Plot(txtgraphics)
 	fmt.Printf("%s\n", txtgraphics.String())
 	thesvg.Gend()
 	barc.XRange.TicSetting.Delta = 0
-
 
 	barc.SameBarWidth = true
 	thesvg.Gtransform("translate(0 300)")
@@ -394,6 +393,98 @@ func barChart() {
 
 	thesvg.End()
 	file.Close()
+}
+
+//
+// Categorical Bar Charts
+//
+func catBarChart() {
+	file, _ := os.Create("xcbar1.svg")
+	thesvg := svg.New(file)
+	thesvg.Start(800, 600)
+	thesvg.Title("Bar Chart")
+	thesvg.Rect(0, 0, 800, 600, "fill: #ffffff")
+	svggraphics := chart.NewSvgGraphics(thesvg, 400, 300, "Arial", 12)
+	txtgraphics := chart.NewTextGraphics(120, 30)
+
+	// Categorized Bar Chart
+	cbarc := chart.CategoryBarChart{Title: "Income", Categories: []string{"none", "low", "average", "high"}}
+	cbarc.AddData("Europe", map[string]float64{"none": 10, "low": 15, "average": 25, "high": 20},
+		chart.DataStyle{LineColor: "#0000ff", LineWidth: 2, Fill: 0.3})
+	cbarc.Plot(svggraphics)
+	cbarc.Plot(txtgraphics)
+	fmt.Printf("%s\n", txtgraphics.String())
+
+	cbarc.AddData("Asia", map[string]float64{"none": 15, "low": 30, "average": 10, "high": 20},
+		chart.DataStyle{LineColor: "#aa00aa", LineWidth: 2, Fill: 0.75})
+	thesvg.Gtransform("translate(400 0)")
+	cbarc.Plot(svggraphics)
+	cbarc.Plot(txtgraphics)
+	fmt.Printf("%s\n", txtgraphics.String())
+	thesvg.Gend()
+
+	cbarc.Stacked = true
+	thesvg.Gtransform("translate(0 300)")
+	cbarc.Plot(svggraphics)
+	cbarc.Plot(txtgraphics)
+	fmt.Printf("%s\n", txtgraphics.String())
+	thesvg.Gend()
+
+	cbarc = chart.CategoryBarChart{Title: "Income", Categories: []string{"none", "low", "average", "high"}}
+	cbarc.YRange.ShowZero = true
+	cbarc.AddData("Europe", map[string]float64{"none": 10, "low": 15, "average": 25, "high": 20},
+		chart.DataStyle{LineColor: "#0000ff", LineWidth: 2, Fill: 0.3})
+	cbarc.AddData("Asia", map[string]float64{"none": 15, "low": 30, "average": 10, "high": -20},
+		chart.DataStyle{LineColor: "#aa00aa", LineWidth: 2, Fill: 0.75})
+
+	thesvg.Gtransform("translate(400 300)")
+	cbarc.Plot(svggraphics)
+	cbarc.Plot(txtgraphics)
+	fmt.Printf("%s\n", txtgraphics.String())
+	thesvg.Gend()
+
+	thesvg.End()
+	file.Close()
+}
+
+
+func textlen() {
+	s2f, _ := os.Create("text.svg")
+	mysvg := svg.New(s2f)
+	mysvg.Start(1600, 800)
+	mysvg.Title("My Plot")
+	mysvg.Rect(0, 0, 2000, 800, "fill: #ffffff")
+	sgr := chart.NewSvgGraphics(mysvg, 2000, 800, "Arial", 18)
+	sgr.Begin()
+
+	texts := []string{"ill", "WWW", "Some normal text.", "Illi, is. illigalli: ill!", "OO WORKSHOOPS OMWWW BMWWMB"}
+	fonts := []string{"Arial", "Helvetica", "Times", "Courier" /* "Calibri", "Palatino" */ }
+	sizes := []int{8, 12, 16, 20}
+	style := chart.DataStyle{FontColor: "#000000", Alpha: 0, LineColor: "#ff0000", LineWidth: 2}
+	ls := chart.DataStyle{FontColor: "#000a0", Font: "Arial", FontSize: 12, Alpha: 0, LineColor: "#000000", LineWidth: 1}
+
+	x, y := 20, 40
+	for _, t := range texts {
+		for _, f := range fonts {
+			for _, s := range sizes {
+				style.Font, style.FontSize = f, s
+				tvl := sgr.TextLen(t, style)
+				sgr.Text(x+tvl/2, y-2, t, "cc", 0, style)
+				sgr.Line(x, y, x+tvl, y, style)
+				sgr.Text(x+tvl+10, y-2, f, "cl", 0, ls)
+				y += 30
+				if y > 760 {
+					y = 40
+					x += 300
+				}
+			}
+		}
+	}
+
+	sgr.End()
+	mysvg.End()
+	s2f.Close()
+
 }
 
 
@@ -413,7 +504,7 @@ func main() {
 
 	barChart()
 
-	goto ende
+	catBarChart()
 
 	/*
 		 steps := []int64{ 1, 5, 7, 8, 10, 30, 50, 100, 150, 300, 500, 800, 1000, 1500, 3000, 5000,8000, 10000, 15000, 20000, 30000, 50000, 70000, 100000, 200000, 400000, 800000, 1200000, 1800000, 2000000, 2200000, 2500000, 3000000, 5000000, 9000000, 2 * 9000000, 4 * 9000000 }
@@ -464,21 +555,6 @@ func main() {
 	piec.Key.Cols = 2
 	fmt.Printf("%s\n", piec.PlotTxt(80, 30))
 
-	// Categorized Bar Chart
-	cbarc := chart.CategoryBarChart{Title: "Income", Categories: []string{"none", "low", "average", "high"}}
-	cbarc.AddData("Europe", map[string]float64{"none": 10, "low": 15, "average": 25, "high": 20})
-	fmt.Printf("%s\n", cbarc.PlotTxt(100, 20))
-	cbarc.AddData("Asia", map[string]float64{"none": 15, "low": 30, "average": 10, "high": 20})
-	fmt.Printf("%s\n", cbarc.PlotTxt(100, 20))
-	cbarc.Stacked = true
-	fmt.Printf("%s\n", cbarc.PlotTxt(100, 20))
-
-	cbarc = chart.CategoryBarChart{Title: "Income", Categories: []string{"none", "low", "average", "high"}}
-	cbarc.YRange.ShowZero = true
-	cbarc.AddData("Europe", map[string]float64{"none": 10, "low": 15, "average": 25, "high": 20})
-	cbarc.AddData("Asia", map[string]float64{"none": 15, "low": 30, "average": 10, "high": -20})
-	fmt.Printf("%s\n", cbarc.PlotTxt(100, 25))
-
 	// Log-X axis
 	lc := chart.ScatterChart{Title: "Log/Lin", Xlabel: "X-Value", Ylabel: "Y-Value"}
 	lc.Key.Hide = true
@@ -487,46 +563,5 @@ func main() {
 	ly := []float64{10, 30, 90, 270, 3 * 270, 9 * 270, 27 * 270}
 	lc.AddDataPair("Measurement", lx, ly, chart.DataStyle{Symbol: 'Z', SymbolColor: "#9966ff", SymbolSize: 1.5})
 	fmt.Printf("%s\n", lc.PlotTxt(100, 25))
-
-ende:
-
-	if true {
-		s2f, _ := os.Create("text.svg")
-		mysvg := svg.New(s2f)
-		mysvg.Start(1600, 800)
-		mysvg.Title("My Plot")
-		mysvg.Rect(0, 0, 2000, 800, "fill: #ffffff")
-		sgr := chart.NewSvgGraphics(mysvg, 2000, 800, "Arial", 18)
-		sgr.Begin()
-
-		texts := []string{"ill", "WWW", "Some normal text.", "Illi, is. illigalli: ill!", "OO WORKSHOOPS OMWWW BMWWMB"}
-		fonts := []string{"Arial", "Helvetica", "Times", "Courier" /* "Calibri", "Palatino" */ }
-		sizes := []int{8, 12, 16, 20}
-		style := chart.DataStyle{FontColor: "#000000", Alpha: 0, LineColor: "#ff0000", LineWidth: 2}
-		ls := chart.DataStyle{FontColor: "#000a0", Font: "Arial", FontSize: 12, Alpha: 0, LineColor: "#000000", LineWidth: 1}
-
-		x, y := 20, 40
-		for _, t := range texts {
-			for _, f := range fonts {
-				for _, s := range sizes {
-					style.Font, style.FontSize = f, s
-					tvl := sgr.TextLen(t, style)
-					sgr.Text(x+tvl/2, y-2, t, "cc", 0, style)
-					sgr.Line(x, y, x+tvl, y, style)
-					sgr.Text(x+tvl+10, y-2, f, "cl", 0, ls)
-					y += 30
-					if y > 760 {
-						y = 40
-						x += 300
-					}
-				}
-			}
-		}
-
-		sgr.End()
-		mysvg.End()
-		s2f.Close()
-
-	}
 
 }

@@ -55,7 +55,7 @@ func (key *Key) LayoutKeyTxt() (kb *TextBuf) {
 			continue
 		}
 		num++
-		lines := strings.Split(e.Text, "\n", -1)
+		lines := strings.Split(e.Text, "\n")
 		if len(lines) > 1 {
 			haveml = true
 		}
@@ -110,7 +110,7 @@ func (key *Key) LayoutKeyTxt() (kb *TextBuf) {
 		} else {
 			c, r = i/rows, i%rows
 		}
-		lines := strings.Split(e.Text, "\n", -1)
+		lines := strings.Split(e.Text, "\n")
 		ml := 0
 		for _, t := range lines {
 			if len(t) > ml { // TODO(vodo) use utf8.CountRuneInString and honour different chars
@@ -265,7 +265,7 @@ func textviewlen(t string) (length float32) {
 }
 
 func textDim(t string) (w float32, h int) {
-	lines := strings.Split(t, "\n", -1)
+	lines := strings.Split(t, "\n")
 	for _, t := range lines {
 		tvl := textviewlen(t)
 		if tvl > w {

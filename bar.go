@@ -203,14 +203,12 @@ func (c *BarChart) Plot(g Graphics) {
 
 	// Start of drawing
 	g.Begin()
-
 	if c.Title != "" {
 		g.Title(c.Title)
 	}
 
 	g.XAxis(c.XRange, topm+height, topm)
 	g.YAxis(c.YRange, leftm, leftm+width)
-
 
 	xf := c.XRange.Data2Screen
 	yf := c.YRange.Data2Screen
@@ -223,7 +221,7 @@ func (c *BarChart) Plot(g Graphics) {
 		}
 		sbw := max(1, xf(2*barWidth)-xf(barWidth)-1) // screen bar width TODO
 		bars := make([]Barinfo, len(data.Samples))
- 
+
 		for i, point := range data.Samples {
 			x, y := point.X, point.Y
 			sx := xf(x-barWidth/2) + 1
@@ -235,7 +233,6 @@ func (c *BarChart) Plot(g Graphics) {
 		}
 		g.Bars(bars, data.Style)
 	}
-
 
 	if !c.Key.Hide {
 		g.Key(layout.KeyX, layout.KeyY, c.Key)

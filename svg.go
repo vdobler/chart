@@ -202,12 +202,12 @@ func (sg *SvgGraphics) Rect(x, y, w, h int, style DataStyle) {
 	}
 	var r, g, b int
 	fillcol := linecol
-	n, err := fmt.Sscanf(linecol[1:], "%2x%2x%2x", &r, &g, &b) 
-	if err == nil && n==3 {
+	n, err := fmt.Sscanf(linecol[1:], "%2x%2x%2x", &r, &g, &b)
+	if err == nil && n == 3 {
 		f := style.Fill
-		r = max(min(255 - int(f*float64(255-r)),255),0)
-		g = max(min(255 - int(f*float64(255-g)),255),0)
-		b = max(min(255 - int(f*float64(255-b)),255),0)
+		r = max(min(255-int(f*float64(255-r)), 255), 0)
+		g = max(min(255-int(f*float64(255-g)), 255), 0)
+		b = max(min(255-int(f*float64(255-b)), 255), 0)
 		fillcol = fmt.Sprintf("#%02x%02x%02x", r, g, b)
 		fmt.Printf("line-color: %s  --- %.2f --> fill-color %s\n", linecol, f, fillcol)
 	} else {
