@@ -194,17 +194,31 @@ func (sg *SvgGraphics) Symbol(x, y, s int, style DataStyle) {
 
 func (sg *SvgGraphics) Rect(x, y, w, h int, style DataStyle) {
 	var s string
-	fc := style.LineColor
-	if fc != "" {
-		s = fmt.Sprintf("stroke:%s; ", fc)
+	linecol := style.LineColor
+	if linecol != "" {
+		s = fmt.Sprintf("stroke:%s; ", linecol)
 	} else {
-		fc = "#808080"
+		linecol = "#808080"
 	}
+	var r, g, b int
+	fillcol := linecol
+	n, err := fmt.Sscanf(linecol[1:], "%2x%2x%2x", &r, &g, &b) 
+	if err == nil && n==3 {
+		f := style.Fill
+		r = max(min(255 - int(f*float64(255-r)),255),0)
+		g = max(min(255 - int(f*float64(255-g)),255),0)
+		b = max(min(255 - int(f*float64(255-b)),255),0)
+		fillcol = fmt.Sprintf("#%02x%02x%02x", r, g, b)
+		fmt.Printf("line-color: %s  --- %.2f --> fill-color %s\n", linecol, f, fillcol)
+	} else {
+		fmt.Printf("Cannot parse %s: %s\n", linecol[1:], err.String())
+	}
+	fillcol += "X"
 	s += fmt.Sprintf("stroke-width: %d; ", style.LineWidth)
 	s += fmt.Sprintf("opacity: %.2f; ", 1-style.Alpha)
 	if style.Fill != 0 {
 		opa := style.Fill
-		s += fmt.Sprintf("fill: %s; fill-opacity: %.2f", fc, opa)
+		s += fmt.Sprintf("fill: %s; fill-opacity: %.2f", linecol, opa)
 	}
 	sg.svg.Rect(x, y, w, h, s)
 	// GenericRect(sg, x, y, w, h, style) // TODO

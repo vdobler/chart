@@ -79,7 +79,8 @@ type DataStyle struct {
 }
 
 const (
-	SolidLine = iota
+	NoLine = iota
+	SolidLine
 	DashedLine
 	DottedLine
 	DashDotDotLine

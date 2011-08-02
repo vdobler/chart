@@ -348,6 +348,55 @@ func histChart(name, title string, stacked bool) {
 }
 
 
+//
+// Box Charts
+//
+func barChart() {
+	file, _ := os.Create("xbar1.svg")
+	thesvg := svg.New(file)
+	thesvg.Start(800, 600)
+	thesvg.Title("Bar Chart")
+	thesvg.Rect(0, 0, 800, 600, "fill: #ffffff")
+	svggraphics := chart.NewSvgGraphics(thesvg, 400, 300, "Arial", 12)
+	txtgraphics := chart.NewTextGraphics(120, 30)
+
+	barc := chart.BarChart{Title: "My first Bar Chart"}
+	barc.XRange.ShowZero = true
+	barc.AddDataPair("Amount",
+		[]float64{-10, 10, 20, 30, 35, 40, 50},
+		[]float64{90, 120, 180, 205, 230, 150, 190},
+		chart.DataStyle{Symbol: 'o', LineColor: "#ff0000", Fill: 0.5, Alpha: 0, 
+	                        LineStyle: chart.SolidLine, LineWidth:2 })
+	barc.Plot(svggraphics)
+	barc.Plot(txtgraphics)
+	fmt.Printf("%s\n", txtgraphics.String())
+	barc.XRange.TicSetting.Delta = 0
+
+	barc.AddDataPair("Test",
+		[]float64{-5, 15, 25, 35, 45, 55},
+		[]float64{110, 80, 95, 80, 120, 140},
+		chart.DataStyle{Symbol: '#', LineColor: "#00ff00", Fill: 1, Alpha: 0, 
+	        LineStyle: chart.SolidLine, LineWidth:0})
+	thesvg.Gtransform("translate(400 0)")
+	barc.Plot(svggraphics)
+	barc.Plot(txtgraphics)
+	fmt.Printf("%s\n", txtgraphics.String())
+	thesvg.Gend()
+	barc.XRange.TicSetting.Delta = 0
+
+
+	barc.SameBarWidth = true
+	thesvg.Gtransform("translate(0 300)")
+	barc.Plot(svggraphics)
+	barc.Plot(txtgraphics)
+	fmt.Printf("%s\n", txtgraphics.String())
+	thesvg.Gend()
+
+	thesvg.End()
+	file.Close()
+}
+
+
 func main() {
 	stripChart()
 
@@ -361,6 +410,8 @@ func main() {
 
 	histChart("xhist2.svg", "Histogram", true)
 	histChart("xhist1.svg", "Histogram", false)
+
+	barChart()
 
 	goto ende
 
@@ -402,18 +453,6 @@ func main() {
 	*/
 
 	// Bar chart
-	barc := chart.BarChart{Title: "My first Bar Chart"}
-	barc.XRange.ShowZero = true
-	barc.AddDataPair("Amount",
-		[]float64{-10, 10, 20, 30, 35, 40, 50},
-		[]float64{90, 120, 180, 205, 230, 150, 190})
-	fmt.Printf("%s\n", barc.PlotTxt(100, 25))
-	barc.AddDataPair("Test",
-		[]float64{-5, 15, 25, 35, 45, 55},
-		[]float64{110, 80, 95, 80, 120, 140})
-	fmt.Printf("%s\n", barc.PlotTxt(100, 25))
-	barc.SameBarWidth = true
-	fmt.Printf("%s\n", barc.PlotTxt(100, 25))
 
 	// Pie Chart
 	piec := chart.PieChart{Title: "Some Pies"}

@@ -339,6 +339,7 @@ func (r *Range) tSetup(desiredNumberOfTics, maxNumberOfTics int, delta, mindelta
 }
 
 func (r *Range) fDelta(delta, mindelta float64) float64 {
+	fmt.Printf("fDelta(%.3f, %.3f)\n", delta, mindelta)
 	if r.Log {
 		return 10
 	}
@@ -359,6 +360,7 @@ func (r *Range) fDelta(delta, mindelta float64) float64 {
 	}
 	delta = f * de
 	if delta < mindelta {
+		fmt.Printf("Redoing delta")
 		// recalculate tic delta
 		switch f {
 		case 1, 5:
@@ -395,8 +397,8 @@ func (r *Range) fSetup(desiredNumberOfTics, maxNumberOfTics int, delta, mindelta
 	} else {
 		first := delta * math.Ceil(r.Min/delta)
 		num := int(-first/delta + math.Floor(r.Max/delta) + 1.5)
-		//fmt.Printf("Range: (%g,%g) --> (%g,%g), Tic-Delta: %g, %d tics from %g\n",
-		//	r.DataMin, r.DataMax, r.Min, r.Max, delta, num, first)
+		fmt.Printf("Range: (%g,%g) --> (%g,%g), Tic-Delta: %g, %d tics from %g\n",
+			r.DataMin, r.DataMax, r.Min, r.Max, delta, num, first)
 
 		// Set up tics
 		r.Tics = make([]Tic, num)
@@ -572,13 +574,13 @@ func Layout(g Graphics, title, xlabel, ylabel string, hidextics, hideytics bool,
 		}
 	}
 
-	// fmt.Printf("width=%d, height=%d, leftm=%d, topm=%d\n", width, height, leftm, topm)
+	// fmt.Printf("width=%d, height=%d, leftm=%d, topm=%d  (fw=%d)\n", width, height, leftm, topm, int(fw))
 
 	// Number of tics
 	if width/int(fw) <= 20 {
 		ld.NumXtics = 2
 	} else {
-		ld.NumXtics = width / int(12*fw)
+		ld.NumXtics = width / int(8*fw)
 		if ld.NumXtics > 25 {
 			ld.NumXtics = 25
 		}

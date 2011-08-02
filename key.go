@@ -370,7 +370,7 @@ func GenericKey(bg BasicGraphics, x, y int, key Key) {
 				continue
 			}
 			s, l, t := e.Style.Symbol, e.Style.LineStyle, e.Text
-			// fmt.Printf("Symbol %d=%c, Line=%d: %s\n", s, s, l, t)
+			fmt.Printf("Symbol %d=%c, Line=%d: %s\n", s, s, l, t)
 			if s == -1 {
 				// heading only...
 				bg.Text(x, yy, t, "cl", 0, e.Style)
@@ -378,6 +378,7 @@ func GenericKey(bg BasicGraphics, x, y int, key Key) {
 				// normal entry
 				if l > 0 {
 					bg.Line(x, yy, x+int(KeySymbolWidth*fw), yy, e.Style)
+					fmt.Printf("Key-Line %d %d %d %d\n", x, yy, x+int(KeySymbolWidth*fw), yy)
 				}
 				if s > 0 {
 					bg.Symbol(x+int(KeySymbolWidth*fw)/2, yy, s, e.Style)
