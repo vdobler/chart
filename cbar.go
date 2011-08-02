@@ -95,7 +95,12 @@ func (c *CategoryBarChart) PlotTxt(w, h int) string {
 				}
 			}
 		}
-		c.YRange.DataMin, c.YRange.DataMax = min, max
+
+		// stacked histograms and y-axis _not_ starting at 0 is
+		// utterly braindamaged and missleading: Fix 0
+		c.YRange.DataMin, c.YRange.Min, c.YRange.DataMax = 0, 0, max
+		c.YRange.MinMode.Fixed, c.YRange.MinMode.Value = true, 0
+		fmt.Printf("YRange = %#v\n", c.YRange)
 	}
 	c.YRange.Setup(numytics, numytics+2, height, topm, true)
 
@@ -218,7 +223,11 @@ func (c *CategoryBarChart) Plot(g Graphics) {
 				}
 			}
 		}
-		c.YRange.DataMin, c.YRange.DataMax = min, max
+		// stacked histograms and y-axis _not_ starting at 0 is
+		// utterly braindamaged and missleading: Fix 0
+		c.YRange.DataMin, c.YRange.Min, c.YRange.DataMax = 0, 0, max
+		c.YRange.MinMode.Fixed, c.YRange.MinMode.Value = true, 0
+		fmt.Printf("YRange = %#v\n", c.YRange)
 	}
 	c.YRange.Setup(numytics, numytics+2, height, topm, true)
 
@@ -255,6 +264,7 @@ func (c *CategoryBarChart) Plot(g Graphics) {
 		fmt.Printf("No f.... idea how this can happen. You've been fiddeling?")
 	}
 
+	// TODO: gap between bars.
 	var sbw, fbw int
 	if c.Stacked {
 		sbw = (xf(2) - xf(0)) / 4

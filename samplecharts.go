@@ -97,9 +97,12 @@ func keyStyles() {
 	p.YRange.Min, p.YRange.Max = -5, 5
 	p.YRange.TicSetting.Delta = 3
 
-	p.AddFunc("Sin", func(x float64) float64 { return math.Sin(x) }, chart.DataStyle{LineColor: "#a00000", LineWidth: 1, LineStyle: 1})
-	p.AddFunc("Cos", func(x float64) float64 { return math.Cos(x) }, chart.DataStyle{LineColor: "#00a000", LineWidth: 1, LineStyle: 1})
-	p.AddFunc("Tan", func(x float64) float64 { return math.Tan(x) }, chart.DataStyle{LineColor: "#0000a0", LineWidth: 1, LineStyle: 1})
+	p.AddFunc("Sin", func(x float64) float64 { return math.Sin(x) },
+		chart.DataStyle{LineColor: "#a00000", LineWidth: 1, LineStyle: 1})
+	p.AddFunc("Cos", func(x float64) float64 { return math.Cos(x) },
+		chart.DataStyle{LineColor: "#00a000", LineWidth: 1, LineStyle: 1})
+	p.AddFunc("Tan", func(x float64) float64 { return math.Tan(x) },
+		chart.DataStyle{LineColor: "#0000a0", LineWidth: 1, LineStyle: 1})
 
 	x, y := 0, 0
 	for _, pos := range []string{"itl", "itc", "itr", "icl", "icc", "icr", "ibl", "ibc", "ibr",
@@ -417,6 +420,8 @@ func catBarChart() {
 
 	cbarc.AddData("Asia", map[string]float64{"none": 15, "low": 30, "average": 10, "high": 20},
 		chart.DataStyle{LineColor: "#aa00aa", LineWidth: 2, Fill: 0.75})
+	cbarc.YRange.MinMode.Fixed = true
+	cbarc.YRange.MinMode.Value = 0
 	thesvg.Gtransform("translate(400 0)")
 	cbarc.Plot(svggraphics)
 	cbarc.Plot(txtgraphics)
@@ -424,6 +429,7 @@ func catBarChart() {
 	thesvg.Gend()
 
 	cbarc.Stacked = true
+	cbarc.YRange.MinMode.Fixed = false
 	thesvg.Gtransform("translate(0 300)")
 	cbarc.Plot(svggraphics)
 	cbarc.Plot(txtgraphics)
@@ -436,7 +442,7 @@ func catBarChart() {
 		chart.DataStyle{LineColor: "#0000ff", LineWidth: 2, Fill: 0.3})
 	cbarc.AddData("Asia", map[string]float64{"none": 15, "low": 30, "average": 10, "high": -20},
 		chart.DataStyle{LineColor: "#aa00aa", LineWidth: 2, Fill: 0.75})
-
+	cbarc.Key.Pos = "ibl"
 	thesvg.Gtransform("translate(400 300)")
 	cbarc.Plot(svggraphics)
 	cbarc.Plot(txtgraphics)
@@ -447,6 +453,67 @@ func catBarChart() {
 	file.Close()
 }
 
+
+//
+// Logarithmic axes
+//
+func logAxis() {
+	file, _ := os.Create("xlog1.svg")
+	thesvg := svg.New(file)
+	thesvg.Start(800, 600)
+	thesvg.Title("Logarithmic axis")
+	thesvg.Rect(0, 0, 800, 600, "fill: #ffffff")
+	svggraphics := chart.NewSvgGraphics(thesvg, 400, 300, "Arial", 12)
+	txtgraphics := chart.NewTextGraphics(120, 30)
+
+	lc := chart.ScatterChart{Xlabel: "X-Value", Ylabel: "Y-Value"}
+	lx := []float64{4e-2, 3e-1, 2e0, 1e1, 8e1, 7e2, 5e3}
+	ly := []float64{10, 30, 90, 270, 3 * 270, 9 * 270, 27 * 270}
+	lc.AddDataPair("Measurement", lx, ly,
+		chart.DataStyle{Symbol: '#', SymbolColor: "#9966ff", SymbolSize: 1.5})
+	lc.Key.Hide = true
+	lc.XRange.MinMode.Expand, lc.XRange.MaxMode.Expand = chart.ExpandToTic, chart.ExpandToTic
+	lc.YRange.MinMode.Expand, lc.YRange.MaxMode.Expand = chart.ExpandToTic, chart.ExpandToTic
+	lc.Title = "Lin / Lin"
+	lc.XRange.Min, lc.XRange.Max = 0, 0
+	lc.YRange.Min, lc.YRange.Max = 0, 0
+	lc.Plot(svggraphics)
+	lc.Plot(txtgraphics)
+	fmt.Printf("%s\n", txtgraphics.String())
+
+	thesvg.Gtransform("translate(400 0)")
+	lc.Title = "Lin / Log"
+	lc.XRange.Log, lc.YRange.Log = false, true
+	lc.XRange.Min, lc.XRange.Max, lc.XRange.TicSetting.Delta = 0, 0, 0
+	lc.YRange.Min, lc.YRange.Max, lc.YRange.TicSetting.Delta = 0, 0, 0
+	lc.Plot(svggraphics)
+	lc.Plot(txtgraphics)
+	fmt.Printf("%s\n", txtgraphics.String())
+	thesvg.Gend()
+
+	thesvg.Gtransform("translate(0 300)")
+	lc.Title = "Log / Lin"
+	lc.XRange.Log, lc.YRange.Log = true, false
+	lc.XRange.Min, lc.XRange.Max, lc.XRange.TicSetting.Delta = 0, 0, 0
+	lc.YRange.Min, lc.YRange.Max, lc.YRange.TicSetting.Delta = 0, 0, 0
+	lc.Plot(svggraphics)
+	lc.Plot(txtgraphics)
+	fmt.Printf("%s\n", txtgraphics.String())
+	thesvg.Gend()
+
+	thesvg.Gtransform("translate(400 300)")
+	lc.Title = "Log / Log"
+	lc.XRange.Log, lc.YRange.Log = true, true
+	lc.XRange.Min, lc.XRange.Max, lc.XRange.TicSetting.Delta = 0, 0, 0
+	lc.YRange.Min, lc.YRange.Max, lc.YRange.TicSetting.Delta = 0, 0, 0
+	lc.Plot(svggraphics)
+	lc.Plot(txtgraphics)
+	fmt.Printf("%s\n", txtgraphics.String())
+	thesvg.Gend()
+
+	thesvg.End()
+	file.Close()
+}
 
 func textlen() {
 	s2f, _ := os.Create("text.svg")
@@ -506,6 +573,8 @@ func main() {
 
 	catBarChart()
 
+	logAxis()
+
 	/*
 		 steps := []int64{ 1, 5, 7, 8, 10, 30, 50, 100, 150, 300, 500, 800, 1000, 1500, 3000, 5000,8000, 10000, 15000, 20000, 30000, 50000, 70000, 100000, 200000, 400000, 800000, 1200000, 1800000, 2000000, 2200000, 2500000, 3000000, 5000000, 9000000, 2 * 9000000, 4 * 9000000 }
 		 for _, step := range steps {
@@ -554,14 +623,5 @@ func main() {
 	piec.AddDataPair("America", []string{"North", "Middel", "South"}, []float64{20, 10, 15})
 	piec.Key.Cols = 2
 	fmt.Printf("%s\n", piec.PlotTxt(80, 30))
-
-	// Log-X axis
-	lc := chart.ScatterChart{Title: "Log/Lin", Xlabel: "X-Value", Ylabel: "Y-Value"}
-	lc.Key.Hide = true
-	lc.XRange.Log, lc.YRange.Log = true, true
-	lx := []float64{4e-2, 3e-1, 2e0, 1e1, 8e1, 7e2, 5e3}
-	ly := []float64{10, 30, 90, 270, 3 * 270, 9 * 270, 27 * 270}
-	lc.AddDataPair("Measurement", lx, ly, chart.DataStyle{Symbol: 'Z', SymbolColor: "#9966ff", SymbolSize: 1.5})
-	fmt.Printf("%s\n", lc.PlotTxt(100, 25))
 
 }
