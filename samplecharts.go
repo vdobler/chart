@@ -517,6 +517,42 @@ func logAxis() {
 	file.Close()
 }
 
+func pieChart() {
+	file, _ := os.Create("xpie1.svg")
+	thesvg := svg.New(file)
+	thesvg.Start(800, 600)
+	thesvg.Title("Pie Charts")
+	thesvg.Rect(0, 0, 800, 600, "fill: #ffffff")
+	svggraphics := chart.NewSvgGraphics(thesvg, 400, 300, "Arial", 12)
+	txtgraphics := chart.NewTextGraphics(120, 30)
+
+	piec := chart.PieChart{Title: "Some Pies"}
+	piec.AddDataPair("Europe", []string{"D", "AT", "CH", "F", "E", "I"}, []float64{10, 20, 30, 35, 15, 25})
+	piec.Plot(svggraphics)
+	piec.Plot(txtgraphics)
+	fmt.Printf("%s\n", txtgraphics.String())
+
+
+	thesvg.Gtransform("translate(400 0)")
+	piec.Inner = 0.5
+	piec.ShowVal = 1
+	piec.Plot(svggraphics)
+	piec.Plot(txtgraphics)
+	fmt.Printf("%s\n", txtgraphics.String())
+	thesvg.Gend()
+
+	piec.AddDataPair("America", []string{"North", "Middel", "South"}, []float64{20, 10, 15})
+	thesvg.Gtransform("translate(0 300)")
+	piec.Key.Cols = 2
+	piec.Plot(svggraphics)
+	piec.Plot(txtgraphics)
+	fmt.Printf("%s\n", txtgraphics.String())
+	thesvg.Gend()
+
+	thesvg.End()
+	file.Close()
+}
+
 func textlen() {
 	s2f, _ := os.Create("text.svg")
 	mysvg := svg.New(s2f)
@@ -577,6 +613,9 @@ func main() {
 
 	logAxis()
 
+	pieChart()
+
+
 	/*
 		 steps := []int64{ 1, 5, 7, 8, 10, 30, 50, 100, 150, 300, 500, 800, 1000, 1500, 3000, 5000,8000, 10000, 15000, 20000, 30000, 50000, 70000, 100000, 200000, 400000, 800000, 1200000, 1800000, 2000000, 2200000, 2500000, 3000000, 5000000, 9000000, 2 * 9000000, 4 * 9000000 }
 		 for _, step := range steps {
@@ -616,14 +655,5 @@ func main() {
 
 	// Bar chart
 
-	// Pie Chart
-	piec := chart.PieChart{Title: "Some Pies"}
-	piec.AddDataPair("Europe", []string{"D", "AT", "CH", "F", "E", "I"}, []float64{10, 20, 30, 35, 15, 25})
-	piec.Inner = 0.5
-	piec.ShowVal = 1
-	fmt.Printf("%s\n", piec.PlotTxt(80, 30))
-	piec.AddDataPair("America", []string{"North", "Middel", "South"}, []float64{20, 10, 15})
-	piec.Key.Cols = 2
-	fmt.Printf("%s\n", piec.PlotTxt(80, 30))
 
 }

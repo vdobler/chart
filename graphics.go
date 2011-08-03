@@ -9,36 +9,29 @@ import (
 // Any type which implements BasicGraphics can use generic implementations
 // of the Graphics methods.
 type BasicGraphics interface {
-	FontMetrics(style DataStyle) (fw float32, fh int, mono bool)     // Return fontwidth and -height in pixel and iff
+	FontMetrics(style DataStyle) (fw float32, fh int, mono bool)     // Return fontwidth and -height in pixel
 	TextLen(t string, style DataStyle) int                           // length=width of t in screen units
 	Line(x0, y0, x1, y1 int, style DataStyle)                        // Draw line from (x0,y0) to (x1,y1)
 	Symbol(x, y, s int, style DataStyle)                             // Put symnbol s at (x,y)
 	Text(x, y int, t string, align string, rot int, style DataStyle) // align: [[tcb]][lcr]
 	Rect(x, y, w, h int, style DataStyle)                            // draw (w x h) rectangle at (x,y)
 	Style(element string) DataStyle                                  // retrieve style for element
+	Wedge(x,y,r int, phi, psi float64, style DataStyle) // draw pie from phi to psi centered at (x,y) with radius r
 }
 
 
 // Graphics is the interface all chart drivers have to implement
 type Graphics interface {
 	BasicGraphics
-	/*
-		FontMetrics(style DataStyle) (fw int, fh int, mono bool)  // Return fontwidth and -height in pixel and iff
-
-		Line(x0, y0, x1, y1 int, style DataStyle)                        // Draw line from (x0,y0) to (x1,y1)
-		Symbol(x, y, s int, style DataStyle)                             // Put symnbol s at (x,y)
-		Text(x, y int, t string, align string, rot int, style DataStyle) // align: [[tcb]][lcr]
-		Style(element string) DataStyle                                  // retrieve style for element
-	*/
 
 	Dimensions() (int, int) // character-width / height
 
 	Begin() // start of chart drawing
 	// All stuff is preprocessed: sanitized, clipped, strings formated, integer coords,
 	// screen coordinates,
-	XAxis(xr Range, ys, yms int)
-	YAxis(yr Range, xs, xms int)
-	Title(text string)
+	XAxis(xr Range, ys, yms int) // Draw x axis xr at screen position ys (and yms if mirrored)
+	YAxis(yr Range, xs, xms int) // Same for y axis.
+	Title(text string) // Draw title onto chart
 
 	Scatter(points []EPoint, style DataStyle)      // Points, Lines and Line+Points
 	Boxes(boxes []Box, width int, style DataStyle) // Boxplots
@@ -88,6 +81,8 @@ func GenericTextLen(bg BasicGraphics, t string, style DataStyle) (width int) {
 	return
 }
 
+// GenericRect draws a rectangle of size w x h at (x,y).  Drawing is done
+// by simple lines only.
 func GenericRect(bg BasicGraphics, x, y, w, h int, style DataStyle) {
 	if style.Fill != 0 {
 		// TODO: calculate color from fill
@@ -280,7 +275,7 @@ func GenericScatter(bg BasicGraphics, points []EPoint, style DataStyle) {
 	}
 }
 
-
+// GenericBoxes draws box plots. (Default implementation for box plots).
 func GenericBoxes(bg BasicGraphics, boxes []Box, width int, style DataStyle) {
 	if width%2 == 0 {
 		width += 1
@@ -316,8 +311,28 @@ func GenericBoxes(bg BasicGraphics, boxes []Box, width int, style DataStyle) {
 
 }
 
+// TODO: Is Bars and Generic Bars useful at all? Replaceable by rect?
 func GenericBars(bg BasicGraphics, bars []Barinfo, style DataStyle) {
 	for _, b := range bars {
 		bg.Rect(b.x, b.y, b.w, b.h, style)
 	}
 }
+
+// GenericWedge draws a pie/wedge just by lines
+func GenericWedge(bg BasicGraphics, x, y, r int, phi, psi float64, style DataStyle) {
+	// TODO: filling
+	
+	xa, ya := int(math.Cos(phi)*float64(r))+x, int(math.Sin(phi)*float64(r))+y
+	xc, yc := int(math.Cos(psi)*float64(r))+x, int(math.Sin(psi)*float64(r))+y
+	bg.Line(x,y, xa,ya, style)
+	bg.Line(x,y, xc,yc, style)
+
+	var xb, yb int 
+	for ; phi < psi; phi += 0.1 { // aproximate circle by 62-corner
+		xb, yb = int(math.Cos(phi)*float64(r))+x, int(math.Sin(phi)*float64(r))+y
+		bg.Line(xa,ya, xb,yb, style)
+		xa, ya = xb, yb
+	}
+	bg.Line(xb,yb, xc,yc, style)
+}
+

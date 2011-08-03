@@ -274,3 +274,7 @@ func (sg *SvgGraphics) Key(x, y int, key Key) {
 func (sg *SvgGraphics) Bars(bars []Barinfo, style DataStyle) {
 	GenericBars(sg, bars, style)
 }
+
+func (sg *SvgGraphics) Wedge(x,y,r int, phi, psi float64, style DataStyle) {
+	GenericWedge(sg, x, y, r, phi, psi, style)
+}

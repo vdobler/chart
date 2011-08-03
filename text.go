@@ -659,3 +659,7 @@ func (g *TextGraphics) Key(x, y int, key Key) {
 func (g *TextGraphics) Bars(bars []Barinfo, style DataStyle) {
 	GenericBars(g, bars, style)
 }
+
+func (g *TextGraphics) Wedge(x,y,r int, phi, psi float64, style DataStyle) {
+	GenericWedge(g, x, y, r, phi, psi, style)
+}

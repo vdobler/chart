@@ -137,3 +137,55 @@ func (c *PieChart) PlotTxt(w, h int) string {
 
 	return tb.String()
 }
+
+
+// Plot outputs the scatter chart sc to g.
+func (c *PieChart) Plot(g Graphics) {
+	layout := Layout(g, c.Title, "", "", true, true, &c.Key)
+
+	width, height := layout.Width, layout.Height
+	topm, leftm := layout.Top, layout.Left
+	width += 0
+
+	r := height/2
+	x0, y0 := leftm + r, topm + r
+
+	g.Begin()
+
+	if c.Title != "" {
+		g.Title(c.Title)
+	}
+
+	for i, data := range c.Data {
+		// _ := c.Key.Entries[keidx].Text // data set name
+		style := data.Style
+		style = DataStyle{LineColor: "#404040", LineWidth: 3, LineStyle: SolidLine}
+
+		var sum float64
+		for _, d := range data.Samples {
+			sum += d.Val
+		}
+
+		var phi float64 = -math.Pi
+		for _, d := range data.Samples {
+			alpha := 2 * math.Pi * d.Val / sum
+			g.Wedge(x0,y0,r, phi, alpha, style)
+
+			if i > 0 { 
+				// clear a border
+			}
+			if c.ShowVal != 0 {
+				// put text
+			}
+			phi += alpha
+		}
+		r = int(float64(r)*PieChartShrinkage)
+	}
+	
+
+	if !c.Key.Hide {
+		g.Key(layout.KeyX, layout.KeyY, c.Key)
+	}
+
+	g.End()
+}
