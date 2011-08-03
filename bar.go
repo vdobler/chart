@@ -7,17 +7,10 @@ import (
 	//	"strings"
 )
 
-
-type BarChartData struct {
-	Name    string
-	Style   DataStyle
-	Samples []Point
-}
-
-
-// Simple Bar Chart
-//  
-// x values must be sorted (low to high).
+// BarChart draws simple bar charts.
+// (Use CategoricalBarChart if your x axis is categorical, that is not numeric.)
+//
+// The x values of ech data set must be sorted from low to high.
 // 
 // In stacked mode all x values of all data sets must be identical. Not even
 // missing values are allowed.
@@ -25,23 +18,27 @@ type BarChartData struct {
 // If BarWidth is zero the BarWidth is the smallest distance between two
 // x values multiplied by BarWidthFac (<1). 
 // Data sets are drawn first to last, last overwriting previous, maybe
-// at the same x position.  Use CategoricalBarChart if your x axis is
-// categorical.
-//
-
+// at the same x position.
 type BarChart struct {
 	XRange, YRange Range
-	Title          string
-	Xlabel, Ylabel string
-	Key            Key
+	Title          string  // Title of the chart
+	Key            Key     // Key/Legend
 	Horizontal     bool    // Display as horizontal bars (unimplemented)
-	Stacked        bool    // Display different data sets ontop of each other
+	Stacked        bool    // Display different data sets ontop of each other (default is side by side)
 	ShowVal        bool    // Display values 
-	SameBarWidth   bool    // all data sets use smalest bar width
-	BarWidthFac    float64 // if nonzero: use this as width for all bars
+	SameBarWidth   bool    // all data sets use the same (smalest of all data sets) bar width
+	BarWidthFac    float64 // if nonzero: scale determined bar width with this factor
 	Data           []BarChartData
 }
 
+// BarChartData encapsulates data sets in a bar chart.
+type BarChartData struct {
+	Name    string
+	Style   DataStyle
+	Samples []Point
+}
+
+// AddData adds the data to the chart.
 func (c *BarChart) AddData(name string, data []Point, style DataStyle) {
 	c.Data = append(c.Data, BarChartData{name, style, data})
 	c.Key.Entries = append(c.Key.Entries, KeyEntry{Style: style, Text: name})
@@ -68,6 +65,7 @@ func (c *BarChart) AddData(name string, data []Point, style DataStyle) {
 	c.XRange.Max = c.XRange.DataMax
 }
 
+// AddDataPair is a convenience method to add all the (x[i],y[i]) pairs to the chart.
 func (c *BarChart) AddDataPair(name string, x, y []float64, style DataStyle) {
 	n := min(len(x), len(y))
 	data := make([]Point, n)
@@ -76,6 +74,7 @@ func (c *BarChart) AddDataPair(name string, x, y []float64, style DataStyle) {
 	}
 	c.AddData(name, data, style)
 }
+
 
 func (c *BarChart) barWidth(sample int) float64 {
 	// find bar width
@@ -108,71 +107,7 @@ func (c *BarChart) extremBarWidth() (smallest, widest float64) {
 }
 
 
-func (c *BarChart) PlotTxt(w, h int) string {
-	width, leftm, height, topm, kb, numxtics, numytics := LayoutTxt(w, h, c.Title, c.Xlabel, c.Ylabel, c.XRange.TicSetting.Hide, c.YRange.TicSetting.Hide, &c.Key, 1, 1)
-
-	// Outside bound ranges for histograms are nicer
-	leftm, width = leftm+2, width-2
-	topm, height = topm, height-1
-
-	// find bar width
-	lbw, ubw := c.extremBarWidth()
-	var barWidth float64
-	if c.SameBarWidth {
-		barWidth = lbw
-	} else {
-		barWidth = ubw
-	}
-
-	// set up range and extend if bar would not fit
-	fmt.Printf("numxtics: %d\n", numxtics)
-	c.XRange.Setup(numxtics, numxtics+1, width, leftm, false)
-	c.YRange.Setup(numytics, numytics+2, height, topm, true)
-
-	if c.XRange.DataMin-barWidth/2 < c.XRange.Min {
-		c.XRange.DataMin -= barWidth / 2
-	}
-	if c.XRange.DataMax+barWidth > c.XRange.Max {
-		c.XRange.DataMax += barWidth / 2
-	}
-	c.XRange.Setup(numxtics, numxtics+1, width, leftm, false)
-
-	tb := NewTextBuf(w, h)
-	if c.Title != "" {
-		tb.Text(width/2+leftm, 0, c.Title, 0)
-	}
-	TxtXRange(c.XRange, tb, topm+height+1, 0, c.Xlabel, 0)
-	TxtYRange(c.YRange, tb, leftm-2, 0, c.Ylabel, 0)
-
-	xf := c.XRange.Data2Screen
-	yf := c.YRange.Data2Screen
-	sy0 := yf(c.YRange.Min)
-
-	barWidth = lbw
-	for i, data := range c.Data {
-		if !c.SameBarWidth {
-			barWidth = c.barWidth(i)
-		}
-		sbw := max(1, xf(2*barWidth)-xf(barWidth)-1) // screen bar width
-		symbol := data.Style.Symbol
-		for _, point := range data.Samples {
-			x, y := point.X, point.Y
-			sx := xf(x-barWidth/2) + 1
-			// sw := xf(x+barWidth/2) - sx
-			sy := yf(y)
-			sh := sy0 - sy
-			tb.Block(sx, sy, sbw, sh, symbol)
-		}
-	}
-
-	if kb != nil {
-		tb.Paste(c.Key.X, c.Key.Y, kb)
-	}
-
-	return tb.String()
-}
-
-
+// Plot renders the chart to the graphics output g.
 func (c *BarChart) Plot(g Graphics) {
 	// layout
 	layout := Layout(g, c.Title, c.XRange.Label, c.YRange.Label,

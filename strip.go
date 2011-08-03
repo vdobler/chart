@@ -8,12 +8,13 @@ import (
 	//	"strings"
 )
 
-
+// StripChart represents very simple strip charts.
 type StripChart struct {
-	Jitter bool
-	ScatterChart
+	Jitter       bool // Add jitter to help distinguish overlapping values
+	ScatterChart      // The embeded ScatterChart is responsible for all drawing 
 }
 
+// AddData adds data to the strip chart.
 func (sc *StripChart) AddData(name string, data []float64, style DataStyle) {
 	n := len(sc.ScatterChart.Data) + 1
 	pd := make([]EPoint, len(data))
@@ -43,48 +44,9 @@ func (sc *StripChart) AddDataGeneric(name string, data []Value) {
 }
 
 
-func (sc *StripChart) PlotTxt(w, h int) string {
-	sc.ScatterChart.Ylabel = ""
-	sc.ScatterChart.YRange.TicSetting.Hide = true
-	sc.ScatterChart.YRange.MinMode.Fixed = true
-	sc.ScatterChart.YRange.MinMode.Value = 0.5
-	sc.ScatterChart.YRange.MaxMode.Fixed = true
-	sc.ScatterChart.YRange.MaxMode.Value = float64(len(sc.ScatterChart.Data)) + 0.5
-
-	if sc.Jitter {
-		// Set up ranging
-		_, _, height, topm, _, _, numytics := LayoutTxt(w, h, sc.Title, sc.Xlabel, sc.Ylabel, sc.XRange.TicSetting.Hide, sc.YRange.TicSetting.Hide, &sc.Key, 1, 1)
-		sc.YRange.Setup(numytics, numytics+1, height, topm, true)
-
-		yj := math.Fabs(sc.YRange.Screen2Data(1) - sc.YRange.Screen2Data(2))
-		for _, data := range sc.ScatterChart.Data {
-			if data.Samples == nil {
-				continue // should not happen
-			}
-			for i := range data.Samples {
-				r := float64(rand.Intn(3) - 1)
-				data.Samples[i].Y += r * yj
-			}
-		}
-	}
-	result := sc.ScatterChart.PlotTxt(w, h)
-
-	// Revert Jitter
-	for s, data := range sc.ScatterChart.Data {
-		if data.Samples == nil {
-			continue // should not happen
-		}
-		for i, _ := range data.Samples {
-			data.Samples[i].Y = float64(s + 1)
-		}
-	}
-
-	return result
-}
-
-
+// Plot outputs the strip chart sc to g.
 func (sc *StripChart) Plot(g Graphics) {
-	sc.ScatterChart.Ylabel = ""
+	sc.ScatterChart.YRange.Label = ""
 	sc.ScatterChart.YRange.TicSetting.Hide = true
 	sc.ScatterChart.YRange.TicSetting.Delta = 1
 	sc.ScatterChart.YRange.MinMode.Fixed = true

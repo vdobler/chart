@@ -93,8 +93,11 @@ func (c CatValue) Value() float64   { return c.Val }
 
 // Box represents a box in an boxplot.
 type Box struct {
-	X, Avg, Med, Q1, Q3, Low, High float64
-	Outliers                       []float64
+	X           float64   // x-position of the box
+	Avg         float64   // "average" value (uncommon in std. box plots, but sometimes useful)  
+	Q1, Med, Q3 float64   // lower quartil, median and upper quartil
+	Low, High   float64   // low and hig end of whiskers (normaly last point in the 1.5*IQR range of Q1/3)
+	Outliers    []float64 // list of y-values of outliers
 }
 
 func (p Box) XVal() float64 { return p.X }

@@ -8,25 +8,45 @@ import (
 )
 
 
+// BoxChart represents box charts.
+//
+// To faciliate standard use of box plots, the method AddSet() exists which will
+// calculate the various elents of a box (e.g. med, q3, outliers, ...) from raw
+// data.
+type BoxChart struct {
+	XRange, YRange Range          // x and y axis
+	Title          string         // Title of the chart
+	Key            Key            // Key/legend
+	Data           []BoxChartData // the data sets to draw
+}
+
+// BoxChartData encapsulates a data set in a box chart
 type BoxChartData struct {
 	Name    string
 	Style   DataStyle
 	Samples []Box
 }
 
+// AddData adds all boxes in data to the chart.
+func (c *BoxChart) AddData(name string, data []Box, style DataStyle) {
+	s := Symbol[len(c.Data)%len(Symbol)]
+	c.Data = append(c.Data, BoxChartData{name, style, data})
+	c.Key.Entries = append(c.Key.Entries, KeyEntry{Symbol: s, Text: name})
+	// TODO(vodo) min, max
+}
 
-type BoxChart struct {
-	XRange, YRange Range
-	Title          string
-	Xlabel, Ylabel string
-	Key            Key
-	Data           []BoxChartData
+// NextDataSet adds a new (empty) data set to chart.  After adding the data set you
+// can fill this last data set with AddSet()
+func (c *BoxChart) NextDataSet(name string, style DataStyle) {
+	s := Symbol[len(c.Data)%len(Symbol)]
+	c.Data = append(c.Data, BoxChartData{name, style, nil})
+	c.Key.Entries = append(c.Key.Entries, KeyEntry{Symbol: s, Text: name})
 }
 
 
-// Will add to last dataset one new box calculated from data.
-// If outlier than outliers (1.5*IQR from 25/75 percentil) are
-// drawn, else the wiskers extend from min to max.
+// AddSet will add to last data set in the chart one new box calculated from data.
+// If outlier is true, than outliers (1.5*IQR from 25/75 percentil) are
+// drawn. If outlier is false, than the wiskers extend from min to max.
 func (c *BoxChart) AddSet(x float64, data []float64, outlier bool) {
 	min, lq, med, avg, uq, max := SixvalFloat64(data, 25)
 	b := Box{X: x, Avg: avg, Med: med, Q1: lq, Q3: uq, Low: min, High: max}
@@ -75,112 +95,16 @@ func (c *BoxChart) AddSet(x float64, data []float64, outlier bool) {
 	c.Data[j].Samples = append(c.Data[j].Samples, b)
 }
 
-// Add a new (empty) data set to chart. Fill this last data set with AddSet()
-func (c *BoxChart) NextDataSet(name string, style DataStyle) {
-	s := Symbol[len(c.Data)%len(Symbol)]
-	c.Data = append(c.Data, BoxChartData{name, style, nil})
-	c.Key.Entries = append(c.Key.Entries, KeyEntry{Symbol: s, Text: name})
-}
 
-// Add data boxes to chart.
-func (c *BoxChart) AddData(name string, data []Box, style DataStyle) {
-	s := Symbol[len(c.Data)%len(Symbol)]
-	c.Data = append(c.Data, BoxChartData{name, style, data})
-	c.Key.Entries = append(c.Key.Entries, KeyEntry{Symbol: s, Text: name})
-	// TODO(vodo) min, max
-}
-
-
-func (c *BoxChart) PlotTxt(w, h int) string {
-	width, leftm, height, topm, kb, numxtics, numytics := LayoutTxt(w, h, c.Title, c.Xlabel, c.Ylabel, c.XRange.TicSetting.Hide, c.YRange.TicSetting.Hide, &c.Key, 1, 1)
-
-	c.XRange.Setup(numxtics, numxtics+2, width, leftm, false)
-	c.YRange.Setup(numytics, numytics+1, height, topm, true)
-
-	xlabsep, ylabsep := 1, 3
-	if !c.XRange.TicSetting.Hide {
-		xlabsep++
-	}
-	if !c.YRange.TicSetting.Hide {
-		ylabsep += 6
-	}
-
-	tb := NewTextBuf(w, h)
-	// tb.Rect(leftm, topm, width, height, 0, ' ')
-	if c.Title != "" {
-		tb.Text(width/2+leftm, 0, c.Title, 0)
-	}
-
-	TxtXRange(c.XRange, tb, topm+height, topm, c.Xlabel, 2)
-	TxtYRange(c.YRange, tb, leftm, leftm+width, c.Ylabel, 2)
-
-	// Plot Data
-	yf := c.YRange.Data2Screen
-	for s, data := range c.Data {
-		// Samples
-		hbw := 2 // Half Box Width
-		nums := len(data.Samples)
-		mhw := width / (2*nums - 1)
-		if mhw > 7 {
-			hbw = 3
-		} else if mhw < 5 {
-			hbw = 1
-		}
-
-		symbol := Symbol[s%len(Symbol)]
-
-		for _, d := range data.Samples {
-			x := c.XRange.Data2Screen(d.X)
-			q1, q3 := c.YRange.Data2Screen(d.Q1), c.YRange.Data2Screen(d.Q3)
-
-			tb.Rect(x-hbw, q1, 2*hbw, q3-q1, 0, ' ')
-			if !math.IsNaN(d.Med) {
-				med := yf(d.Med)
-				tb.Put(x-hbw, med, '+')
-				for i := 0; i < hbw; i++ {
-					tb.Put(x-i, med, '-')
-					tb.Put(x+i, med, '-')
-				}
-				tb.Put(x+hbw, med, '+')
-			}
-
-			if !math.IsNaN(d.Avg) {
-				tb.Put(x, yf(d.Avg), symbol)
-			}
-
-			if !math.IsNaN(d.High) {
-				for y := yf(d.High); y < q3; y++ {
-					tb.Put(x, y, '|')
-				}
-			}
-
-			if !math.IsNaN(d.Low) {
-				for y := yf(d.Low); y > q1; y-- {
-					tb.Put(x, y, '|')
-				}
-			}
-
-			for _, ol := range d.Outliers {
-				y := c.YRange.Data2Screen(ol)
-				tb.Put(x, y, 'o')
-			}
-
-			// tb.Put(x, y, Symbol[s%len(Symbol)])
-		}
-	}
-
-	if kb != nil {
-		tb.Paste(c.Key.X, c.Key.Y, kb)
-	}
-
-	return tb.String()
-}
-
+// Plot renders the chart to the graphic output g.
 func (c *BoxChart) Plot(g Graphics) {
-	fontwidth, fontheight, _ := g.FontMetrics(g.Style("axis")) // TODO: use different
-	w, h := g.Dimensions()
-
-	width, leftm, height, topm, kb, numxtics, numytics := LayoutTxt(w, h, c.Title, c.Xlabel, c.Ylabel, c.XRange.TicSetting.Hide, c.YRange.TicSetting.Hide, &c.Key, int(fontwidth+0.75), fontheight)
+	// layout
+	layout := Layout(g, c.Title, c.XRange.Label, c.YRange.Label,
+		c.XRange.TicSetting.Hide, c.YRange.TicSetting.Hide, &c.Key)
+	width, height := layout.Width, layout.Height
+	topm, leftm := layout.Top, layout.Left
+	numxtics, numytics := layout.NumXtics, layout.NumYtics
+	// fontwidth, fontheight, _ := g.FontMetrics(DataStyle{})
 
 	g.Begin()
 
@@ -236,8 +160,8 @@ func (c *BoxChart) Plot(g Graphics) {
 		g.Boxes(boxes, bw, data.Style)
 	}
 
-	if kb != nil {
-		//	tb.Paste(sc.Key.X, sc.Key.Y, kb)
+	if !c.Key.Hide {
+		g.Key(layout.KeyX, layout.KeyY, c.Key)
 	}
 
 	g.End()

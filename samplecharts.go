@@ -188,7 +188,8 @@ func scatterTics() {
 // Full fletched scatter plots
 //
 func fancyScatter() {
-	pl := chart.ScatterChart{Title: "Scatter + Lines", Xlabel: "X-Value", Ylabel: "Y-Value"}
+	pl := chart.ScatterChart{Title: "Scatter + Lines"}
+	pl.XRange.Label, pl.YRange.Label = "X - Value", "Y - Value"
 	pl.Key.Pos = "itl"
 	// pl.XRange.TicSetting.Delta = 5
 	pl.XRange.TicSetting.Grid = 1
@@ -466,7 +467,8 @@ func logAxis() {
 	svggraphics := chart.NewSvgGraphics(thesvg, 400, 300, "Arial", 12)
 	txtgraphics := chart.NewTextGraphics(120, 30)
 
-	lc := chart.ScatterChart{Xlabel: "X-Value", Ylabel: "Y-Value"}
+	lc := chart.ScatterChart{}
+	lc.XRange.Label, lc.YRange.Label = "X-Value", "Y-Value"
 	lx := []float64{4e-2, 3e-1, 2e0, 1e1, 8e1, 7e2, 5e3}
 	ly := []float64{10, 30, 90, 270, 3 * 270, 9 * 270, 27 * 270}
 	lc.AddDataPair("Measurement", lx, ly,
