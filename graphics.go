@@ -33,7 +33,7 @@ type Graphics interface {
 	YAxis(yr Range, xs, xms int) // Same for y axis.
 	Title(text string) // Draw title onto chart
 
-	Scatter(points []EPoint, style DataStyle)      // Points, Lines and Line+Points
+	Scatter(points []EPoint, plotstyle PlotStyle, style DataStyle)      // Points, Lines and Line+Points
 	Boxes(boxes []Box, width int, style DataStyle) // Boxplots
 	Bars(bars []Barinfo, style DataStyle)          // any type of histogram
 	/*
@@ -236,7 +236,7 @@ func GenericYAxis(bg BasicGraphics, rng Range, x, xm int) {
 // as the length of the endmarks of the error bars. Both have suitable defaults
 // if the FontXyz are not set. Point coordinates and errors must be provided 
 // in screen coordinates.
-func GenericScatter(bg BasicGraphics, points []EPoint, style DataStyle) {
+func GenericScatter(bg BasicGraphics, points []EPoint, plotstyle PlotStyle, style DataStyle) {
 	// First pass: Error bars
 	for _, p := range points {
 		ebs := style
@@ -258,7 +258,7 @@ func GenericScatter(bg BasicGraphics, points []EPoint, style DataStyle) {
 	}
 
 	// Second pass: Line
-	if style.LineStyle != 0 && len(points) > 0 {
+	if (plotstyle & PlotStyleLines) != 0 && len(points) > 0 {
 		lastx, lasty := points[0].X, points[0].Y
 		for i := 1; i < len(points); i++ {
 			x, y := points[i].X, points[i].Y
@@ -268,7 +268,7 @@ func GenericScatter(bg BasicGraphics, points []EPoint, style DataStyle) {
 	}
 
 	// Third pass: symbols
-	if style.Symbol != 0 {
+	if (plotstyle & PlotStylePoints) != 0  && len(points) != 0 {
 		for _, p := range points {
 			bg.Symbol(int(p.X), int(p.Y), style.Symbol, style)
 		}

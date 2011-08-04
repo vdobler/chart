@@ -25,10 +25,10 @@ func (sc *StripChart) AddData(name string, data []float64, style DataStyle) {
 		pd[i].DeltaX, pd[i].DeltaY = nan, nan
 	}
 	if style.empty() {
-		style = AutoStyle()
+		style = AutoStyle(len(sc.Data)+1)
 	}
 	style.LineStyle = 0
-	sc.ScatterChart.AddData(name, pd, style)
+	sc.ScatterChart.AddData(name, pd, PlotStylePoints, style)
 }
 
 func (sc *StripChart) AddDataGeneric(name string, data []Value) {
@@ -40,7 +40,7 @@ func (sc *StripChart) AddDataGeneric(name string, data []Value) {
 		pd[i].Y = float64(n)
 		pd[i].DeltaX, pd[i].DeltaY = nan, nan
 	}
-	sc.ScatterChart.AddData(name, pd, DataStyle{})
+	sc.ScatterChart.AddData(name, pd, PlotStylePoints, DataStyle{})
 }
 
 

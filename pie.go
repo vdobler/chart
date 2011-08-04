@@ -10,7 +10,7 @@ import (
 
 type CategoryChartData struct {
 	Name    string
-	Style   DataStyle
+	Style   []DataStyle
 	Samples []CatValue
 }
 
@@ -23,12 +23,15 @@ type PieChart struct {
 	Data    []CategoryChartData
 }
 
-func (c *PieChart) AddData(name string, data []CatValue) {
-	c.Data = append(c.Data, CategoryChartData{name, DataStyle{}, data})
-	c.Key.Entries = append(c.Key.Entries, KeyEntry{Symbol: -1, Text: name})
+func (c *PieChart) AddData(name string, data []CatValue, style []DataStyle) {
+	if len(style) == 0 {
+		style = make([]DataStyle, len(data))
+		// fill with suitable
+	}
+	c.Data = append(c.Data, CategoryChartData{name, style, data})
+	c.Key.Entries = append(c.Key.Entries, KeyEntry{PlotStyle: 0, Text: name})
 	for s, cv := range data {
-		symbol := Symbol[s%len(Symbol)]
-		c.Key.Entries = append(c.Key.Entries, KeyEntry{Symbol: symbol, Text: cv.Cat})
+		c.Key.Entries = append(c.Key.Entries, KeyEntry{Style: style[s], Text: cv.Cat})
 	}
 }
 
@@ -38,7 +41,7 @@ func (c *PieChart) AddDataPair(name string, cat []string, val []float64) {
 	for i := 0; i < n; i++ {
 		data[i].Cat, data[i].Val = cat[i], val[i]
 	}
-	c.AddData(name, data)
+	c.AddData(name, data, nil)
 }
 
 
@@ -97,7 +100,7 @@ func (c *PieChart) PlotTxt(w, h int) string {
 
 		var phi float64 = -math.Pi
 		for _, d := range data.Samples {
-			symbol := c.Key.Entries[keidx].Symbol
+			symbol := c.Key.Entries[keidx].Style.Symbol
 			keidx++
 			alpha := 2 * math.Pi * d.Val / sum
 			for r := c.Inner * radiusy; r <= radiusy+0.1; r += 0.2 {
@@ -151,25 +154,26 @@ func (c *PieChart) Plot(g Graphics) {
 	x0, y0 := leftm + r, topm + r
 
 	g.Begin()
-
+	
 	if c.Title != "" {
 		g.Title(c.Title)
 	}
 
 	for i, data := range c.Data {
 		// _ := c.Key.Entries[keidx].Text // data set name
-		style := data.Style
+		style := data.Style[i]
 		style = DataStyle{LineColor: "#404040", LineWidth: 3, LineStyle: SolidLine}
 
 		var sum float64
 		for _, d := range data.Samples {
 			sum += d.Val
 		}
+		fmt.Printf("sum = %.2f\n", sum)
 
 		var phi float64 = -math.Pi
 		for _, d := range data.Samples {
 			alpha := 2 * math.Pi * d.Val / sum
-			g.Wedge(x0,y0,r, phi, alpha, style)
+			g.Wedge(x0,y0,r, phi, phi+alpha, style)
 
 			if i > 0 { 
 				// clear a border

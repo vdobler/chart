@@ -17,29 +17,39 @@ type ScatterChart struct {
 // Not both Samples and Func may be non nil.
 type ScatterChartData struct {
 	Name    string
+	PlotStyle PlotStyle
 	Style   DataStyle
 	Samples []EPoint
 	Func    func(float64) float64
 }
 
 // AddFunc adds a function f to this chart.
-func (sc *ScatterChart) AddFunc(name string, f func(float64) float64, style DataStyle) {
-	if style.empty() {
-		style = AutoStyle()
+func (sc *ScatterChart) AddFunc(name string, f func(float64) float64, plotstyle PlotStyle, style DataStyle) {
+	if plotstyle.undefined() {
+		plotstyle = PlotStyleLines
 	}
-	sc.Data = append(sc.Data, ScatterChartData{name, style, nil, f})
-	ke := KeyEntry{Text: name, Style: style}
+	if style.empty() {
+		style = AutoStyle(len(sc.Data)+1)
+	}
+
+	scd := ScatterChartData{Name: name, PlotStyle: plotstyle, Style: style, Samples: nil, Func: f}
+	sc.Data = append(sc.Data, scd)
+	ke := KeyEntry{Text: name, PlotStyle: plotstyle, Style: style}
 	sc.Key.Entries = append(sc.Key.Entries, ke)
 }
 
 
 // AddData adds points in data to chart.
-func (sc *ScatterChart) AddData(name string, data []EPoint, style DataStyle) {
-	if style.empty() {
-		style = AutoStyle()
+func (sc *ScatterChart) AddData(name string, data []EPoint, plotstyle PlotStyle, style DataStyle) {
+	if plotstyle.undefined() {
+		plotstyle = PlotStylePoints
 	}
-	sc.Data = append(sc.Data, ScatterChartData{name, style, data, nil})
-	ke := KeyEntry{Style: style, Text: name}
+	if style.empty() {
+		style = AutoStyle(len(sc.Data)+1)
+	}
+	scd := ScatterChartData{Name: name, PlotStyle: plotstyle, Style: style, Samples: data, Func: nil}
+	sc.Data = append(sc.Data, scd)
+	ke := KeyEntry{Style: style, PlotStyle: plotstyle, Text: name}
 	sc.Key.Entries = append(sc.Key.Entries, ke)
 	if sc.XRange.DataMin == 0 && sc.XRange.DataMax == 0 && sc.YRange.DataMin == 0 && sc.YRange.DataMax == 0 {
 		sc.XRange.DataMin = data[0].X
@@ -66,6 +76,7 @@ func (sc *ScatterChart) AddData(name string, data []EPoint, style DataStyle) {
 	sc.YRange.Max = sc.YRange.DataMax
 }
 
+/*
 // Add points in data to chart.
 func (sc *ScatterChart) AddDataGeneric(name string, data []XYErrValue, style DataStyle) {
 	edata := make([]EPoint, len(data))
@@ -79,17 +90,17 @@ func (sc *ScatterChart) AddDataGeneric(name string, data []XYErrValue, style Dat
 	}
 	sc.AddData(name, edata, style)
 }
-
+*/
 
 // Make points from x and y and add to chart.
-func (sc *ScatterChart) AddDataPair(name string, x, y []float64, style DataStyle) {
+func (sc *ScatterChart) AddDataPair(name string, x, y []float64, plotstyle PlotStyle, style DataStyle) {
 	n := min(len(x), len(y))
 	data := make([]EPoint, n)
 	nan := math.NaN()
 	for i := 0; i < n; i++ {
 		data[i] = EPoint{X: x[i], Y: y[i], DeltaX: nan, DeltaY: nan}
 	}
-	sc.AddData(name, data, style)
+	sc.AddData(name, data, plotstyle, style)
 }
 
 
@@ -140,7 +151,7 @@ func (sc *ScatterChart) Plot(g Graphics) {
 				p := EPoint{X: float64(x), Y: float64(y), DeltaX: dx, DeltaY: dy, OffX: xo, OffY: yo}
 				points = append(points, p)
 			}
-			g.Scatter(points, style)
+			g.Scatter(points, data.PlotStyle, style)
 		} else if data.Func != nil {
 			// Functions. TODO(vodo) proper clipping
 			step := 8
@@ -175,11 +186,11 @@ func (sc *ScatterChart) Plot(g Graphics) {
 						p := EPoint{X: float64(sx), Y: float64(sy), DeltaX: nan, DeltaY: nan}
 						points = append(points, p)
 					}
-					g.Scatter(points, style)
+					g.Scatter(points, data.PlotStyle, style)
 					points = make([]EPoint, 0, width/10)
 				}
 			}
-			g.Scatter(points, style)
+			g.Scatter(points, data.PlotStyle, style)
 		}
 	}
 

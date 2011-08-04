@@ -29,18 +29,18 @@ type BoxChartData struct {
 
 // AddData adds all boxes in data to the chart.
 func (c *BoxChart) AddData(name string, data []Box, style DataStyle) {
-	s := Symbol[len(c.Data)%len(Symbol)]
 	c.Data = append(c.Data, BoxChartData{name, style, data})
-	c.Key.Entries = append(c.Key.Entries, KeyEntry{Symbol: s, Text: name})
+	ps := PlotStyle(PlotStylePoints | PlotStyleBox)
+	c.Key.Entries = append(c.Key.Entries, KeyEntry{Text: name, Style: style, PlotStyle: ps})
 	// TODO(vodo) min, max
 }
 
 // NextDataSet adds a new (empty) data set to chart.  After adding the data set you
 // can fill this last data set with AddSet()
 func (c *BoxChart) NextDataSet(name string, style DataStyle) {
-	s := Symbol[len(c.Data)%len(Symbol)]
 	c.Data = append(c.Data, BoxChartData{name, style, nil})
-	c.Key.Entries = append(c.Key.Entries, KeyEntry{Symbol: s, Text: name})
+	ps := PlotStyle(PlotStylePoints | PlotStyleBox)
+	c.Key.Entries = append(c.Key.Entries, KeyEntry{Text: name, Style: style, PlotStyle: ps})
 }
 
 

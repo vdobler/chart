@@ -64,6 +64,17 @@ var Palette = map[string]string{"title": "#aa9933", "label": "#000000", "axis": 
 }
 
 // DataStyle contains all information about all graphic elements in a chart.
+// TODOs:
+//  - remove Font..., not part of DataStyle and relevant only for Text
+//  - keep Symbol as "show this symbol in strip/scatter/box plots"
+//  - add new Char as "char/symbol to use as text replacement for color"
+//    that would be for "lines without symbols", hist, bar, cbar, pie
+//    box
+//
+// differentiate between drawing data/plot-style in scatter (points, lines, linespoints)
+// and style (color, symbol, width, filling). disalow e.g. in "datastyle lines"
+// linwidth of 0.
+//
 type DataStyle struct {
 	Symbol      int     // 0: no symbol; any codepoint: this symbol
 	SymbolColor string  // 
@@ -72,15 +83,30 @@ type DataStyle struct {
 	LineColor   string  // 0: auto = same as SymbolColor
 	LineWidth   int     // 0: no line
 	Fill        float64 // 0: none, 1: same as line, 0.x: lighter fill
+	FillColor   string  // "": no fill
+	Alpha       float64 // 
+	
 	Font        string  // "": default
 	FontSize    int     // -2: tiny, -1: small, 0: normal, 1: large, 2: huge
 	FontColor   string  // 
-	Alpha       float64
 }
 
+// PlotStyle describes how data and functions are drawn in scatter plots.
+// Can be used to describe how a key entry is drawn
+type PlotStyle int
 const (
-	NoLine = iota
-	SolidLine
+	PlotStylePoints = 1
+	PlotStyleLines = 2
+	PlotStyleLinesPoints = 3
+	PlotStyleBox = 4
+)
+func (ps PlotStyle) undefined() bool {
+	return int(ps) < 1 || int(ps) > 3
+}
+
+
+const (
+	SolidLine = iota
 	DashedLine
 	DottedLine
 	DashDotDotLine
@@ -112,23 +138,18 @@ var Style = []DataStyle{
 }
 
 
-var autostylecnt int = 0
-
 // AutoStyle produces on subsequent call new styles based on the Style list.
-func AutoStyle() (style DataStyle) {
+func AutoStyle(i int) (style DataStyle) {
 	n := len(Style)
-	si := autostylecnt % n
-	ci := (si + autostylecnt/n) % n
-	li := (si + 2*autostylecnt/n) % n
+	si := i % n
+	ci := (si + i/n) % n
+	li := (si + 2*i/n) % n
 	style.Symbol = Style[si].Symbol
 	style.SymbolColor = Style[ci].SymbolColor
 	style.LineColor = Style[ci].LineColor
 	style.LineStyle = Style[li].LineStyle
-	style.Fill = Style[autostylecnt].Fill
-	style.SymbolSize = Style[autostylecnt].SymbolSize
-	style.Font = Style[autostylecnt].Font
-	style.FontSize = Style[autostylecnt].FontSize
-	style.Alpha = Style[autostylecnt].Alpha
-	autostylecnt++
+	style.Fill = Style[si].Fill
+	style.SymbolSize = Style[si].SymbolSize
+	style.Alpha = Style[si].Alpha
 	return
 }

@@ -30,10 +30,10 @@ type Key struct {
 
 // KeyEntry encapsulates an antry in the key/legend.
 type KeyEntry struct {
-	Style  DataStyle
-	Symbol int    // Symbol index to use
-	Linie  int    // Line Style
-	Text   string // Text to display
+	Text   string       // Text to display
+	PlotStyle PlotStyle // What to show: symbol, line, bar, combi thereof 
+	Style  DataStyle    // How to show
+	
 }
 
 // Margins
@@ -117,7 +117,7 @@ func (key *Key) LayoutKeyTxt() (kb *TextBuf) {
 				ml = len(t)
 			}
 		}
-		symbol[c][r] = e.Symbol // TODO(vodo) allow line symbols?
+		symbol[c][r] = e.Style.Symbol // TODO(vodo) allow line symbols?
 		height[c][r] = len(lines)
 		width[c][r] = ml
 		text[c][r] = lines

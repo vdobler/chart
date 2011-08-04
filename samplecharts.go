@@ -97,11 +97,11 @@ func keyStyles() {
 	p.YRange.Min, p.YRange.Max = -5, 5
 	p.YRange.TicSetting.Delta = 3
 
-	p.AddFunc("Sin", func(x float64) float64 { return math.Sin(x) },
+	p.AddFunc("Sin", func(x float64) float64 { return math.Sin(x) }, chart.PlotStyleLines,
 		chart.DataStyle{LineColor: "#a00000", LineWidth: 1, LineStyle: 1})
-	p.AddFunc("Cos", func(x float64) float64 { return math.Cos(x) },
+	p.AddFunc("Cos", func(x float64) float64 { return math.Cos(x) }, chart.PlotStyleLines,
 		chart.DataStyle{LineColor: "#00a000", LineWidth: 1, LineStyle: 1})
-	p.AddFunc("Tan", func(x float64) float64 { return math.Tan(x) },
+	p.AddFunc("Tan", func(x float64) float64 { return math.Tan(x) }, chart.PlotStyleLines,
 		chart.DataStyle{LineColor: "#0000a0", LineWidth: 1, LineStyle: 1})
 
 	x, y := 0, 0
@@ -120,10 +120,14 @@ func keyStyles() {
 	}
 
 	p.Key.Pos = "itl"
-	p.AddFunc("Log", func(x float64) float64 { return math.Log(x) }, chart.DataStyle{LineColor: "#ff6060", LineWidth: 1, LineStyle: 1})
-	p.AddFunc("Exp", func(x float64) float64 { return math.Exp(x) }, chart.DataStyle{LineColor: "#60ff60", LineWidth: 1, LineStyle: 1})
-	p.AddFunc("Atan", func(x float64) float64 { return math.Atan(x) }, chart.DataStyle{LineColor: "#6060ff", LineWidth: 1, LineStyle: 1})
-	p.AddFunc("Y1", func(x float64) float64 { return math.Y1(x) }, chart.DataStyle{LineColor: "#d0d000", LineWidth: 1, LineStyle: 1})
+	p.AddFunc("Log", func(x float64) float64 { return math.Log(x) }, chart.PlotStyleLines,
+		chart.DataStyle{LineColor: "#ff6060", LineWidth: 1, LineStyle: 1})
+	p.AddFunc("Exp", func(x float64) float64 { return math.Exp(x) }, chart.PlotStyleLines,
+		chart.DataStyle{LineColor: "#60ff60", LineWidth: 1, LineStyle: 1})
+	p.AddFunc("Atan", func(x float64) float64 { return math.Atan(x) }, chart.PlotStyleLines,
+		chart.DataStyle{LineColor: "#6060ff", LineWidth: 1, LineStyle: 1})
+	p.AddFunc("Y1", func(x float64) float64 { return math.Y1(x) }, chart.PlotStyleLines,
+		chart.DataStyle{LineColor: "#d0d000", LineWidth: 1, LineStyle: 1})
 
 	for _, cols := range []int{-4, -3, -2, -1, 0, 1, 2, 3, 4} {
 		p.Key.Cols = cols
@@ -155,7 +159,7 @@ func scatterTics() {
 	svggraphics := chart.NewSvgGraphics(thesvg, 400, 300, "Arial", 12)
 
 	p := chart.ScatterChart{Title: "Sample Scatter Chart"}
-	p.AddDataPair("Sample A", data10, data1, chart.DataStyle{})
+	p.AddDataPair("Sample A", data10, data1, chart.PlotStylePoints, chart.DataStyle{})
 	p.XRange.TicSetting.Delta = 5000
 	p.XRange.Label = "X - Value"
 	p.YRange.Label = "Y - Value"
@@ -195,14 +199,15 @@ func fancyScatter() {
 	pl.XRange.TicSetting.Grid = 1
 	x := []float64{-4, -3.3, -1.8, -1, 0.2, 0.8, 1.8, 3.1, 4, 5.3, 6, 7, 8, 9}
 	y := []float64{22, 18, -3, 0, 0.5, 2, 45, 12, 16.5, 24, 30, 55, 60, 70}
-	pl.AddDataPair("Mmnt", x, y, chart.DataStyle{Symbol: '#', SymbolColor: "#0000ff", LineStyle: 0})
+	pl.AddDataPair("Mmnt", x, y, chart.PlotStyleLinesPoints, 
+		chart.DataStyle{Symbol: '#', SymbolColor: "#0000ff", LineStyle: 0})
 	last := len(pl.Data) - 1
 	pl.Data[last].Samples[6].DeltaX = 2.5
 	pl.Data[last].Samples[6].OffX = 0.5
 	pl.Data[last].Samples[6].DeltaY = 16
 	pl.Data[last].Samples[6].OffY = 2
 	pl.AddData("abcde", []chart.EPoint{chart.EPoint{-4, 40, 0, 0, 0, 0}, chart.EPoint{-3, 45, 0, 0, 0, 0},
-		chart.EPoint{-2, 35, 0, 0, 0, 0}},
+		chart.EPoint{-2, 35, 0, 0, 0, 0}}, chart.PlotStylePoints, 
 		chart.DataStyle{Symbol: '0', SymbolColor: "#ff00ff", LineStyle: 1, LineWidth: 1})
 	pl.AddFunc("wxyz", func(x float64) float64 {
 		if x > 5.25 && x < 5.75 {
@@ -212,10 +217,10 @@ func fancyScatter() {
 			return 500
 		}
 		return x * x
-	}, chart.DataStyle{Symbol: 0, LineWidth: 2, LineColor: "#a00000", LineStyle: 1})
-	pl.AddFunc("30", func(x float64) float64 { return 30 },
+	}, chart.PlotStyleLines, chart.DataStyle{Symbol: 0, LineWidth: 2, LineColor: "#a00000", LineStyle: 1})
+	pl.AddFunc("30", func(x float64) float64 { return 30 }, chart.PlotStyleLines, 
 		chart.DataStyle{Symbol: 0, LineWidth: 1, LineColor: "#00a000", LineStyle: 1})
-	pl.AddFunc("7777", func(x float64) float64 { return 7 },
+	pl.AddFunc("7777", func(x float64) float64 { return 7 }, chart.PlotStyleLines, 
 		chart.DataStyle{Symbol: 0, LineWidth: 1, LineColor: "#0000a0", LineStyle: 1})
 
 	pl.XRange.ShowZero = true
@@ -471,7 +476,7 @@ func logAxis() {
 	lc.XRange.Label, lc.YRange.Label = "X-Value", "Y-Value"
 	lx := []float64{4e-2, 3e-1, 2e0, 1e1, 8e1, 7e2, 5e3}
 	ly := []float64{10, 30, 90, 270, 3 * 270, 9 * 270, 27 * 270}
-	lc.AddDataPair("Measurement", lx, ly,
+	lc.AddDataPair("Measurement", lx, ly, chart.PlotStylePoints, 
 		chart.DataStyle{Symbol: '#', SymbolColor: "#9966ff", SymbolSize: 1.5})
 	lc.Key.Hide = true
 	lc.XRange.MinMode.Expand, lc.XRange.MaxMode.Expand = chart.ExpandToTic, chart.ExpandToTic
@@ -526,14 +531,22 @@ func pieChart() {
 	svggraphics := chart.NewSvgGraphics(thesvg, 400, 300, "Arial", 12)
 	txtgraphics := chart.NewTextGraphics(120, 30)
 
+	pc := chart.PieChart{Title: "Some Pies"}
+	pc.AddDataPair("Data1", []string{"2009", "2010", "2011"}, []float64{10,20,30})
+	pc.Plot(svggraphics)
+	pc.Plot(txtgraphics)
+	fmt.Printf("%s\n", txtgraphics.String())
+
+	thesvg.Gtransform("translate(400 0)")
 	piec := chart.PieChart{Title: "Some Pies"}
 	piec.AddDataPair("Europe", []string{"D", "AT", "CH", "F", "E", "I"}, []float64{10, 20, 30, 35, 15, 25})
 	piec.Plot(svggraphics)
 	piec.Plot(txtgraphics)
 	fmt.Printf("%s\n", txtgraphics.String())
+	thesvg.Gend()
 
 
-	thesvg.Gtransform("translate(400 0)")
+	thesvg.Gtransform("translate(0 300)")
 	piec.Inner = 0.5
 	piec.ShowVal = 1
 	piec.Plot(svggraphics)
@@ -542,7 +555,7 @@ func pieChart() {
 	thesvg.Gend()
 
 	piec.AddDataPair("America", []string{"North", "Middel", "South"}, []float64{20, 10, 15})
-	thesvg.Gtransform("translate(0 300)")
+	thesvg.Gtransform("translate(400 300)")
 	piec.Key.Cols = 2
 	piec.Plot(svggraphics)
 	piec.Plot(txtgraphics)

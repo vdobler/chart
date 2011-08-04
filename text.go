@@ -602,8 +602,8 @@ func (g *TextGraphics) YAxis(yrange Range, x, x1 int) {
 	}
 }
 
-func (g *TextGraphics) Scatter(points []EPoint, style DataStyle) {
-	GenericScatter(g, points, style)
+func (g *TextGraphics) Scatter(points []EPoint, plotstyle PlotStyle, style DataStyle) {
+	GenericScatter(g, points, plotstyle, style)
 }
 
 func (g *TextGraphics) Boxes(boxes []Box, width int, style DataStyle) {
