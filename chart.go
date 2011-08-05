@@ -486,7 +486,7 @@ type LayoutData struct {
 
 // TODO: Key.X/Y have to go to explicit data
 func Layout(g Graphics, title, xlabel, ylabel string, hidextics, hideytics bool, key *Key) (ld LayoutData) {
-	fw, fh, _ := g.FontMetrics(g.Style("key"))
+	fw, fh, _ := g.FontMetrics(g.Font("key"))
 	w, h := g.Dimensions()
 
 	if key.Pos == "" {

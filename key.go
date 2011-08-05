@@ -286,7 +286,7 @@ var (
 )
 
 func (key Key) Layout(bg BasicGraphics, m [][]*KeyEntry) (w, h int, colwidth, rowheight []int) {
-	fontwidth, fontheight, _ := bg.FontMetrics(bg.Style("key"))
+	fontwidth, fontheight, _ := bg.FontMetrics(bg.Font("key"))
 	cols, rows := len(m), len(m[0])
 
 	// Find total width and height
@@ -351,7 +351,8 @@ func (key Key) Layout(bg BasicGraphics, m [][]*KeyEntry) (w, h int, colwidth, ro
 
 func GenericKey(bg BasicGraphics, x, y int, key Key) {
 	m := key.Place()
-	fw, fh, _ := bg.FontMetrics(bg.Style("key"))
+	keyfont := bg.Font("key")
+	fw, fh, _ := bg.FontMetrics(keyfont)
 	tw, th, cw, rh := key.Layout(bg, m)
 	style := bg.Style("key")
 	bg.Rect(x, y, tw, th, style)
@@ -373,7 +374,7 @@ func GenericKey(bg BasicGraphics, x, y int, key Key) {
 			fmt.Printf("Symbol %d=%c, Line=%d: %s\n", s, s, l, t)
 			if s == -1 {
 				// heading only...
-				bg.Text(x, yy, t, "cl", 0, e.Style)
+				bg.Text(x, yy, t, "cl", 0, keyfont)
 			} else {
 				// normal entry
 				if l > 0 {
@@ -383,7 +384,7 @@ func GenericKey(bg BasicGraphics, x, y int, key Key) {
 				if s > 0 {
 					bg.Symbol(x+int(KeySymbolWidth*fw)/2, yy, s, e.Style)
 				}
-				bg.Text(x+int(fw*(KeySymbolWidth+KeySymbolSep)), yy, t, "cl", 0, e.Style)
+				bg.Text(x+int(fw*(KeySymbolWidth+KeySymbolSep)), yy, t, "cl", 0, keyfont)
 			}
 			{
 				/*

@@ -44,15 +44,29 @@ func (sg *SvgGraphics) Dimensions() (int, int) {
 	return sg.w, sg.h
 }
 
-func (sg *SvgGraphics) FontMetrics(style DataStyle) (fw float32, fh int, mono bool) {
-	fh = style.FontSize
-	if fh == 0 {
-		fh = sg.fs
+func (sg *SvgGraphics) fontheight(font Font) (fh int) {
+	if sg.fs <= 14 {
+		fh = sg.fs + font.Size
+	} else if sg.fs <= 20 {
+		fh = sg.fs + 2*font.Size
+	} else {
+		fh = sg.fs + 3*font.Size
 	}
+	
 	if fh == 0 {
 		fh = 12
 	}
-	switch style.Font {
+	return
+}
+
+func (sg *SvgGraphics) FontMetrics(font Font) (fw float32, fh int, mono bool) {
+	if font.Name == "" {
+		font.Name = sg.font
+	}
+	fh = sg.fontheight(font)
+	
+	
+	switch font.Name {
 	case "Arial":
 		fw, mono = 0.5*float32(fh), false
 	case "Helvetica":
@@ -69,8 +83,8 @@ func (sg *SvgGraphics) FontMetrics(style DataStyle) (fw float32, fh int, mono bo
 	return
 }
 
-func (sg *SvgGraphics) TextLen(t string, style DataStyle) int {
-	return GenericTextLen(sg, t, style)
+func (sg *SvgGraphics) TextLen(t string, font Font) int {
+	return GenericTextLen(sg, t, font)
 }
 
 
@@ -85,11 +99,11 @@ func (sg *SvgGraphics) Line(x0, y0, x1, y1 int, style DataStyle) {
 	sg.svg.Line(x0, y0, x1, y1, s)
 }
 
-func (sg *SvgGraphics) Text(x, y int, t string, align string, rot int, style DataStyle) {
+func (sg *SvgGraphics) Text(x, y int, t string, align string, rot int, f Font) {
 	if len(align) == 1 {
 		align = "c" + align
 	}
-	_, fh, _ := sg.FontMetrics(style)
+	_, fh, _ := sg.FontMetrics(f)
 
 	trans := ""
 	if rot != 0 {
@@ -114,14 +128,14 @@ func (sg *SvgGraphics) Text(x, y int, t string, align string, rot int, style Dat
 	default:
 		s += "middle"
 	}
-	if style.FontColor != "" {
-		s += "; stroke:" + style.FontColor
+	if f.Color != "" {
+		s += "; stroke:" + f.Color
 	}
-	if style.Font != "" {
-		s += "; font-family:" + style.Font
+	if f.Name != "" {
+		s += "; font-family:" + f.Name
 	}
-	if style.FontSize != 0 {
-		s += fmt.Sprintf("; font-size: %d", style.FontSize)
+	if f.Size != 0 {
+		s += fmt.Sprintf("; font-size: %d", fh)
 	}
 
 	sg.svg.Text(x, y, t, trans, s)
@@ -200,56 +214,35 @@ func (sg *SvgGraphics) Rect(x, y, w, h int, style DataStyle) {
 	} else {
 		linecol = "#808080"
 	}
-	var r, g, b int
-	fillcol := linecol
-	n, err := fmt.Sscanf(linecol[1:], "%2x%2x%2x", &r, &g, &b)
-	if err == nil && n == 3 {
-		f := style.Fill
-		r = max(min(255-int(f*float64(255-r)), 255), 0)
-		g = max(min(255-int(f*float64(255-g)), 255), 0)
-		b = max(min(255-int(f*float64(255-b)), 255), 0)
-		fillcol = fmt.Sprintf("#%02x%02x%02x", r, g, b)
-		fmt.Printf("line-color: %s  --- %.2f --> fill-color %s\n", linecol, f, fillcol)
-	} else {
-		fmt.Printf("Cannot parse %s: %s\n", linecol[1:], err.String())
-	}
-	fillcol += "X"
 	s += fmt.Sprintf("stroke-width: %d; ", style.LineWidth)
 	s += fmt.Sprintf("opacity: %.2f; ", 1-style.Alpha)
-	if style.Fill != 0 {
-		opa := style.Fill
-		s += fmt.Sprintf("fill: %s; fill-opacity: %.2f", linecol, opa)
+	if style.FillColor != "" {
+		s += fmt.Sprintf("fill: %s; fill-opacity: %.2f", style.FillColor, 1-style.Alpha)
+	} else {
+		s += "fill-opacity: 0"
 	}
 	sg.svg.Rect(x, y, w, h, s)
 	// GenericRect(sg, x, y, w, h, style) // TODO
 }
 
 func (sg *SvgGraphics) Style(element string) DataStyle {
-	switch element {
-	case "title":
-		return DataStyle{FontColor: "#000000", FontSize: int(float64(sg.fs)*1.2 + 0.5)}
-	case "axis":
-		return DataStyle{LineColor: "#000000", LineWidth: 2, LineStyle: SolidLine}
-	case "zero":
-		return DataStyle{LineColor: "#404040", LineWidth: 1, LineStyle: SolidLine}
-	case "tic":
-		return DataStyle{LineColor: "#000000", LineWidth: 1, LineStyle: SolidLine}
-	case "grid":
-		return DataStyle{LineColor: "#808080", LineWidth: 1, LineStyle: SolidLine}
-	case "key":
-		return DataStyle{LineColor: "#4040ff", LineWidth: 1, LineStyle: SolidLine, Fill: 1e-6}
+	if v, ok := DefaultStyle[element]; ok {
+		return v
 	}
-	b := "#000000"
-	return DataStyle{Symbol: 'o', SymbolColor: b, SymbolSize: 1,
-		LineColor: b, LineWidth: 1, LineStyle: SolidLine,
-		Font: "Helvetica", FontSize: 12, FontColor: b, Fill: 0, Alpha: 0,
+	return DataStyle{Symbol: 'o', SymbolColor: "#808080", LineColor: "#808080", LineWidth: 1, LineStyle: SolidLine}
+}
+
+func (sg *SvgGraphics) Font(element string) Font {
+	if v, ok := DefaultFont[element]; ok {
+		return v
 	}
+	return Font{}
 }
 
 func (sg *SvgGraphics) Title(text string) {
-	_, fh, _ := sg.FontMetrics(sg.Style("title"))
+	_, fh, _ := sg.FontMetrics(Font{})
 	x, y := sg.w/2, fh/2
-	sg.Text(x, y, text, "tc", 0, sg.Style("title"))
+	sg.Text(x, y, text, "tc", 0, sg.Font("title"))
 }
 
 func (sg *SvgGraphics) XAxis(xr Range, ys, yms int) {

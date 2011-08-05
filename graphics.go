@@ -9,13 +9,14 @@ import (
 // Any type which implements BasicGraphics can use generic implementations
 // of the Graphics methods.
 type BasicGraphics interface {
-	FontMetrics(style DataStyle) (fw float32, fh int, mono bool)     // Return fontwidth and -height in pixel
-	TextLen(t string, style DataStyle) int                           // length=width of t in screen units
+	Style(element string) DataStyle                                  // retrieve style for element
+	Font(element string) Font // retrieve font for element
+	FontMetrics(font Font) (fw float32, fh int, mono bool)     // Return fontwidth and -height in pixel
+	TextLen(t string, font Font) int                           // length=width of t in screen units
 	Line(x0, y0, x1, y1 int, style DataStyle)                        // Draw line from (x0,y0) to (x1,y1)
 	Symbol(x, y, s int, style DataStyle)                             // Put symnbol s at (x,y)
-	Text(x, y int, t string, align string, rot int, style DataStyle) // align: [[tcb]][lcr]
+	Text(x, y int, t string, align string, rot int, f Font) // align: [[tcb]][lcr]
 	Rect(x, y, w, h int, style DataStyle)                            // draw (w x h) rectangle at (x,y)
-	Style(element string) DataStyle                                  // retrieve style for element
 	Wedge(x,y,r int, phi, psi float64, style DataStyle) // draw pie from phi to psi centered at (x,y) with radius r
 }
 
@@ -49,17 +50,11 @@ type Barinfo struct {
 	t          string
 }
 
-func GenericFontMetrics(bg BasicGraphics, style DataStyle) (fw float32, fh int, mono bool) {
-	fh = style.FontSize
-	fw = 0.65 * float32(fh)
-	mono = true
-	return
-}
 
 
-func GenericTextLen(bg BasicGraphics, t string, style DataStyle) (width int) {
+func GenericTextLen(bg BasicGraphics, t string, font Font) (width int) {
 	// TODO: how handle newlines?  same way like Text does
-	fw, _, mono := bg.FontMetrics(style)
+	fw, _, mono := bg.FontMetrics(font)
 	if mono {
 		for _ = range t {
 			width++
@@ -99,7 +94,8 @@ func GenericRect(bg BasicGraphics, x, y, w, h int, style DataStyle) {
 
 // GenericAxis draws the axis r solely by graphic primitives of bg.
 func GenericXAxis(bg BasicGraphics, rng Range, y, ym int) {
-	_, fontheight, _ := bg.FontMetrics(bg.Style("axis"))
+	_, fontheight, _ := bg.FontMetrics(bg.Font("label"))
+	ticfont := bg.Font("tic")
 	var ticLen int = 0
 	if !rng.TicSetting.Hide {
 		ticLen = min(10, max(4, fontheight/2))
@@ -122,17 +118,17 @@ func GenericXAxis(bg BasicGraphics, rng Range, y, ym int) {
 		aly += (3 * fontheight) / 2
 	}
 	if rng.ShowLimits {
-		st := bg.Style("rangelimit")
+		f := bg.Font("rangelimit")
 		if rng.Time {
-			bg.Text(xa, aly, rng.TMin.Format("2006-01-02 15:04:05"), "tl", 0, st)
-			bg.Text(xe, aly, rng.TMax.Format("2006-01-02 15:04:05"), "tr", 0, st)
+			bg.Text(xa, aly, rng.TMin.Format("2006-01-02 15:04:05"), "tl", 0, f)
+			bg.Text(xe, aly, rng.TMax.Format("2006-01-02 15:04:05"), "tr", 0, f)
 		} else {
-			bg.Text(xa, aly, fmt.Sprintf("%g", rng.Min), "tl", 0, st)
-			bg.Text(xe, aly, fmt.Sprintf("%g", rng.Max), "tr", 0, st)
+			bg.Text(xa, aly, fmt.Sprintf("%g", rng.Min), "tl", 0, f)
+			bg.Text(xe, aly, fmt.Sprintf("%g", rng.Max), "tr", 0, f)
 		}
 	}
 	if rng.Label != "" { // draw label _after_ (=over) range limits
-		bg.Text((xa+xe)/2, aly, "  "+rng.Label+"  ", "tc", 0, bg.Style("label"))
+		bg.Text((xa+xe)/2, aly, "  "+rng.Label+"  ", "tc", 0, bg.Font("label"))
 	}
 
 	if !rng.TicSetting.Hide {
@@ -156,9 +152,9 @@ func GenericXAxis(bg BasicGraphics, rng Range, y, ym int) {
 			}
 			if rng.Time && tic.Align == -1 {
 				bg.Line(x, y+ticLen, x, y+2*ticLen, ticstyle)
-				bg.Text(lx, y+2*ticLen, tic.Label, "tl", 0, ticstyle)
+				bg.Text(lx, y+2*ticLen, tic.Label, "tl", 0, ticfont)
 			} else {
-				bg.Text(lx, y+2*ticLen, tic.Label, "tc", 0, ticstyle)
+				bg.Text(lx, y+2*ticLen, tic.Label, "tc", 0, ticfont)
 			}
 		}
 	}
@@ -166,7 +162,7 @@ func GenericXAxis(bg BasicGraphics, rng Range, y, ym int) {
 
 // GenericAxis draws the axis r solely by graphic primitives of bg.
 func GenericYAxis(bg BasicGraphics, rng Range, x, xm int) {
-	_, fontheight, _ := bg.FontMetrics(bg.Style("key"))
+	_, fontheight, _ := bg.FontMetrics(bg.Font("label"))
 	var ticLen int = 0
 	if !rng.TicSetting.Hide {
 		ticLen = min(10, max(4, fontheight/2))
@@ -199,12 +195,13 @@ func GenericYAxis(bg BasicGraphics, rng Range, x, xm int) {
 	}
 	if rng.Label != "" {
 		y := (ya + ye) / 2
-		bg.Text(alx, y, rng.Label, "bc", 90, bg.Style("label"))
+		bg.Text(alx, y, rng.Label, "bc", 90, bg.Font("label"))
 	}
 
 	if !rng.TicSetting.Hide {
 		// Tics, tic labels and grid lines
 		ticstyle := bg.Style("tic")
+		ticfont := bg.Font("tic")
 		for ticcnt, tic := range rng.Tics {
 			y := rng.Data2Screen(tic.Pos)
 			ly := rng.Data2Screen(tic.LabelPos)
@@ -222,9 +219,9 @@ func GenericYAxis(bg BasicGraphics, rng Range, x, xm int) {
 			}
 			if rng.Time && tic.Align == 0 { // centered tic
 				bg.Line(x-2*ticLen, y, x+ticLen, y, ticstyle)
-				bg.Text(x-ticLen, ly, tic.Label, "cr", 90, ticstyle)
+				bg.Text(x-ticLen, ly, tic.Label, "cr", 90, ticfont)
 			} else {
-				bg.Text(x-2*ticLen, ly, tic.Label, "cr", 0, ticstyle)
+				bg.Text(x-2*ticLen, ly, tic.Label, "cr", 0, ticfont)
 			}
 		}
 	}
@@ -232,7 +229,7 @@ func GenericYAxis(bg BasicGraphics, rng Range, x, xm int) {
 
 
 // GenericScatter draws the given points according to style.
-// style.FontColor is used as color of error bars and style.FontSize is used
+// style.FillColor is used as color of error bars and style.FontSize is used
 // as the length of the endmarks of the error bars. Both have suitable defaults
 // if the FontXyz are not set. Point coordinates and errors must be provided 
 // in screen coordinates.
@@ -240,7 +237,7 @@ func GenericScatter(bg BasicGraphics, points []EPoint, plotstyle PlotStyle, styl
 	// First pass: Error bars
 	for _, p := range points {
 		ebs := style
-		ebs.LineColor, ebs.LineWidth = ebs.FontColor, ebs.FontSize
+		ebs.LineColor, ebs.LineWidth = ebs.FillColor, 1
 		if ebs.LineColor == "" {
 			ebs.LineColor = "#404040"
 		}

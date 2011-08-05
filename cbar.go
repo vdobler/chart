@@ -79,7 +79,7 @@ func (c *CategoryBarChart) Plot(g Graphics) {
 	width, height := layout.Width, layout.Height
 	topm, leftm := layout.Top, layout.Left
 	numytics := layout.NumYtics
-	fw, fh, _ := g.FontMetrics(DataStyle{})
+	fw, fh, _ := g.FontMetrics(g.Font("label"))
 	fw += 0
 
 	// Outside bound ranges for histograms are nicer

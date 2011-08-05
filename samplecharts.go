@@ -323,13 +323,15 @@ func histChart(name, title string, stacked bool) {
 	hc.XRange.Label, hc.YRange.Label = "Sample Value", "Count"
 	hc.Key.Hide = true
 	points := gauss(150, 10, 20, 0, 50)
-	hc.AddData("Sample 1", points, chart.DataStyle{LineColor: "#ff0000", LineWidth: 1, LineStyle: 1, Fill: 1})
+	hc.AddData("Sample 1", points, 
+		chart.DataStyle{LineColor: "#ff0000", LineWidth: 1, LineStyle: 1, FillColor: "#ff8080" })
 	hc.Plot(svggraphics)
 	hc.Plot(txtgraphics)
 	fmt.Printf("%s\n", txtgraphics.String())
 
 	points2 := gauss(80, 4, 37, 0, 50)
-	hc.AddData("Sample 2", points2, chart.DataStyle{LineColor: "#00ff00", LineWidth: 1, LineStyle: 1, Fill: 1})
+	hc.AddData("Sample 2", points2, 
+		chart.DataStyle{LineColor: "#00ff00", LineWidth: 1, LineStyle: 1, FillColor: "#80ff80"})
 	thesvg.Gtransform("translate(400 0)")
 	hc.Plot(svggraphics)
 	hc.Plot(txtgraphics)
@@ -338,7 +340,8 @@ func histChart(name, title string, stacked bool) {
 
 	thesvg.Gtransform("translate(0 300)")
 	points3 := gauss(60, 15, 0, 0, 50)
-	hc.AddData("Sample 3", points3, chart.DataStyle{LineColor: "#0000ff", LineWidth: 1, LineStyle: 1, Fill: 1})
+	hc.AddData("Sample 3", points3, 
+		chart.DataStyle{LineColor: "#0000ff", LineWidth: 1, LineStyle: 1, FillColor: "#8080ff"})
 	hc.Plot(svggraphics)
 	hc.Plot(txtgraphics)
 	fmt.Printf("%s\n", txtgraphics.String())
@@ -419,13 +422,13 @@ func catBarChart() {
 	// Categorized Bar Chart
 	cbarc := chart.CategoryBarChart{Title: "Income", Categories: []string{"none", "low", "average", "high"}}
 	cbarc.AddData("Europe", map[string]float64{"none": 10, "low": 15, "average": 25, "high": 20},
-		chart.DataStyle{LineColor: "#0000ff", LineWidth: 2, Fill: 0.3})
+		chart.DataStyle{LineColor: "#0000ff", LineWidth: 4, FillColor: "#4040ff"})
 	cbarc.Plot(svggraphics)
 	cbarc.Plot(txtgraphics)
 	fmt.Printf("%s\n", txtgraphics.String())
 
 	cbarc.AddData("Asia", map[string]float64{"none": 15, "low": 30, "average": 10, "high": 20},
-		chart.DataStyle{LineColor: "#aa00aa", LineWidth: 2, Fill: 0.75})
+		chart.DataStyle{LineColor: "#aa00aa", LineWidth: 4, FillColor: "#aa40aa"})
 	cbarc.YRange.MinMode.Fixed = true
 	cbarc.YRange.MinMode.Value = 0
 	thesvg.Gtransform("translate(400 0)")
@@ -445,9 +448,9 @@ func catBarChart() {
 	cbarc = chart.CategoryBarChart{Title: "Income", Categories: []string{"none", "low", "average", "high"}}
 	cbarc.YRange.ShowZero = true
 	cbarc.AddData("Europe", map[string]float64{"none": 10, "low": 15, "average": 25, "high": 20},
-		chart.DataStyle{LineColor: "#0000ff", LineWidth: 2, Fill: 0.3})
+		chart.DataStyle{LineColor: "#0000ff", LineWidth: 4, FillColor: "#0000ff"})
 	cbarc.AddData("Asia", map[string]float64{"none": 15, "low": 30, "average": 10, "high": -20},
-		chart.DataStyle{LineColor: "#aa00aa", LineWidth: 2, Fill: 0.75})
+		chart.DataStyle{LineColor: "#aa00aa", LineWidth: 4, FillColor: "#aa00aa"})
 	cbarc.Key.Pos = "ibl"
 	thesvg.Gtransform("translate(400 300)")
 	cbarc.Plot(svggraphics)
@@ -577,19 +580,20 @@ func textlen() {
 
 	texts := []string{"ill", "WWW", "Some normal text.", "Illi, is. illigalli: ill!", "OO WORKSHOOPS OMWWW BMWWMB"}
 	fonts := []string{"Arial", "Helvetica", "Times", "Courier" /* "Calibri", "Palatino" */ }
-	sizes := []int{8, 12, 16, 20}
-	style := chart.DataStyle{FontColor: "#000000", Alpha: 0, LineColor: "#ff0000", LineWidth: 2}
-	ls := chart.DataStyle{FontColor: "#000a0", Font: "Arial", FontSize: 12, Alpha: 0, LineColor: "#000000", LineWidth: 1}
-
+	sizes := []int{-3, -2, -1, 0, 1, 2, 3}
+	font := chart.Font{Color: "#000000"}
+	
+	df :=  chart.Font{Name: "Arial", Color: "#2020ff", Size: -3}
 	x, y := 20, 40
 	for _, t := range texts {
 		for _, f := range fonts {
 			for _, s := range sizes {
-				style.Font, style.FontSize = f, s
-				tvl := sgr.TextLen(t, style)
-				sgr.Text(x+tvl/2, y-2, t, "cc", 0, style)
-				sgr.Line(x, y, x+tvl, y, style)
-				sgr.Text(x+tvl+10, y-2, f, "cl", 0, ls)
+				font.Name, font.Size = f, s
+				tvl := sgr.TextLen(t, font)
+				sgr.Text(x+tvl/2, y-2, t, "cc", 0, font)
+				sgr.Line(x, y, x+tvl, y, chart.DataStyle{LineColor: "#ff0000", LineWidth: 2, LineStyle: chart.SolidLine})
+				r := fmt.Sprintf("%s (%d)", f, s)
+				sgr.Text(x+tvl+10, y-2, r, "cl", 0, df)
 				y += 30
 				if y > 760 {
 					y = 40
@@ -628,6 +632,7 @@ func main() {
 
 	pieChart()
 
+	textlen()
 
 	/*
 		 steps := []int64{ 1, 5, 7, 8, 10, 30, 50, 100, 150, 300, 500, 800, 1000, 1500, 3000, 5000,8000, 10000, 15000, 20000, 30000, 50000, 70000, 100000, 200000, 400000, 800000, 1200000, 1800000, 2000000, 2200000, 2500000, 3000000, 5000000, 9000000, 2 * 9000000, 4 * 9000000 }

@@ -437,11 +437,11 @@ func (g *TextGraphics) End() {}
 func (g *TextGraphics) Dimensions() (int, int) {
 	return g.w, g.h
 }
-func (g *TextGraphics) FontMetrics(style DataStyle) (fw float32, fh int, mono bool) {
+func (g *TextGraphics) FontMetrics(font Font) (fw float32, fh int, mono bool) {
 	return 1, 1, true
 }
 
-func (g *TextGraphics) TextLen(t string, style DataStyle) int {
+func (g *TextGraphics) TextLen(t string, font Font) int {
 	return len(t)
 }
 
@@ -450,7 +450,7 @@ func (g *TextGraphics) Line(x0, y0, x1, y1 int, style DataStyle) {
 	g.tb.Line(x0, y0, x1, y1, '*')
 }
 
-func (g *TextGraphics) Text(x, y int, t string, align string, rot int, style DataStyle) {
+func (g *TextGraphics) Text(x, y int, t string, align string, rot int, font Font) {
 	// align: -1: left; 0: centered; 1: right; 2: top, 3: center, 4: bottom
 	if len(align) == 2 {
 		align = align[1:]
@@ -488,6 +488,11 @@ func (g *TextGraphics) Style(element string) DataStyle {
 	b := "#000000"
 	return DataStyle{Symbol: 'o', SymbolColor: b, LineColor: b, LineWidth: 1, LineStyle: SolidLine}
 }
+
+func (g *TextGraphics) Font(element string) Font {
+	return Font{}
+}
+
 func (g *TextGraphics) String() string {
 	return g.tb.String()
 }
@@ -497,7 +502,7 @@ func (g *TextGraphics) Symbol(x, y, s int, style DataStyle) {
 }
 func (g *TextGraphics) Title(text string) {
 	x, y := g.w/2, 0
-	g.Text(x, y, text, "tc", 0, DataStyle{})
+	g.Text(x, y, text, "tc", 0, Font{})
 }
 
 func (g *TextGraphics) XAxis(xrange Range, y, y1 int) {

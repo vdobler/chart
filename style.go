@@ -85,10 +85,6 @@ type DataStyle struct {
 	Fill        float64 // 0: none, 1: same as line, 0.x: lighter fill
 	FillColor   string  // "": no fill
 	Alpha       float64 // 
-	
-	Font        string  // "": default
-	FontSize    int     // -2: tiny, -1: small, 0: normal, 1: large, 2: huge
-	FontColor   string  // 
 }
 
 // PlotStyle describes how data and functions are drawn in scatter plots.
@@ -114,42 +110,63 @@ const (
 	LongDotLine
 )
 
+type Font struct {
+	Name string  // "": default
+	Size int     // -2: tiny, -1: small, 0: normal, 1: large, 2: huge
+	Color string // "": default, other: use this
+}
+
 func (d *DataStyle) empty() bool {
 	return d.Symbol == 0 && d.SymbolColor == "" && d.LineStyle == 0 && d.LineColor == "" && d.Fill == 0 && d.SymbolSize == 0
 }
 
 
 // Style is a list of suitable default styles.
-var Style = []DataStyle{
+var StandardStyle = []DataStyle{
 	DataStyle{Symbol: 'o', SymbolColor: "#cc0000", LineStyle: 0, LineColor: "#cc0000",
-		Fill: 0, SymbolSize: 1, Font: "Verdana", FontSize: 0, Alpha: 0},
+		Fill: 0, SymbolSize: 1, Alpha: 0},
 	DataStyle{Symbol: '=', SymbolColor: "#00bb00", LineStyle: 1, LineColor: "#00bb00",
-		Fill: 0, SymbolSize: 1, Font: "Verdana", FontSize: 0, Alpha: 0},
+		Fill: 0, SymbolSize: 1, Alpha: 0},
 	DataStyle{Symbol: '%', SymbolColor: "#0000dd", LineStyle: 2, LineColor: "#0000dd",
-		Fill: 0, SymbolSize: 1, Font: "Verdana", FontSize: 0, Alpha: 0},
+		Fill: 0, SymbolSize: 1, Alpha: 0},
 	DataStyle{Symbol: '&', SymbolColor: "#996600", LineStyle: 3, LineColor: "#996600",
-		Fill: 0, SymbolSize: 1, Font: "Verdana", FontSize: 0, Alpha: 0},
+		Fill: 0, SymbolSize: 1,  Alpha: 0},
 	DataStyle{Symbol: '+', SymbolColor: "#bb00bb", LineStyle: 4, LineColor: "#bb00bb",
-		Fill: 0, SymbolSize: 1, Font: "Verdana", FontSize: 0, Alpha: 0},
+		Fill: 0, SymbolSize: 1,Alpha: 0},
 	DataStyle{Symbol: 'X', SymbolColor: "#00aaaa", LineStyle: 5, LineColor: "#00aaaa",
-		Fill: 0, SymbolSize: 1, Font: "Verdana", FontSize: 0, Alpha: 0},
+		Fill: 0, SymbolSize: 1,  Alpha: 0},
 	DataStyle{Symbol: '*', SymbolColor: "#aaaa00", LineStyle: 6, LineColor: "#aaaa00",
-		Fill: 0, SymbolSize: 1, Font: "Verdana", FontSize: 0, Alpha: 0},
+		Fill: 0, SymbolSize: 1,  Alpha: 0},
 }
 
 
-// AutoStyle produces on subsequent call new styles based on the Style list.
+// AutoStyle produces a styles based on the Style list.
 func AutoStyle(i int) (style DataStyle) {
-	n := len(Style)
+	n := len(StandardStyle)
 	si := i % n
 	ci := (si + i/n) % n
 	li := (si + 2*i/n) % n
-	style.Symbol = Style[si].Symbol
-	style.SymbolColor = Style[ci].SymbolColor
-	style.LineColor = Style[ci].LineColor
-	style.LineStyle = Style[li].LineStyle
-	style.Fill = Style[si].Fill
-	style.SymbolSize = Style[si].SymbolSize
-	style.Alpha = Style[si].Alpha
+	style.Symbol = StandardStyle[si].Symbol
+	style.SymbolColor = StandardStyle[ci].SymbolColor
+	style.LineColor = StandardStyle[ci].LineColor
+	style.LineStyle = StandardStyle[li].LineStyle
+	style.Fill = StandardStyle[si].Fill
+	style.SymbolSize = StandardStyle[si].SymbolSize
+	style.Alpha = StandardStyle[si].Alpha
 	return
 }
+
+
+var DefaultStyle = map[string]DataStyle{"axis": DataStyle{LineColor: "#000000", LineWidth: 2, LineStyle: SolidLine},
+	"maxis": DataStyle{LineColor: "#000000", LineWidth: 2, LineStyle: SolidLine}, // mirrored axis
+	"tic": DataStyle{LineColor: "#000000", LineWidth: 1, LineStyle: SolidLine},
+	"mtic": DataStyle{LineColor: "#000000", LineWidth: 1, LineStyle: SolidLine},
+	"zero": DataStyle{LineColor: "#404040", LineWidth: 1, LineStyle: SolidLine},
+	"grid": DataStyle{LineColor: "#808080", LineWidth: 1, LineStyle: SolidLine},
+	"key":  DataStyle{LineColor: "#202020", LineWidth: 1, LineStyle: SolidLine, FillColor: "#f0f0f0", Alpha: 0.2},
+}
+
+var DefaultFont = map[string]Font{"title": Font{Size: +1}, "label": Font{}, "key": Font{Size: -1},
+	"tic": Font{}, "rangelimit": Font{},
+}
+

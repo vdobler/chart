@@ -280,7 +280,7 @@ func (c *HistChart) binify(binStart, binWidth float64, binCnt int) (counts [][]i
 func (c *HistChart) Plot(g Graphics) {
 	layout := Layout(g, c.Title, c.XRange.Label, c.YRange.Label,
 		c.XRange.TicSetting.Hide, c.YRange.TicSetting.Hide, &c.Key)
-	fw, fh, _ := g.FontMetrics(DataStyle{})
+	fw, fh, _ := g.FontMetrics(g.Font("label"))
 	fw += 0
 
 	width, height := layout.Width, layout.Height
