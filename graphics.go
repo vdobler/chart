@@ -9,15 +9,15 @@ import (
 // Any type which implements BasicGraphics can use generic implementations
 // of the Graphics methods.
 type BasicGraphics interface {
-	Style(element string) DataStyle                                  // retrieve style for element
-	Font(element string) Font // retrieve font for element
-	FontMetrics(font Font) (fw float32, fh int, mono bool)     // Return fontwidth and -height in pixel
-	TextLen(t string, font Font) int                           // length=width of t in screen units
-	Line(x0, y0, x1, y1 int, style DataStyle)                        // Draw line from (x0,y0) to (x1,y1)
-	Symbol(x, y, s int, style DataStyle)                             // Put symnbol s at (x,y)
+	Style(element string) DataStyle                         // retrieve style for element
+	Font(element string) Font                               // retrieve font for element
+	FontMetrics(font Font) (fw float32, fh int, mono bool)  // Return fontwidth and -height in pixel
+	TextLen(t string, font Font) int                        // length=width of t in screen units
+	Line(x0, y0, x1, y1 int, style DataStyle)               // Draw line from (x0,y0) to (x1,y1)
+	Symbol(x, y, s int, style DataStyle)                    // Put symnbol s at (x,y)
 	Text(x, y int, t string, align string, rot int, f Font) // align: [[tcb]][lcr]
-	Rect(x, y, w, h int, style DataStyle)                            // draw (w x h) rectangle at (x,y)
-	Wedge(x,y,r int, phi, psi float64, style DataStyle) // draw pie from phi to psi centered at (x,y) with radius r
+	Rect(x, y, w, h int, style DataStyle)                   // draw (w x h) rectangle at (x,y)
+	Wedge(x, y, r int, phi, psi float64, style DataStyle)   // draw pie from phi to psi centered at (x,y) with radius r
 }
 
 
@@ -32,11 +32,11 @@ type Graphics interface {
 	// screen coordinates,
 	XAxis(xr Range, ys, yms int) // Draw x axis xr at screen position ys (and yms if mirrored)
 	YAxis(yr Range, xs, xms int) // Same for y axis.
-	Title(text string) // Draw title onto chart
+	Title(text string)           // Draw title onto chart
 
-	Scatter(points []EPoint, plotstyle PlotStyle, style DataStyle)      // Points, Lines and Line+Points
-	Boxes(boxes []Box, width int, style DataStyle) // Boxplots
-	Bars(bars []Barinfo, style DataStyle)          // any type of histogram
+	Scatter(points []EPoint, plotstyle PlotStyle, style DataStyle) // Points, Lines and Line+Points
+	Boxes(boxes []Box, width int, style DataStyle)                 // Boxplots
+	Bars(bars []Barinfo, style DataStyle)                          // any type of histogram
 	/*
 		Ring(style DataStyle)                     // 
 	*/
@@ -49,7 +49,6 @@ type Barinfo struct {
 	lx, ly     int
 	t          string
 }
-
 
 
 func GenericTextLen(bg BasicGraphics, t string, font Font) (width int) {
@@ -255,7 +254,7 @@ func GenericScatter(bg BasicGraphics, points []EPoint, plotstyle PlotStyle, styl
 	}
 
 	// Second pass: Line
-	if (plotstyle & PlotStyleLines) != 0 && len(points) > 0 {
+	if (plotstyle&PlotStyleLines) != 0 && len(points) > 0 {
 		lastx, lasty := points[0].X, points[0].Y
 		for i := 1; i < len(points); i++ {
 			x, y := points[i].X, points[i].Y
@@ -265,7 +264,7 @@ func GenericScatter(bg BasicGraphics, points []EPoint, plotstyle PlotStyle, styl
 	}
 
 	// Third pass: symbols
-	if (plotstyle & PlotStylePoints) != 0  && len(points) != 0 {
+	if (plotstyle&PlotStylePoints) != 0 && len(points) != 0 {
 		for _, p := range points {
 			bg.Symbol(int(p.X), int(p.Y), style.Symbol, style)
 		}
@@ -318,18 +317,17 @@ func GenericBars(bg BasicGraphics, bars []Barinfo, style DataStyle) {
 // GenericWedge draws a pie/wedge just by lines
 func GenericWedge(bg BasicGraphics, x, y, r int, phi, psi float64, style DataStyle) {
 	// TODO: filling
-	
+
 	xa, ya := int(math.Cos(phi)*float64(r))+x, int(math.Sin(phi)*float64(r))+y
 	xc, yc := int(math.Cos(psi)*float64(r))+x, int(math.Sin(psi)*float64(r))+y
-	bg.Line(x,y, xa,ya, style)
-	bg.Line(x,y, xc,yc, style)
+	bg.Line(x, y, xa, ya, style)
+	bg.Line(x, y, xc, yc, style)
 
-	var xb, yb int 
+	var xb, yb int
 	for ; phi < psi; phi += 0.1 { // aproximate circle by 62-corner
 		xb, yb = int(math.Cos(phi)*float64(r))+x, int(math.Sin(phi)*float64(r))+y
-		bg.Line(xa,ya, xb,yb, style)
+		bg.Line(xa, ya, xb, yb, style)
 		xa, ya = xb, yb
 	}
-	bg.Line(xb,yb, xc,yc, style)
+	bg.Line(xb, yb, xc, yc, style)
 }
-

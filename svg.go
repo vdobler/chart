@@ -2,6 +2,7 @@ package chart
 
 import (
 	"fmt"
+	"math"
 	"github.com/ajstarks/svgo"
 )
 
@@ -52,7 +53,7 @@ func (sg *SvgGraphics) fontheight(font Font) (fh int) {
 	} else {
 		fh = sg.fs + 3*font.Size
 	}
-	
+
 	if fh == 0 {
 		fh = 12
 	}
@@ -64,8 +65,7 @@ func (sg *SvgGraphics) FontMetrics(font Font) (fw float32, fh int, mono bool) {
 		font.Name = sg.font
 	}
 	fh = sg.fontheight(font)
-	
-	
+
 	switch font.Name {
 	case "Arial":
 		fw, mono = 0.5*float32(fh), false
@@ -268,6 +268,28 @@ func (sg *SvgGraphics) Bars(bars []Barinfo, style DataStyle) {
 	GenericBars(sg, bars, style)
 }
 
-func (sg *SvgGraphics) Wedge(x,y,r int, phi, psi float64, style DataStyle) {
-	GenericWedge(sg, x, y, r, phi, psi, style)
+func (sg *SvgGraphics) Wedge(x, y, r int, phi, psi float64, style DataStyle) {
+	d := fmt.Sprintf("M%d,%d ", x, y)
+	rf := float64(r)
+	d += fmt.Sprintf("L %d,%d", int(rf*math.Cos(phi)+0.5)+x, int(rf*math.Sin(phi)+0.5)+y)
+	d += fmt.Sprintf("A %d,%d 0 0 1 %d,%d", r, r, int(rf*math.Cos(psi)+0.5)+x, int(rf*math.Sin(psi)+0.5)+y)
+	d += fmt.Sprintf("z")
+
+	var s string
+	linecol := style.LineColor
+	if linecol != "" {
+		s = fmt.Sprintf("stroke:%s; ", linecol)
+	} else {
+		linecol = "#808080"
+	}
+	s += fmt.Sprintf("stroke-width: %d; ", style.LineWidth)
+	s += fmt.Sprintf("opacity: %.2f; ", 1-style.Alpha)
+	if style.FillColor != "" {
+		s += fmt.Sprintf("fill: %s; fill-opacity: %.2f", style.FillColor, 1-style.Alpha)
+	} else {
+		s += "fill-opacity: 0"
+	}
+
+	sg.svg.Path(d, s)
+	// GenericWedge(sg, x, y, r, phi, psi, style)
 }

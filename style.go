@@ -90,12 +90,14 @@ type DataStyle struct {
 // PlotStyle describes how data and functions are drawn in scatter plots.
 // Can be used to describe how a key entry is drawn
 type PlotStyle int
+
 const (
-	PlotStylePoints = 1
-	PlotStyleLines = 2
+	PlotStylePoints      = 1
+	PlotStyleLines       = 2
 	PlotStyleLinesPoints = 3
-	PlotStyleBox = 4
+	PlotStyleBox         = 4
 )
+
 func (ps PlotStyle) undefined() bool {
 	return int(ps) < 1 || int(ps) > 3
 }
@@ -111,8 +113,8 @@ const (
 )
 
 type Font struct {
-	Name string  // "": default
-	Size int     // -2: tiny, -1: small, 0: normal, 1: large, 2: huge
+	Name  string // "": default
+	Size  int    // -2: tiny, -1: small, 0: normal, 1: large, 2: huge
 	Color string // "": default, other: use this
 }
 
@@ -130,13 +132,13 @@ var StandardStyle = []DataStyle{
 	DataStyle{Symbol: '%', SymbolColor: "#0000dd", LineStyle: 2, LineColor: "#0000dd",
 		Fill: 0, SymbolSize: 1, Alpha: 0},
 	DataStyle{Symbol: '&', SymbolColor: "#996600", LineStyle: 3, LineColor: "#996600",
-		Fill: 0, SymbolSize: 1,  Alpha: 0},
+		Fill: 0, SymbolSize: 1, Alpha: 0},
 	DataStyle{Symbol: '+', SymbolColor: "#bb00bb", LineStyle: 4, LineColor: "#bb00bb",
-		Fill: 0, SymbolSize: 1,Alpha: 0},
+		Fill: 0, SymbolSize: 1, Alpha: 0},
 	DataStyle{Symbol: 'X', SymbolColor: "#00aaaa", LineStyle: 5, LineColor: "#00aaaa",
-		Fill: 0, SymbolSize: 1,  Alpha: 0},
+		Fill: 0, SymbolSize: 1, Alpha: 0},
 	DataStyle{Symbol: '*', SymbolColor: "#aaaa00", LineStyle: 6, LineColor: "#aaaa00",
-		Fill: 0, SymbolSize: 1,  Alpha: 0},
+		Fill: 0, SymbolSize: 1, Alpha: 0},
 }
 
 
@@ -159,14 +161,13 @@ func AutoStyle(i int) (style DataStyle) {
 
 var DefaultStyle = map[string]DataStyle{"axis": DataStyle{LineColor: "#000000", LineWidth: 2, LineStyle: SolidLine},
 	"maxis": DataStyle{LineColor: "#000000", LineWidth: 2, LineStyle: SolidLine}, // mirrored axis
-	"tic": DataStyle{LineColor: "#000000", LineWidth: 1, LineStyle: SolidLine},
-	"mtic": DataStyle{LineColor: "#000000", LineWidth: 1, LineStyle: SolidLine},
-	"zero": DataStyle{LineColor: "#404040", LineWidth: 1, LineStyle: SolidLine},
-	"grid": DataStyle{LineColor: "#808080", LineWidth: 1, LineStyle: SolidLine},
-	"key":  DataStyle{LineColor: "#202020", LineWidth: 1, LineStyle: SolidLine, FillColor: "#f0f0f0", Alpha: 0.2},
+	"tic":   DataStyle{LineColor: "#000000", LineWidth: 1, LineStyle: SolidLine},
+	"mtic":  DataStyle{LineColor: "#000000", LineWidth: 1, LineStyle: SolidLine},
+	"zero":  DataStyle{LineColor: "#404040", LineWidth: 1, LineStyle: SolidLine},
+	"grid":  DataStyle{LineColor: "#808080", LineWidth: 1, LineStyle: SolidLine},
+	"key":   DataStyle{LineColor: "#202020", LineWidth: 1, LineStyle: SolidLine, FillColor: "#f0f0f0", Alpha: 0.2},
 }
 
 var DefaultFont = map[string]Font{"title": Font{Size: +1}, "label": Font{}, "key": Font{Size: -1},
 	"tic": Font{}, "rangelimit": Font{},
 }
-

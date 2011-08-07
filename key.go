@@ -30,10 +30,10 @@ type Key struct {
 
 // KeyEntry encapsulates an antry in the key/legend.
 type KeyEntry struct {
-	Text   string       // Text to display
+	Text      string    // Text to display
 	PlotStyle PlotStyle // What to show: symbol, line, bar, combi thereof 
-	Style  DataStyle    // How to show
-	
+	Style     DataStyle // How to show
+
 }
 
 // Margins

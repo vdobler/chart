@@ -199,7 +199,7 @@ func fancyScatter() {
 	pl.XRange.TicSetting.Grid = 1
 	x := []float64{-4, -3.3, -1.8, -1, 0.2, 0.8, 1.8, 3.1, 4, 5.3, 6, 7, 8, 9}
 	y := []float64{22, 18, -3, 0, 0.5, 2, 45, 12, 16.5, 24, 30, 55, 60, 70}
-	pl.AddDataPair("Mmnt", x, y, chart.PlotStyleLinesPoints, 
+	pl.AddDataPair("Mmnt", x, y, chart.PlotStyleLinesPoints,
 		chart.DataStyle{Symbol: '#', SymbolColor: "#0000ff", LineStyle: 0})
 	last := len(pl.Data) - 1
 	pl.Data[last].Samples[6].DeltaX = 2.5
@@ -207,7 +207,7 @@ func fancyScatter() {
 	pl.Data[last].Samples[6].DeltaY = 16
 	pl.Data[last].Samples[6].OffY = 2
 	pl.AddData("abcde", []chart.EPoint{chart.EPoint{-4, 40, 0, 0, 0, 0}, chart.EPoint{-3, 45, 0, 0, 0, 0},
-		chart.EPoint{-2, 35, 0, 0, 0, 0}}, chart.PlotStylePoints, 
+		chart.EPoint{-2, 35, 0, 0, 0, 0}}, chart.PlotStylePoints,
 		chart.DataStyle{Symbol: '0', SymbolColor: "#ff00ff", LineStyle: 1, LineWidth: 1})
 	pl.AddFunc("wxyz", func(x float64) float64 {
 		if x > 5.25 && x < 5.75 {
@@ -218,9 +218,9 @@ func fancyScatter() {
 		}
 		return x * x
 	}, chart.PlotStyleLines, chart.DataStyle{Symbol: 0, LineWidth: 2, LineColor: "#a00000", LineStyle: 1})
-	pl.AddFunc("30", func(x float64) float64 { return 30 }, chart.PlotStyleLines, 
+	pl.AddFunc("30", func(x float64) float64 { return 30 }, chart.PlotStyleLines,
 		chart.DataStyle{Symbol: 0, LineWidth: 1, LineColor: "#00a000", LineStyle: 1})
-	pl.AddFunc("7777", func(x float64) float64 { return 7 }, chart.PlotStyleLines, 
+	pl.AddFunc("7777", func(x float64) float64 { return 7 }, chart.PlotStyleLines,
 		chart.DataStyle{Symbol: 0, LineWidth: 1, LineColor: "#0000a0", LineStyle: 1})
 
 	pl.XRange.ShowZero = true
@@ -323,14 +323,14 @@ func histChart(name, title string, stacked bool) {
 	hc.XRange.Label, hc.YRange.Label = "Sample Value", "Count"
 	hc.Key.Hide = true
 	points := gauss(150, 10, 20, 0, 50)
-	hc.AddData("Sample 1", points, 
-		chart.DataStyle{LineColor: "#ff0000", LineWidth: 1, LineStyle: 1, FillColor: "#ff8080" })
+	hc.AddData("Sample 1", points,
+		chart.DataStyle{LineColor: "#ff0000", LineWidth: 1, LineStyle: 1, FillColor: "#ff8080"})
 	hc.Plot(svggraphics)
 	hc.Plot(txtgraphics)
 	fmt.Printf("%s\n", txtgraphics.String())
 
 	points2 := gauss(80, 4, 37, 0, 50)
-	hc.AddData("Sample 2", points2, 
+	hc.AddData("Sample 2", points2,
 		chart.DataStyle{LineColor: "#00ff00", LineWidth: 1, LineStyle: 1, FillColor: "#80ff80"})
 	thesvg.Gtransform("translate(400 0)")
 	hc.Plot(svggraphics)
@@ -340,7 +340,7 @@ func histChart(name, title string, stacked bool) {
 
 	thesvg.Gtransform("translate(0 300)")
 	points3 := gauss(60, 15, 0, 0, 50)
-	hc.AddData("Sample 3", points3, 
+	hc.AddData("Sample 3", points3,
 		chart.DataStyle{LineColor: "#0000ff", LineWidth: 1, LineStyle: 1, FillColor: "#8080ff"})
 	hc.Plot(svggraphics)
 	hc.Plot(txtgraphics)
@@ -479,7 +479,7 @@ func logAxis() {
 	lc.XRange.Label, lc.YRange.Label = "X-Value", "Y-Value"
 	lx := []float64{4e-2, 3e-1, 2e0, 1e1, 8e1, 7e2, 5e3}
 	ly := []float64{10, 30, 90, 270, 3 * 270, 9 * 270, 27 * 270}
-	lc.AddDataPair("Measurement", lx, ly, chart.PlotStylePoints, 
+	lc.AddDataPair("Measurement", lx, ly, chart.PlotStylePoints,
 		chart.DataStyle{Symbol: '#', SymbolColor: "#9966ff", SymbolSize: 1.5})
 	lc.Key.Hide = true
 	lc.XRange.MinMode.Expand, lc.XRange.MaxMode.Expand = chart.ExpandToTic, chart.ExpandToTic
@@ -535,7 +535,7 @@ func pieChart() {
 	txtgraphics := chart.NewTextGraphics(120, 30)
 
 	pc := chart.PieChart{Title: "Some Pies"}
-	pc.AddDataPair("Data1", []string{"2009", "2010", "2011"}, []float64{10,20,30})
+	pc.AddDataPair("Data1", []string{"2009", "2010", "2011"}, []float64{10, 20, 30})
 	pc.Plot(svggraphics)
 	pc.Plot(txtgraphics)
 	fmt.Printf("%s\n", txtgraphics.String())
@@ -547,7 +547,6 @@ func pieChart() {
 	piec.Plot(txtgraphics)
 	fmt.Printf("%s\n", txtgraphics.String())
 	thesvg.Gend()
-
 
 	thesvg.Gtransform("translate(0 300)")
 	piec.Inner = 0.5
@@ -582,8 +581,8 @@ func textlen() {
 	fonts := []string{"Arial", "Helvetica", "Times", "Courier" /* "Calibri", "Palatino" */ }
 	sizes := []int{-3, -2, -1, 0, 1, 2, 3}
 	font := chart.Font{Color: "#000000"}
-	
-	df :=  chart.Font{Name: "Arial", Color: "#2020ff", Size: -3}
+
+	df := chart.Font{Name: "Arial", Color: "#2020ff", Size: -3}
 	x, y := 20, 40
 	for _, t := range texts {
 		for _, f := range fonts {

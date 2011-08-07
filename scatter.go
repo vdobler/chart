@@ -16,11 +16,11 @@ type ScatterChart struct {
 // ScatterChartData encapsulates a data set or function in a scatter chart.
 // Not both Samples and Func may be non nil.
 type ScatterChartData struct {
-	Name    string
+	Name      string
 	PlotStyle PlotStyle
-	Style   DataStyle
-	Samples []EPoint
-	Func    func(float64) float64
+	Style     DataStyle
+	Samples   []EPoint
+	Func      func(float64) float64
 }
 
 // AddFunc adds a function f to this chart.
@@ -29,7 +29,7 @@ func (sc *ScatterChart) AddFunc(name string, f func(float64) float64, plotstyle 
 		plotstyle = PlotStyleLines
 	}
 	if style.empty() {
-		style = AutoStyle(len(sc.Data)+1)
+		style = AutoStyle(len(sc.Data) + 1)
 	}
 
 	scd := ScatterChartData{Name: name, PlotStyle: plotstyle, Style: style, Samples: nil, Func: f}
@@ -45,7 +45,7 @@ func (sc *ScatterChart) AddData(name string, data []EPoint, plotstyle PlotStyle,
 		plotstyle = PlotStylePoints
 	}
 	if style.empty() {
-		style = AutoStyle(len(sc.Data)+1)
+		style = AutoStyle(len(sc.Data) + 1)
 	}
 	scd := ScatterChartData{Name: name, PlotStyle: plotstyle, Style: style, Samples: data, Func: nil}
 	sc.Data = append(sc.Data, scd)

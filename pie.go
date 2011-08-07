@@ -23,10 +23,19 @@ type PieChart struct {
 	Data    []CategoryChartData
 }
 
+
 func (c *PieChart) AddData(name string, data []CatValue, style []DataStyle) {
 	if len(style) == 0 {
+		fc := []string{"#ff0000", "#00ff00", "#0000ff", "#ffff00", "#ff00ff", "#00ffff",
+			"#808080", "#a08040", "#4080a0", "#80a040"}
 		style = make([]DataStyle, len(data))
-		// fill with suitable
+		for i := 0; i < len(data); i++ {
+			c := fc[i%len(fc)]
+			style[i].LineWidth = 3
+			style[i].LineStyle = SolidLine
+			style[i].LineColor = "#404040"
+			style[i].FillColor = c
+		}
 	}
 	c.Data = append(c.Data, CategoryChartData{name, style, data})
 	c.Key.Entries = append(c.Key.Entries, KeyEntry{PlotStyle: 0, Text: name})
@@ -150,19 +159,18 @@ func (c *PieChart) Plot(g Graphics) {
 	topm, leftm := layout.Top, layout.Left
 	width += 0
 
-	r := height/2
-	x0, y0 := leftm + r, topm + r
+	r := height / 2
+	x0, y0 := leftm+r, topm+r
 
 	g.Begin()
-	
+
 	if c.Title != "" {
 		g.Title(c.Title)
 	}
 
 	for i, data := range c.Data {
 		// _ := c.Key.Entries[keidx].Text // data set name
-		style := data.Style[i]
-		style = DataStyle{LineColor: "#404040", LineWidth: 3, LineStyle: SolidLine}
+		// style = DataStyle{LineColor: "#404040", LineWidth: 3, LineStyle: SolidLine}
 
 		var sum float64
 		for _, d := range data.Samples {
@@ -171,11 +179,12 @@ func (c *PieChart) Plot(g Graphics) {
 		fmt.Printf("sum = %.2f\n", sum)
 
 		var phi float64 = -math.Pi
-		for _, d := range data.Samples {
+		for j, d := range data.Samples {
+			style := data.Style[j]
 			alpha := 2 * math.Pi * d.Val / sum
-			g.Wedge(x0,y0,r, phi, phi+alpha, style)
+			g.Wedge(x0, y0, r, phi, phi+alpha, style)
 
-			if i > 0 { 
+			if i > 0 {
 				// clear a border
 			}
 			if c.ShowVal != 0 {
@@ -183,9 +192,8 @@ func (c *PieChart) Plot(g Graphics) {
 			}
 			phi += alpha
 		}
-		r = int(float64(r)*PieChartShrinkage)
+		r = int(float64(r) * PieChartShrinkage)
 	}
-	
 
 	if !c.Key.Hide {
 		g.Key(layout.KeyX, layout.KeyY, c.Key)
