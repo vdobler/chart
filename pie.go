@@ -31,16 +31,17 @@ func (c *PieChart) AddData(name string, data []CatValue, style []DataStyle) {
 		style = make([]DataStyle, len(data))
 		for i := 0; i < len(data); i++ {
 			c := fc[i%len(fc)]
-			style[i].LineWidth = 3
+			style[i].LineWidth = 1
 			style[i].LineStyle = SolidLine
-			style[i].LineColor = "#404040"
+			style[i].LineColor = c
 			style[i].FillColor = c
 		}
 	}
 	c.Data = append(c.Data, CategoryChartData{name, style, data})
-	c.Key.Entries = append(c.Key.Entries, KeyEntry{PlotStyle: 0, Text: name})
+	c.Key.Entries = append(c.Key.Entries, KeyEntry{PlotStyle: -1, Text: name})
 	for s, cv := range data {
-		c.Key.Entries = append(c.Key.Entries, KeyEntry{Style: style[s], Text: cv.Cat})
+		c.Key.Entries = append(c.Key.Entries, KeyEntry{PlotStyle: PlotStyleBox, Style: style[s], Text: cv.Cat})
+		fmt.Printf("c.Key.Entries = %#v\n", c.Key.Entries)
 	}
 }
 

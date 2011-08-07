@@ -78,9 +78,8 @@ func GenericTextLen(bg BasicGraphics, t string, font Font) (width int) {
 // GenericRect draws a rectangle of size w x h at (x,y).  Drawing is done
 // by simple lines only.
 func GenericRect(bg BasicGraphics, x, y, w, h int, style DataStyle) {
-	if style.Fill != 0 {
-		// TODO: calculate color from fill
-		fs := DataStyle{LineWidth: 1, LineColor: "#ffffff", LineStyle: SolidLine, Alpha: 0}
+	if style.FillColor != "" {
+		fs := DataStyle{LineWidth: 1, LineColor: style.FillColor, LineStyle: SolidLine, Alpha: 0}
 		for i := 1; i < h-1; i++ {
 			bg.Line(x+1, y+i, x+w-1, y+i, fs)
 		}
@@ -316,16 +315,30 @@ func GenericBars(bg BasicGraphics, bars []Barinfo, style DataStyle) {
 
 // GenericWedge draws a pie/wedge just by lines
 func GenericWedge(bg BasicGraphics, x, y, r int, phi, psi float64, style DataStyle) {
-	// TODO: filling
 
 	xa, ya := int(math.Cos(phi)*float64(r))+x, int(math.Sin(phi)*float64(r))+y
 	xc, yc := int(math.Cos(psi)*float64(r))+x, int(math.Sin(psi)*float64(r))+y
-	bg.Line(x, y, xa, ya, style)
-	bg.Line(x, y, xc, yc, style)
+	rf := float64(r)
+
+	if math.Fabs(phi-psi) >= 4*math.Pi {
+		phi, psi = 0, 2*math.Pi
+	} else {
+		bg.Line(x, y, xa, ya, style)
+		bg.Line(x, y, xc, yc, style)
+	}
+
+	if style.FillColor != "" {
+		delta := 1 / (4 * rf)
+		ls := DataStyle{LineColor: style.FillColor, LineWidth: 3, Symbol: style.Symbol}
+		for a := phi; a <= psi; a += delta {
+			xr, yr := int(math.Cos(a)*rf)+x, int(math.Sin(a)*rf)+y
+			bg.Line(x, y, xr, yr, ls)
+		}
+	}
 
 	var xb, yb int
 	for ; phi < psi; phi += 0.1 { // aproximate circle by 62-corner
-		xb, yb = int(math.Cos(phi)*float64(r))+x, int(math.Sin(phi)*float64(r))+y
+		xb, yb = int(math.Cos(phi)*rf)+x, int(math.Sin(phi)*rf)+y
 		bg.Line(xa, ya, xb, yb, style)
 		xa, ya = xb, yb
 	}

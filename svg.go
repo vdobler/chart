@@ -269,6 +269,8 @@ func (sg *SvgGraphics) Bars(bars []Barinfo, style DataStyle) {
 }
 
 func (sg *SvgGraphics) Wedge(x, y, r int, phi, psi float64, style DataStyle) {
+	// GenericWedge(sg, x, y, r, phi, psi, style); return
+
 	d := fmt.Sprintf("M%d,%d ", x, y)
 	rf := float64(r)
 	d += fmt.Sprintf("L %d,%d", int(rf*math.Cos(phi)+0.5)+x, int(rf*math.Sin(phi)+0.5)+y)
@@ -291,5 +293,5 @@ func (sg *SvgGraphics) Wedge(x, y, r int, phi, psi float64, style DataStyle) {
 	}
 
 	sg.svg.Path(d, s)
-	// GenericWedge(sg, x, y, r, phi, psi, style)
+	// 
 }

@@ -241,7 +241,7 @@ func (key Key) Place() (matrix [][]*KeyEntry) {
 		} else {
 			c, r = i/rows, i%rows
 		}
-		matrix[c][r] = &KeyEntry{Text: e.Text, Style: e.Style}
+		matrix[c][r] = &KeyEntry{Text: e.Text, Style: e.Style, PlotStyle: e.PlotStyle}
 		// fmt.Printf("Place1 (%d,%d) = %d: %s\n", c,r, i, matrix[c][r].Text)
 		i++
 	}
@@ -370,21 +370,25 @@ func GenericKey(bg BasicGraphics, x, y int, key Key) {
 			if e == nil || e.Text == "" {
 				continue
 			}
-			s, l, t := e.Style.Symbol, e.Style.LineStyle, e.Text
-			fmt.Printf("Symbol %d=%c, Line=%d: %s\n", s, s, l, t)
-			if s == -1 {
+			plotStyle := e.PlotStyle
+			fmt.Printf("KeyEntry %s: PlotStyle = %d\n", e.Text, e.PlotStyle)
+			if plotStyle == -1 {
 				// heading only...
-				bg.Text(x, yy, t, "cl", 0, keyfont)
+				bg.Text(x, yy, e.Text, "cl", 0, keyfont)
 			} else {
 				// normal entry
-				if l > 0 {
+				if (plotStyle & PlotStyleLines) != 0 {
 					bg.Line(x, yy, x+int(KeySymbolWidth*fw), yy, e.Style)
-					fmt.Printf("Key-Line %d %d %d %d\n", x, yy, x+int(KeySymbolWidth*fw), yy)
 				}
-				if s > 0 {
-					bg.Symbol(x+int(KeySymbolWidth*fw)/2, yy, s, e.Style)
+				if (plotStyle & PlotStylePoints) != 0 {
+					bg.Symbol(x+int(KeySymbolWidth*fw)/2, yy, e.Style.Symbol, e.Style)
 				}
-				bg.Text(x+int(fw*(KeySymbolWidth+KeySymbolSep)), yy, t, "cl", 0, keyfont)
+				if (plotStyle & PlotStyleBox) != 0 {
+					sh := fh / 2
+					a := x + int(KeySymbolWidth*fw)/2
+					bg.Rect(a-sh, yy-sh, 2*sh, 2*sh, e.Style)
+				}
+				bg.Text(x+int(fw*(KeySymbolWidth+KeySymbolSep)), yy, e.Text, "cl", 0, keyfont)
 			}
 			{
 				/*

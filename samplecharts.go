@@ -377,7 +377,7 @@ func barChart() {
 	barc.AddDataPair("Amount",
 		[]float64{-10, 10, 20, 30, 35, 40, 50},
 		[]float64{90, 120, 180, 205, 230, 150, 190},
-		chart.DataStyle{Symbol: 'o', LineColor: "#ff0000", Fill: 0.5, Alpha: 0,
+		chart.DataStyle{Symbol: 'o', LineColor: "#ff0000", FillColor: "#ff8080", Alpha: 0,
 			LineStyle: chart.SolidLine, LineWidth: 2})
 	barc.Plot(svggraphics)
 	barc.Plot(txtgraphics)
@@ -387,7 +387,7 @@ func barChart() {
 	barc.AddDataPair("Test",
 		[]float64{-5, 15, 25, 35, 45, 55},
 		[]float64{110, 80, 95, 80, 120, 140},
-		chart.DataStyle{Symbol: '#', LineColor: "#00ff00", Fill: 1, Alpha: 0,
+		chart.DataStyle{Symbol: '#', LineColor: "#00ff00", FillColor: "#00ff00", Alpha: 0,
 			LineStyle: chart.SolidLine, LineWidth: 0})
 	thesvg.Gtransform("translate(400 0)")
 	barc.Plot(svggraphics)

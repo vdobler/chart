@@ -82,7 +82,6 @@ type DataStyle struct {
 	LineStyle   int     // 0: solid, 1 dashed, 2 dotted, 3 dashdotdot, 4 longdash  5 longdot
 	LineColor   string  // 0: auto = same as SymbolColor
 	LineWidth   int     // 0: no line
-	Fill        float64 // 0: none, 1: same as line, 0.x: lighter fill
 	FillColor   string  // "": no fill
 	Alpha       float64 // 
 }
@@ -119,26 +118,26 @@ type Font struct {
 }
 
 func (d *DataStyle) empty() bool {
-	return d.Symbol == 0 && d.SymbolColor == "" && d.LineStyle == 0 && d.LineColor == "" && d.Fill == 0 && d.SymbolSize == 0
+	return d.Symbol == 0 && d.SymbolColor == "" && d.LineStyle == 0 && d.LineColor == "" && d.FillColor == "" && d.SymbolSize == 0
 }
 
 
 // Style is a list of suitable default styles.
 var StandardStyle = []DataStyle{
-	DataStyle{Symbol: 'o', SymbolColor: "#cc0000", LineStyle: 0, LineColor: "#cc0000",
-		Fill: 0, SymbolSize: 1, Alpha: 0},
-	DataStyle{Symbol: '=', SymbolColor: "#00bb00", LineStyle: 1, LineColor: "#00bb00",
-		Fill: 0, SymbolSize: 1, Alpha: 0},
-	DataStyle{Symbol: '%', SymbolColor: "#0000dd", LineStyle: 2, LineColor: "#0000dd",
-		Fill: 0, SymbolSize: 1, Alpha: 0},
-	DataStyle{Symbol: '&', SymbolColor: "#996600", LineStyle: 3, LineColor: "#996600",
-		Fill: 0, SymbolSize: 1, Alpha: 0},
-	DataStyle{Symbol: '+', SymbolColor: "#bb00bb", LineStyle: 4, LineColor: "#bb00bb",
-		Fill: 0, SymbolSize: 1, Alpha: 0},
-	DataStyle{Symbol: 'X', SymbolColor: "#00aaaa", LineStyle: 5, LineColor: "#00aaaa",
-		Fill: 0, SymbolSize: 1, Alpha: 0},
-	DataStyle{Symbol: '*', SymbolColor: "#aaaa00", LineStyle: 6, LineColor: "#aaaa00",
-		Fill: 0, SymbolSize: 1, Alpha: 0},
+	DataStyle{Symbol: 'o', SymbolColor: "#cc0000", LineStyle: SolidLine, LineColor: "#cc0000",
+		FillColor: "#cc8080", SymbolSize: 1, Alpha: 0},
+	DataStyle{Symbol: '=', SymbolColor: "#00bb00", LineStyle: DashedLine, LineColor: "#00bb00",
+		FillColor: "#80bb80", SymbolSize: 1, Alpha: 0},
+	DataStyle{Symbol: '%', SymbolColor: "#0000dd", LineStyle: DottedLine, LineColor: "#0000dd",
+		FillColor: "#8080dd", SymbolSize: 1, Alpha: 0},
+	DataStyle{Symbol: '&', SymbolColor: "#996600", LineStyle: DashDotDotLine, LineColor: "#996600",
+		FillColor: "#aa8040", SymbolSize: 1, Alpha: 0},
+	DataStyle{Symbol: '+', SymbolColor: "#bb00bb", LineStyle: LongDashLine, LineColor: "#bb00bb",
+		FillColor: "#aa80aa", SymbolSize: 1, Alpha: 0},
+	DataStyle{Symbol: 'X', SymbolColor: "#00aaaa", LineStyle: LongDotLine, LineColor: "#00aaaa",
+		FillColor: "#80bbbb", SymbolSize: 1, Alpha: 0},
+	DataStyle{Symbol: '*', SymbolColor: "#aaaa00", LineStyle: SolidLine, LineColor: "#aaaa00",
+		FillColor: "#bbbb80", SymbolSize: 1, Alpha: 0},
 }
 
 
@@ -151,8 +150,8 @@ func AutoStyle(i int) (style DataStyle) {
 	style.Symbol = StandardStyle[si].Symbol
 	style.SymbolColor = StandardStyle[ci].SymbolColor
 	style.LineColor = StandardStyle[ci].LineColor
+	style.FillColor = StandardStyle[ci].FillColor
 	style.LineStyle = StandardStyle[li].LineStyle
-	style.Fill = StandardStyle[si].Fill
 	style.SymbolSize = StandardStyle[si].SymbolSize
 	style.Alpha = StandardStyle[si].Alpha
 	return
