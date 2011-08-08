@@ -431,6 +431,7 @@ func catBarChart() {
 		chart.DataStyle{LineColor: "#aa00aa", LineWidth: 4, FillColor: "#aa40aa"})
 	cbarc.YRange.MinMode.Fixed = true
 	cbarc.YRange.MinMode.Value = 0
+	cbarc.ShowVal = 1
 	thesvg.Gtransform("translate(400 0)")
 	cbarc.Plot(svggraphics)
 	cbarc.Plot(txtgraphics)
@@ -439,6 +440,7 @@ func catBarChart() {
 
 	cbarc.Stacked = true
 	cbarc.YRange.MinMode.Fixed = false
+	cbarc.ShowVal = 2
 	thesvg.Gtransform("translate(0 300)")
 	cbarc.Plot(svggraphics)
 	cbarc.Plot(txtgraphics)
@@ -452,6 +454,7 @@ func catBarChart() {
 	cbarc.AddData("Asia", map[string]float64{"none": 15, "low": 30, "average": 10, "high": -20},
 		chart.DataStyle{LineColor: "#aa00aa", LineWidth: 4, FillColor: "#aa00aa"})
 	cbarc.Key.Pos = "ibl"
+	cbarc.ShowVal = 3
 	thesvg.Gtransform("translate(400 300)")
 	cbarc.Plot(svggraphics)
 	cbarc.Plot(txtgraphics)
@@ -536,11 +539,13 @@ func pieChart() {
 
 	pc := chart.PieChart{Title: "Some Pies"}
 	pc.AddDataPair("Data1", []string{"2009", "2010", "2011"}, []float64{10, 20, 30})
+	pc.Inner = 0.75
 	pc.Plot(svggraphics)
 	pc.Plot(txtgraphics)
 	fmt.Printf("%s\n", txtgraphics.String())
 
 	thesvg.Gtransform("translate(400 0)")
+	pc.Inner = 0
 	piec := chart.PieChart{Title: "Some Pies"}
 	piec.AddDataPair("Europe", []string{"D", "AT", "CH", "F", "E", "I"}, []float64{10, 20, 30, 35, 15, 25})
 	piec.Plot(svggraphics)

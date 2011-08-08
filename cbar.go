@@ -16,7 +16,7 @@ type CategoryBarChart struct {
 	Key        Key      // Key/legend
 	Horizontal bool     // Display as horizontal bars (swap x and y axis). Unimplemented
 	Stacked    bool     // Display different data sets ontop of each other.
-	ShowVal    bool     // Display values 
+	ShowVal    int      // 0: don't show; 1: above bar, 2: centerd in bar; 3: at top of bar
 	Data       []CategoryBarChartData
 }
 
@@ -110,7 +110,6 @@ func (c *CategoryBarChart) Plot(g Graphics) {
 		// utterly braindamaged and missleading: Fix 0
 		c.YRange.DataMin, c.YRange.Min, c.YRange.DataMax = 0, 0, max
 		c.YRange.MinMode.Fixed, c.YRange.MinMode.Value = true, 0
-		fmt.Printf("YRange = %#v\n", c.YRange)
 	}
 	c.YRange.Setup(numytics, numytics+2, height, topm, true)
 
@@ -185,12 +184,39 @@ func (c *CategoryBarChart) Plot(g Graphics) {
 			}
 			bars[z].x, bars[z].y = sx, sy
 			bars[z].w, bars[z].h = sbw, sh
+
+			if c.ShowVal != 0 {
+				var sval string
+				if v >= 100 {
+					sval = fmt.Sprintf("%i", int(v+0.5))
+				} else if v >= 10 {
+					sval = fmt.Sprintf("%.1f", v)
+				} else if v >= 1 {
+					sval = fmt.Sprintf("%.2f", v)
+				} else {
+					sval = fmt.Sprintf("%.3f", v)
+				}
+				
+				var tp string
+				switch c.ShowVal {
+				case 1: if v >= 0 {
+						tp = "ot"
+					} else {
+						tp = "ob"
+					}
+				case 2:  if v >= 0 {
+						tp = "it"
+					} else {
+						tp = "ib"
+					}
+				case 3:  tp = "c"
+				}
+				bars[z].t = sval
+				bars[z].tp = tp
+			}
+
 			z++
 			current[i] += v
-
-			if c.ShowVal {
-				_ = fmt.Sprintf("%f", v)
-			}
 		}
 		g.Bars(bars, data.Style)
 

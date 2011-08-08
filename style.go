@@ -217,7 +217,7 @@ func f3max(a, b, c float64) float64 {
 		return a
 	case b > c && b >= a:
 		return b
-	case c > b && c >= a:
+	case c > a && c >= b:
 		return c
 	}
 	return a
@@ -271,6 +271,7 @@ func color2rgb(color string) (r, g, b int) {
 	if n != 3 || err != nil {
 		r, g, b = 127, 127, 127
 	}
+	// fmt.Printf("%s  -->  %d %d %d\n", color,r,g,b)
 	return
 }
 

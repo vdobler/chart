@@ -371,7 +371,7 @@ func GenericKey(bg BasicGraphics, x, y int, key Key) {
 				continue
 			}
 			plotStyle := e.PlotStyle
-			fmt.Printf("KeyEntry %s: PlotStyle = %d\n", e.Text, e.PlotStyle)
+			// fmt.Printf("KeyEntry %s: PlotStyle = %d\n", e.Text, e.PlotStyle)
 			if plotStyle == -1 {
 				// heading only...
 				bg.Text(x, yy, e.Text, "cl", 0, keyfont)
@@ -389,18 +389,6 @@ func GenericKey(bg BasicGraphics, x, y int, key Key) {
 					bg.Rect(a-sh, yy-sh, 2*sh, 2*sh, e.Style)
 				}
 				bg.Text(x+int(fw*(KeySymbolWidth+KeySymbolSep)), yy, e.Text, "cl", 0, keyfont)
-			}
-			{
-				/*
-					xx := x + int(fw*float32(cw[ci]))
-					bg.Text(xx,y, "|", "cc", 0, e.Style)
-					xx += int(KeyColSep*fw)
-					bg.Text(xx,y, "|", "cc", 0, e.Style)
-					xx += KeySymbolWidth
-					bg.Text(xx,y, "|", "cc", 0, e.Style)
-					xx += KeySymbolSep
-					bg.Text(xx,y, "|", "cc", 0, e.Style)
-				*/
 			}
 			yy += fh*rh[ri] + int(KeyRowSep*float32(fh))
 		}

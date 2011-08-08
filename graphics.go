@@ -45,9 +45,10 @@ type Graphics interface {
 }
 
 type Barinfo struct {
-	x, y, w, h int
-	lx, ly     int
-	t          string
+	x, y   int    // (x,y) of top left corner; 
+	w, h   int    // width and heigt
+	t, tp  string // label text and text position '[oi][tblr]' or 'c'
+	f      Font   // font of text
 }
 
 
@@ -310,6 +311,38 @@ func GenericBoxes(bg BasicGraphics, boxes []Box, width int, style DataStyle) {
 func GenericBars(bg BasicGraphics, bars []Barinfo, style DataStyle) {
 	for _, b := range bars {
 		bg.Rect(b.x, b.y, b.w, b.h, style)
+		if b.t != "" {
+			var tx, ty int
+			var a string
+			_, fh, _ := bg.FontMetrics(b.f)
+			if fh > 1 {
+				fh /= 2
+			}
+			switch b.tp {
+			case "ot": 
+				tx, ty, a = b.x + b.w/2, b.y - fh, "bc"
+			case "it": 
+				tx, ty, a = b.x + b.w/2, b.y + fh, "tc"
+			case "ib": 
+				tx, ty, a = b.x + b.w/2, b.y + b.h - fh, "bc"
+			case "ob": 
+				tx, ty, a = b.x + b.w/2, b.y + b.h + fh, "tc"
+			case "ol": 
+				tx, ty, a = b.x - fh, b.y + b.h/2, "cr"
+			case "il": 
+				tx, ty, a = b.x + fh, b.y + b.h/2, "cl"
+			case "or": 
+				tx, ty, a = b.x + b.w + fh, b.y + b.h/2, "cl"
+			case "ir": 
+				tx, ty, a = b.x + b.w - fh, b.y + b.h/2, "cr"
+			default: 
+				tx, ty, a = b.x + b.w/2, b.y + b.h/2, "cc"
+				
+			}
+				
+				
+			bg.Text(tx, ty, b.t, a, 0, b.f)
+		}
 	}
 }
 
@@ -329,7 +362,7 @@ func GenericWedge(bg BasicGraphics, x, y, r int, phi, psi float64, style DataSty
 
 	if style.FillColor != "" {
 		delta := 1 / (4 * rf)
-		ls := DataStyle{LineColor: style.FillColor, LineWidth: 3, Symbol: style.Symbol}
+		ls := DataStyle{LineColor: style.FillColor, LineWidth: 2, Symbol: style.Symbol}
 		for a := phi; a <= psi; a += delta {
 			xr, yr := int(math.Cos(a)*rf)+x, int(math.Sin(a)*rf)+y
 			bg.Line(x, y, xr, yr, ls)

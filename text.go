@@ -448,6 +448,9 @@ func (g *TextGraphics) TextLen(t string, font Font) int {
 
 func (g *TextGraphics) Line(x0, y0, x1, y1 int, style DataStyle) {
 	symbol := style.Symbol
+	if symbol < ' ' || symbol > '~' {
+		symbol = 'x'
+	}
 	g.tb.Line(x0, y0, x1, y1, symbol)
 }
 
@@ -482,7 +485,45 @@ func (g *TextGraphics) Text(x, y int, t string, align string, rot int, font Font
 }
 
 func (g *TextGraphics) Rect(x, y, w, h int, style DataStyle) {
-	g.tb.Rect(x, y, w, h, 1, ' ') // TODO use info from style
+	// Normalize coordinates
+	if h < 0 {
+		h = -h
+		y -= h
+	}
+	if w < 0 {
+		w = -w
+		x -= w
+	}
+
+	// Border
+	if style.LineWidth > 0 {
+		for i:=0; i<w; i++ {
+			g.tb.Put(x+i, y, style.Symbol)
+			g.tb.Put(x+i, y+h-1, style.Symbol)
+		}
+		for i:=1; i<h-1; i++ {
+			g.tb.Put(x, y+i, style.Symbol)
+			g.tb.Put(x+w-1, y+i, style.Symbol)
+		}
+	}
+
+	// Filling
+	if style.FillColor != "" {
+		// TODO: fancier logic
+		var s int
+		if style.FillColor == "#000000" {
+			s = '#' // black
+		} else if style.FillColor == "#ffffff" {
+			s = ' ' // white
+		} else {
+			s = style.Symbol
+		}
+		for i:=1; i<h-1; i++ {
+			for j:=1; j<w-1; j++ {
+				g.tb.Put(x+j, y+i, s)
+			}
+		}
+	}
 }
 
 func (g *TextGraphics) Style(element string) DataStyle {
@@ -659,13 +700,84 @@ func (g *TextGraphics) Boxes(boxes []Box, width int, style DataStyle) {
 }
 
 func (g *TextGraphics) Key(x, y int, key Key) {
-	GenericKey(g, x, y, key)
+	m := key.Place()
+	tw, th, cw, rh := key.Layout(g, m)
+	style := g.Style("key")
+	if style.LineWidth > 0 || style.FillColor != "" {
+		g.tb.Rect(x, y, tw, th, 1, ' ')
+	}
+	x += int(KeyHorSep)
+	vsep := KeyVertSep
+	if vsep < 1 {
+		vsep = 1
+	} 
+	y += int(vsep) 
+	for ci, col := range m {
+		yy := y
+
+		for ri, e := range col {
+			if e == nil || e.Text == "" {
+				continue
+			}
+			plotStyle := e.PlotStyle
+			// fmt.Printf("KeyEntry %s: PlotStyle = %d\n", e.Text, e.PlotStyle)
+			if plotStyle == -1 {
+				// heading only...
+				g.tb.Text(x, yy, e.Text, -1)
+			} else {
+				// normal entry
+				if (plotStyle & PlotStyleLines) != 0 {
+					g.Line(x, yy, x+int(KeySymbolWidth), yy, e.Style)
+				}
+				if (plotStyle & PlotStylePoints) != 0 {
+					g.Symbol(x+int(KeySymbolWidth/2), yy, e.Style.Symbol, e.Style)
+				}
+				if (plotStyle & PlotStyleBox) != 0 {
+					g.tb.Put(x+int(KeySymbolWidth/2), yy, e.Style.Symbol)
+				}
+				g.tb.Text(x+int((KeySymbolWidth+KeySymbolSep)), yy, e.Text, -1)
+			}
+			yy += rh[ri] + int(KeyRowSep)
+		}
+
+		x += int((KeySymbolWidth + KeySymbolSep + KeyColSep + float32(cw[ci])))
+	}
+
 }
 
 func (g *TextGraphics) Bars(bars []Barinfo, style DataStyle) {
 	GenericBars(g, bars, style)
 }
 
-func (g *TextGraphics) Wedge(x, y, r int, phi, psi float64, style DataStyle) {
-	GenericWedge(g, x, y, r, phi, psi, style)
+func (g *TextGraphics) Wedge(x, y, ry int, phi, psi float64, style DataStyle) {
+	rx := int(1.9 * float64(ry))
+	x += 10 // TODO: find a proper way here....
+	ryf, rxf := float64(ry), float64(rx)
+	xa, ya := int(math.Cos(phi)*rxf)+x, int(math.Sin(phi)*ryf)+y
+	xc, yc := int(math.Cos(psi)*rxf)+x, int(math.Sin(psi)*ryf)+y
+
+	if math.Fabs(phi-psi) >= 4*math.Pi {
+		phi, psi = 0, 2*math.Pi
+	} else {
+		g.Line(x, y, xa, ya, style)
+		g.Line(x, y, xc, yc, style)
+	}
+
+	if style.FillColor != "" {
+		delta := 1 / (4 * rxf)
+		ls := DataStyle{LineColor: style.FillColor, LineWidth: 1, Symbol: style.Symbol}
+		for a := phi; a <= psi; a += delta {
+			xr, yr := int(math.Cos(a)*rxf)+x, int(math.Sin(a)*ryf)+y
+			g.Line(x, y, xr, yr, ls)
+		}
+	}
+
+	var xb, yb int
+	for ; phi < psi; phi += 0.1 { // aproximate circle by 62-corner
+		xb, yb = int(math.Cos(phi)*rxf)+x, int(math.Sin(phi)*ryf)+y
+		g.Line(xa, ya, xb, yb, style)
+		xa, ya = xb, yb
+	}
+	g.Line(xb, yb, xc, yc, style)
+
 }

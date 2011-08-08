@@ -208,6 +208,13 @@ func (sg *SvgGraphics) Symbol(x, y, s int, style DataStyle) {
 
 func (sg *SvgGraphics) Rect(x, y, w, h int, style DataStyle) {
 	var s string
+	if style.LineWidth > 1 {
+		d := style.LineWidth / 2
+		x += d
+		y += d
+		w -= 2*d
+		h -= 2*d
+	}
 	linecol := style.LineColor
 	if linecol != "" {
 		s = fmt.Sprintf("stroke:%s; ", linecol)
@@ -271,12 +278,6 @@ func (sg *SvgGraphics) Bars(bars []Barinfo, style DataStyle) {
 func (sg *SvgGraphics) Wedge(x, y, r int, phi, psi float64, style DataStyle) {
 	// GenericWedge(sg, x, y, r, phi, psi, style); return
 
-	d := fmt.Sprintf("M%d,%d ", x, y)
-	rf := float64(r)
-	d += fmt.Sprintf("L %d,%d", int(rf*math.Cos(phi)+0.5)+x, int(rf*math.Sin(phi)+0.5)+y)
-	d += fmt.Sprintf("A %d,%d 0 0 1 %d,%d", r, r, int(rf*math.Cos(psi)+0.5)+x, int(rf*math.Sin(psi)+0.5)+y)
-	d += fmt.Sprintf("z")
-
 	var s string
 	linecol := style.LineColor
 	if linecol != "" {
@@ -292,6 +293,16 @@ func (sg *SvgGraphics) Wedge(x, y, r int, phi, psi float64, style DataStyle) {
 		s += "fill-opacity: 0"
 	}
 
-	sg.svg.Path(d, s)
-	// 
+	if math.Fabs(phi-psi) >= 4*math.Pi {
+		sg.svg.Circle(x,y,r, s)
+	} else {
+
+		d := fmt.Sprintf("M%d,%d ", x, y)
+		rf := float64(r)
+		d += fmt.Sprintf("L %d,%d", int(rf*math.Cos(phi)+0.5)+x, int(rf*math.Sin(phi)+0.5)+y)
+		d += fmt.Sprintf("A %d,%d 0 0 1 %d,%d", r, r, int(rf*math.Cos(psi)+0.5)+x, int(rf*math.Sin(psi)+0.5)+y)
+		d += fmt.Sprintf("z")
+
+		sg.svg.Path(d, s)
+	}
 }

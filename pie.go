@@ -8,13 +8,8 @@ import (
 )
 
 
-type CategoryChartData struct {
-	Name    string
-	Style   []DataStyle
-	Samples []CatValue
-}
 
-
+// PieChart represents pie and ring charts.
 type PieChart struct {
 	Title   string
 	Key     Key
@@ -23,25 +18,26 @@ type PieChart struct {
 	Data    []CategoryChartData
 }
 
+type CategoryChartData struct {
+	Name    string
+	Style   []DataStyle
+	Samples []CatValue
+}
+
 
 func (c *PieChart) AddData(name string, data []CatValue, style []DataStyle) {
-	if len(style) == 0 {
-		fc := []string{"#ff0000", "#00ff00", "#0000ff", "#ffff00", "#ff00ff", "#00ffff",
-			"#808080", "#a08040", "#4080a0", "#80a040"}
-		style = make([]DataStyle, len(data))
-		for i := 0; i < len(data); i++ {
-			c := fc[i%len(fc)]
-			style[i].LineWidth = 1
-			style[i].LineStyle = SolidLine
-			style[i].LineColor = c
-			style[i].FillColor = c
+	if len(style) < len(data) {
+		ns := make([]DataStyle, len(data))
+		copy(style, ns)
+		for i := len(style); i < len(data); i++ {
+			ns[i] = AutoStyle(i-len(style), true)
 		}
+		style = ns
 	}
 	c.Data = append(c.Data, CategoryChartData{name, style, data})
 	c.Key.Entries = append(c.Key.Entries, KeyEntry{PlotStyle: -1, Text: name})
 	for s, cv := range data {
 		c.Key.Entries = append(c.Key.Entries, KeyEntry{PlotStyle: PlotStyleBox, Style: style[s], Text: cv.Cat})
-		fmt.Printf("c.Key.Entries = %#v\n", c.Key.Entries)
 	}
 }
 
@@ -75,7 +71,8 @@ func (c *PieChart) formatVal(v, sum float64) (s string) {
 
 var PieChartTextAscpect float64 = 1.9 // how much wider is the x-radius
 var PieChartLabelPos = 0.75           // relativ to outer radius
-var PieChartShrinkage = 0.65          // fractrion of next data set
+var PieChartShrinkage = 0.65          // Scaling factor of radius of next data set.
+var PieChartBorder = 0.05             // Fraction of white border outside next data sets.
 
 func (c *PieChart) PlotTxt(w, h int) string {
 	tb := NewTextBuf(w, h)
@@ -177,7 +174,6 @@ func (c *PieChart) Plot(g Graphics) {
 		for _, d := range data.Samples {
 			sum += d.Val
 		}
-		fmt.Printf("sum = %.2f\n", sum)
 
 		var phi float64 = -math.Pi
 		for j, d := range data.Samples {
@@ -193,7 +189,22 @@ func (c *PieChart) Plot(g Graphics) {
 			}
 			phi += alpha
 		}
+
+		if c.Inner > 0 {
+			ri := int(float64(r) * c.Inner)
+			st := DataStyle{LineWidth:0, FillColor: "#ffffff", Symbol: ' '}
+			g.Wedge(x0,y0, ri, 0, 15, st)
+		}
+
 		r = int(float64(r) * PieChartShrinkage)
+		if i < len(c.Data) - 1 {
+			ra := int(float64(r) * (1+PieChartBorder))
+			if ra == r {
+				ra++
+			}
+			st := DataStyle{LineWidth:0, FillColor: "#ffffff", Symbol: ' '}
+			g.Wedge(x0,y0, ra, 0, 15, st)
+		}
 	}
 
 	if !c.Key.Hide {
