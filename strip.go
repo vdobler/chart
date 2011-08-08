@@ -25,7 +25,7 @@ func (sc *StripChart) AddData(name string, data []float64, style DataStyle) {
 		pd[i].DeltaX, pd[i].DeltaY = nan, nan
 	}
 	if style.empty() {
-		style = AutoStyle(len(sc.Data) + 1)
+		style = AutoStyle(len(sc.Data), false)
 	}
 	style.LineStyle = 0
 	sc.ScatterChart.AddData(name, pd, PlotStylePoints, style)

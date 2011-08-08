@@ -29,13 +29,15 @@ func (sc *ScatterChart) AddFunc(name string, f func(float64) float64, plotstyle 
 		plotstyle = PlotStyleLines
 	}
 	if style.empty() {
-		style = AutoStyle(len(sc.Data) + 1)
+		style = AutoStyle(len(sc.Data), false)
 	}
 
 	scd := ScatterChartData{Name: name, PlotStyle: plotstyle, Style: style, Samples: nil, Func: f}
 	sc.Data = append(sc.Data, scd)
-	ke := KeyEntry{Text: name, PlotStyle: plotstyle, Style: style}
-	sc.Key.Entries = append(sc.Key.Entries, ke)
+	if name != "" {
+		ke := KeyEntry{Text: name, PlotStyle: plotstyle, Style: style}
+		sc.Key.Entries = append(sc.Key.Entries, ke)
+	}
 }
 
 
@@ -45,12 +47,14 @@ func (sc *ScatterChart) AddData(name string, data []EPoint, plotstyle PlotStyle,
 		plotstyle = PlotStylePoints
 	}
 	if style.empty() {
-		style = AutoStyle(len(sc.Data) + 1)
+		style = AutoStyle(len(sc.Data), false)
 	}
 	scd := ScatterChartData{Name: name, PlotStyle: plotstyle, Style: style, Samples: data, Func: nil}
 	sc.Data = append(sc.Data, scd)
-	ke := KeyEntry{Style: style, PlotStyle: plotstyle, Text: name}
-	sc.Key.Entries = append(sc.Key.Entries, ke)
+	if name != "" {
+		ke := KeyEntry{Style: style, PlotStyle: plotstyle, Text: name}
+		sc.Key.Entries = append(sc.Key.Entries, ke)
+	}
 	if sc.XRange.DataMin == 0 && sc.XRange.DataMax == 0 && sc.YRange.DataMin == 0 && sc.YRange.DataMax == 0 {
 		sc.XRange.DataMin = data[0].X
 		sc.XRange.DataMax = data[0].X

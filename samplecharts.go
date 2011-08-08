@@ -324,14 +324,14 @@ func histChart(name, title string, stacked bool) {
 	hc.Key.Hide = true
 	points := gauss(150, 10, 20, 0, 50)
 	hc.AddData("Sample 1", points,
-		chart.DataStyle{LineColor: "#ff0000", LineWidth: 1, LineStyle: 1, FillColor: "#ff8080"})
+		chart.DataStyle{ /*LineColor: "#ff0000", LineWidth: 1, LineStyle: 1, FillColor: "#ff8080"*/ })
 	hc.Plot(svggraphics)
 	hc.Plot(txtgraphics)
 	fmt.Printf("%s\n", txtgraphics.String())
 
 	points2 := gauss(80, 4, 37, 0, 50)
 	hc.AddData("Sample 2", points2,
-		chart.DataStyle{LineColor: "#00ff00", LineWidth: 1, LineStyle: 1, FillColor: "#80ff80"})
+		chart.DataStyle{ /*LineColor: "#00ff00", LineWidth: 1, LineStyle: 1, FillColor: "#80ff80"*/ })
 	thesvg.Gtransform("translate(400 0)")
 	hc.Plot(svggraphics)
 	hc.Plot(txtgraphics)
@@ -341,7 +341,7 @@ func histChart(name, title string, stacked bool) {
 	thesvg.Gtransform("translate(0 300)")
 	points3 := gauss(60, 15, 0, 0, 50)
 	hc.AddData("Sample 3", points3,
-		chart.DataStyle{LineColor: "#0000ff", LineWidth: 1, LineStyle: 1, FillColor: "#8080ff"})
+		chart.DataStyle{ /*LineColor: "#0000ff", LineWidth: 1, LineStyle: 1, FillColor: "#8080ff"*/ })
 	hc.Plot(svggraphics)
 	hc.Plot(txtgraphics)
 	fmt.Printf("%s\n", txtgraphics.String())
@@ -349,7 +349,7 @@ func histChart(name, title string, stacked bool) {
 
 	thesvg.Gtransform("translate(400 300)")
 	points4 := gauss(40, 30, 15, 0, 50)
-	hc.AddData("Sample 4", points4, chart.DataStyle{LineColor: "#000000", LineWidth: 1, LineStyle: 1})
+	hc.AddData("Sample 4", points4, chart.DataStyle{ /*LineColor: "#000000", LineWidth: 1, LineStyle: 1*/ })
 	hc.Plot(svggraphics)
 	hc.Plot(txtgraphics)
 	fmt.Printf("%s\n", txtgraphics.String())

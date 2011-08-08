@@ -447,7 +447,8 @@ func (g *TextGraphics) TextLen(t string, font Font) int {
 
 
 func (g *TextGraphics) Line(x0, y0, x1, y1 int, style DataStyle) {
-	g.tb.Line(x0, y0, x1, y1, '*')
+	symbol := style.Symbol
+	g.tb.Line(x0, y0, x1, y1, symbol)
 }
 
 func (g *TextGraphics) Text(x, y int, t string, align string, rot int, font Font) {

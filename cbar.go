@@ -31,7 +31,9 @@ type CategoryBarChartData struct {
 // in the Categories of the CategoryBarChart: These will be ignored.
 func (c *CategoryBarChart) AddData(name string, data map[string]float64, style DataStyle) {
 	c.Data = append(c.Data, CategoryBarChartData{name, style, data})
-	c.Key.Entries = append(c.Key.Entries, KeyEntry{Style: style, Text: name})
+	if name != "" {
+		c.Key.Entries = append(c.Key.Entries, KeyEntry{Style: style, Text: name, PlotStyle: PlotStyleBox})
+	}
 
 	if len(c.Data) == 1 { // first data set
 		for _, v := range data {

@@ -41,8 +41,9 @@ type BarChartData struct {
 // AddData adds the data to the chart.
 func (c *BarChart) AddData(name string, data []Point, style DataStyle) {
 	c.Data = append(c.Data, BarChartData{name, style, data})
-	c.Key.Entries = append(c.Key.Entries, KeyEntry{Style: style, Text: name})
-	fmt.Printf("KeyEntry: %#v\n", KeyEntry{Style: style, Text: name})
+	if name != "" {
+		c.Key.Entries = append(c.Key.Entries, KeyEntry{Style: style, Text: name, PlotStyle: PlotStyleBox})
+	}
 	if len(c.Data) == 1 { // first data set 
 		c.XRange.DataMin = data[0].X
 		c.XRange.DataMax = data[0].X

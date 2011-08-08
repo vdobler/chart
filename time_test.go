@@ -15,7 +15,7 @@ func TestRoundDown(t *testing.T) {
 		{"2011-07-04 16:33:23", "2010-01-01 00:00:00",Year{10}},
 	}
 
-	for i, sample := range samples {
+	for _, sample := range samples {
 		date, e1 := time.Parse("2006-01-02 15:04:05", sample.date)
 		expected, e2 := time.Parse("2006-01-02 15:04:05", sample.expected)
 		if e1 != nil || e2 != nil {

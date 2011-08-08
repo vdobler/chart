@@ -1,5 +1,9 @@
 package chart
 
+import (
+	"math"
+	"fmt"
+)
 
 // Symbol is a list of different symbols. 
 var Symbol = []int{'o', // empty circle
@@ -122,38 +126,46 @@ func (d *DataStyle) empty() bool {
 }
 
 
-// Style is a list of suitable default styles.
-var StandardStyle = []DataStyle{
-	DataStyle{Symbol: 'o', SymbolColor: "#cc0000", LineStyle: SolidLine, LineColor: "#cc0000",
-		FillColor: "#cc8080", SymbolSize: 1, Alpha: 0},
-	DataStyle{Symbol: '=', SymbolColor: "#00bb00", LineStyle: DashedLine, LineColor: "#00bb00",
-		FillColor: "#80bb80", SymbolSize: 1, Alpha: 0},
-	DataStyle{Symbol: '%', SymbolColor: "#0000dd", LineStyle: DottedLine, LineColor: "#0000dd",
-		FillColor: "#8080dd", SymbolSize: 1, Alpha: 0},
-	DataStyle{Symbol: '&', SymbolColor: "#996600", LineStyle: DashDotDotLine, LineColor: "#996600",
-		FillColor: "#aa8040", SymbolSize: 1, Alpha: 0},
-	DataStyle{Symbol: '+', SymbolColor: "#bb00bb", LineStyle: LongDashLine, LineColor: "#bb00bb",
-		FillColor: "#aa80aa", SymbolSize: 1, Alpha: 0},
-	DataStyle{Symbol: 'X', SymbolColor: "#00aaaa", LineStyle: LongDotLine, LineColor: "#00aaaa",
-		FillColor: "#80bbbb", SymbolSize: 1, Alpha: 0},
-	DataStyle{Symbol: '*', SymbolColor: "#aaaa00", LineStyle: SolidLine, LineColor: "#aaaa00",
-		FillColor: "#bbbb80", SymbolSize: 1, Alpha: 0},
-}
+// Standard colors used by AutoStyle
+var StandardColors = []string{"#cc0000", "#00bb00", "#0000dd", "#996600", "#bb00bb", "#00aaaa",
+	"#aaaa00"}
+// Standard line styles used by AutoStyle (fill=false)
+var StandardLineStyles = []int{SolidLine, DashedLine, DottedLine, LongDashLine, LongDotLine}
+// Standard symbols used by AutoStyle
+var StandardSymbols = []int{'o', '=', '%', '&', '+', 'X', '*', '@', '#', 'A', 'Z'}
+// How much brighter/darker filled elements become.
+var StandardFillFactor = 0.4
 
 
-// AutoStyle produces a styles based on the Style list.
-func AutoStyle(i int) (style DataStyle) {
-	n := len(StandardStyle)
-	si := i % n
-	ci := (si + i/n) % n
-	li := (si + 2*i/n) % n
-	style.Symbol = StandardStyle[si].Symbol
-	style.SymbolColor = StandardStyle[ci].SymbolColor
-	style.LineColor = StandardStyle[ci].LineColor
-	style.FillColor = StandardStyle[ci].FillColor
-	style.LineStyle = StandardStyle[li].LineStyle
-	style.SymbolSize = StandardStyle[si].SymbolSize
-	style.Alpha = StandardStyle[si].Alpha
+// AutoStyle produces a styles based on StandardColors, StandardLineStyles, and StandardSymbols.
+// Call with fill = true for charts with filled elements (hist, bar, cbar, pie).
+func AutoStyle(i int, fill bool) (style DataStyle) {
+	nc, nl, ns := len(StandardColors), len(StandardLineStyles), len(StandardSymbols)
+
+	si := i % ns
+	ci := i % nc
+	li := i % nl
+
+	style.Symbol = StandardSymbols[si]
+	style.SymbolColor = StandardColors[ci]
+	style.LineColor = StandardColors[ci]
+	style.SymbolSize = 1
+	style.Alpha = 0
+
+	if fill {
+		style.LineStyle = SolidLine
+		style.LineWidth = 2
+		if i < nc {
+			style.FillColor = lighter(style.LineColor, StandardFillFactor)
+		} else if i <= 2*nc {
+			style.FillColor = darker(style.LineColor, StandardFillFactor)
+		} else {
+			style.FillColor = style.LineColor
+		}
+	} else {
+		style.LineStyle = StandardLineStyles[li]
+		style.LineWidth = 1
+	}
 	return
 }
 
@@ -169,4 +181,124 @@ var DefaultStyle = map[string]DataStyle{"axis": DataStyle{LineColor: "#000000", 
 
 var DefaultFont = map[string]Font{"title": Font{Size: +1}, "label": Font{}, "key": Font{Size: -1},
 	"tic": Font{}, "rangelimit": Font{},
+}
+
+func hsv2rgb(h, s, v int) (r, g, b int) {
+	H := int(math.Floor(float64(h) / 60))
+	S, V := float64(s)/100, float64(v)/100
+	f := float64(h)/60 - float64(H)
+	p := V * (1 - S)
+	q := V * (1 - S*f)
+	t := V * (1 - S*(1-f))
+
+	switch H {
+	case 0, 6:
+		r, g, b = int(255*V), int(255*t), int(255*p)
+	case 1:
+		r, g, b = int(255*q), int(255*V), int(255*p)
+	case 2:
+		r, g, b = int(255*p), int(255*V), int(255*t)
+	case 3:
+		r, g, b = int(255*p), int(255*q), int(255*V)
+	case 4:
+		r, g, b = int(255*t), int(255*p), int(255*V)
+	case 5:
+		r, g, b = int(255*V), int(255*p), int(255*q)
+	default:
+		panic(fmt.Sprintf("Ooops: Strange H value %d in hsv2rgb(%d,%d,%d).", H, h, s, v))
+	}
+
+	return
+}
+
+func f3max(a, b, c float64) float64 {
+	switch true {
+	case a > b && a >= c:
+		return a
+	case b > c && b >= a:
+		return b
+	case c > b && c >= a:
+		return c
+	}
+	return a
+}
+
+func f3min(a, b, c float64) float64 {
+	switch true {
+	case a < b && a <= c:
+		return a
+	case b < c && b <= a:
+		return b
+	case c < a && c <= b:
+		return c
+	}
+	return a
+}
+
+func rgb2hsv(r, g, b int) (h, s, v int) {
+	R, G, B := float64(r)/255, float64(g)/255, float64(b)/255
+
+	if R == G && G == B {
+		h, s = 0, 0
+		v = int(r * 255)
+	} else {
+		max, min := f3max(R, G, B), f3min(R, G, B)
+		if max == R {
+			h = int(60 * (G - B) / (max - min))
+		} else if max == G {
+			h = int(60 * (2 + (B-R)/(max-min)))
+		} else {
+			h = int(60 * (4 + (R-G)/(max-min)))
+		}
+		if max == 0 {
+			s = 0
+		} else {
+			s = int(100 * (max - min) / max)
+		}
+		v = int(100 * max)
+	}
+	if h < 0 {
+		h += 360
+	}
+	return
+}
+
+func color2rgb(color string) (r, g, b int) {
+	if color[0] == '#' {
+		color = color[1:]
+	}
+	n, err := fmt.Sscanf(color, "%2x%2x%2x", &r, &g, &b)
+	if n != 3 || err != nil {
+		r, g, b = 127, 127, 127
+	}
+	return
+}
+
+
+func lighter(color string, f float64) string {
+	r, g, b := color2rgb(color)
+	h, s, v := rgb2hsv(r, g, b)
+	f = 1 - f
+	s = int(float64(s) * f)
+	v += int((100 - float64(v)) * f)
+	if v > 100 {
+		v = 100
+	}
+	r, g, b = hsv2rgb(h, s, v)
+
+	return fmt.Sprintf("#%02x%02x%02x", r, g, b)
+}
+
+func darker(color string, f float64) string {
+	r, g, b := color2rgb(color)
+	h, s, v := rgb2hsv(r, g, b)
+	f = 1 - f
+	v = int(float64(v) * f)
+	s += int((100 - float64(s)) * f)
+	if s > 100 {
+		s = 100
+	}
+	r, g, b = hsv2rgb(h, s, v)
+
+	return fmt.Sprintf("#%02x%02x%02x", r, g, b)
 }
