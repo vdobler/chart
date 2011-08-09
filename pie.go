@@ -8,7 +8,6 @@ import (
 )
 
 
-
 // PieChart represents pie and ring charts.
 type PieChart struct {
 	Title   string
@@ -192,18 +191,18 @@ func (c *PieChart) Plot(g Graphics) {
 
 		if c.Inner > 0 {
 			ri := int(float64(r) * c.Inner)
-			st := DataStyle{LineWidth:0, FillColor: "#ffffff", Symbol: ' '}
-			g.Wedge(x0,y0, ri, 0, 15, st)
+			st := DataStyle{LineWidth: 0, FillColor: "#ffffff", Symbol: ' '}
+			g.Wedge(x0, y0, ri, 0, 15, st)
 		}
 
 		r = int(float64(r) * PieChartShrinkage)
-		if i < len(c.Data) - 1 {
-			ra := int(float64(r) * (1+PieChartBorder))
+		if i < len(c.Data)-1 {
+			ra := int(float64(r) * (1 + PieChartBorder))
 			if ra == r {
 				ra++
 			}
-			st := DataStyle{LineWidth:0, FillColor: "#ffffff", Symbol: ' '}
-			g.Wedge(x0,y0, ra, 0, 15, st)
+			st := DataStyle{LineWidth: 0, FillColor: "#ffffff", Symbol: ' '}
+			g.Wedge(x0, y0, ra, 0, 15, st)
 		}
 	}
 

@@ -2,7 +2,7 @@ package chart
 
 import (
 	"fmt"
-	//"math"
+	"math"
 	//	"os"
 	//	"strings"
 )
@@ -187,29 +187,32 @@ func (c *CategoryBarChart) Plot(g Graphics) {
 
 			if c.ShowVal != 0 {
 				var sval string
-				if v >= 100 {
+				if math.Fabs(v) >= 100 {
 					sval = fmt.Sprintf("%i", int(v+0.5))
-				} else if v >= 10 {
+				} else if math.Fabs(v) >= 10 {
 					sval = fmt.Sprintf("%.1f", v)
-				} else if v >= 1 {
+				} else if math.Fabs(v) >= 1 {
 					sval = fmt.Sprintf("%.2f", v)
 				} else {
 					sval = fmt.Sprintf("%.3f", v)
 				}
-				
+
 				var tp string
 				switch c.ShowVal {
-				case 1: if v >= 0 {
+				case 1:
+					if v >= 0 {
 						tp = "ot"
 					} else {
 						tp = "ob"
 					}
-				case 2:  if v >= 0 {
+				case 2:
+					if v >= 0 {
 						tp = "it"
 					} else {
 						tp = "ib"
 					}
-				case 3:  tp = "c"
+				case 3:
+					tp = "c"
 				}
 				bars[z].t = sval
 				bars[z].tp = tp

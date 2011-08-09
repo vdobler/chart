@@ -134,7 +134,7 @@ var StandardLineStyles = []int{SolidLine, DashedLine, DottedLine, LongDashLine, 
 // Standard symbols used by AutoStyle
 var StandardSymbols = []int{'o', '=', '%', '&', '+', 'X', '*', '@', '#', 'A', 'Z'}
 // How much brighter/darker filled elements become.
-var StandardFillFactor = 0.4
+var StandardFillFactor = 0.5
 
 
 // AutoStyle produces a styles based on StandardColors, StandardLineStyles, and StandardSymbols.

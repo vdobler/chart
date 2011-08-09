@@ -212,8 +212,8 @@ func (sg *SvgGraphics) Rect(x, y, w, h int, style DataStyle) {
 		d := style.LineWidth / 2
 		x += d
 		y += d
-		w -= 2*d
-		h -= 2*d
+		w -= 2 * d
+		h -= 2 * d
 	}
 	linecol := style.LineColor
 	if linecol != "" {
@@ -294,7 +294,7 @@ func (sg *SvgGraphics) Wedge(x, y, r int, phi, psi float64, style DataStyle) {
 	}
 
 	if math.Fabs(phi-psi) >= 4*math.Pi {
-		sg.svg.Circle(x,y,r, s)
+		sg.svg.Circle(x, y, r, s)
 	} else {
 
 		d := fmt.Sprintf("M%d,%d ", x, y)

@@ -28,6 +28,8 @@ type Graphics interface {
 	Dimensions() (int, int) // character-width / height
 
 	Begin() // start of chart drawing
+	End()   // Done, cleanup
+
 	// All stuff is preprocessed: sanitized, clipped, strings formated, integer coords,
 	// screen coordinates,
 	XAxis(xr Range, ys, yms int) // Draw x axis xr at screen position ys (and yms if mirrored)
@@ -36,19 +38,25 @@ type Graphics interface {
 
 	Scatter(points []EPoint, plotstyle PlotStyle, style DataStyle) // Points, Lines and Line+Points
 	Boxes(boxes []Box, width int, style DataStyle)                 // Boxplots
-	Bars(bars []Barinfo, style DataStyle)                          // any type of histogram
-	/*
-		Ring(style DataStyle)                     // 
-	*/
+	Bars(bars []Barinfo, style DataStyle)                          // any type of histogram/bars
+	// Rings(wedeges []Wedgeinfo, x,y, r int) // Pie/ring diagram elements
+
 	Key(x, y int, key Key) // place key at x,y
-	End()                  // Done, cleanup
 }
 
 type Barinfo struct {
-	x, y   int    // (x,y) of top left corner; 
-	w, h   int    // width and heigt
-	t, tp  string // label text and text position '[oi][tblr]' or 'c'
-	f      Font   // font of text
+	x, y  int    // (x,y) of top left corner; 
+	w, h  int    // width and heigt
+	t, tp string // label text and text position '[oi][tblr]' or 'c'
+	f     Font   // font of text
+}
+
+type Wedgeinfo struct {
+	ro, ri   int       // Outer and inner radius of wedge ring, std. wedge if ri<=0
+	phi, psi float64   // Start and ende of wedge. Fuill circle if |phi-psi| > 4pi
+	t, tp    string    // label text and text position: [ico]
+	style    DataStyle // style of this wedge
+	f        Font      // font of text
 }
 
 
@@ -319,28 +327,27 @@ func GenericBars(bg BasicGraphics, bars []Barinfo, style DataStyle) {
 				fh /= 2
 			}
 			switch b.tp {
-			case "ot": 
-				tx, ty, a = b.x + b.w/2, b.y - fh, "bc"
-			case "it": 
-				tx, ty, a = b.x + b.w/2, b.y + fh, "tc"
-			case "ib": 
-				tx, ty, a = b.x + b.w/2, b.y + b.h - fh, "bc"
-			case "ob": 
-				tx, ty, a = b.x + b.w/2, b.y + b.h + fh, "tc"
-			case "ol": 
-				tx, ty, a = b.x - fh, b.y + b.h/2, "cr"
-			case "il": 
-				tx, ty, a = b.x + fh, b.y + b.h/2, "cl"
-			case "or": 
-				tx, ty, a = b.x + b.w + fh, b.y + b.h/2, "cl"
-			case "ir": 
-				tx, ty, a = b.x + b.w - fh, b.y + b.h/2, "cr"
-			default: 
-				tx, ty, a = b.x + b.w/2, b.y + b.h/2, "cc"
-				
+			case "ot":
+				tx, ty, a = b.x+b.w/2, b.y-fh, "bc"
+			case "it":
+				tx, ty, a = b.x+b.w/2, b.y+fh, "tc"
+			case "ib":
+				tx, ty, a = b.x+b.w/2, b.y+b.h-fh, "bc"
+			case "ob":
+				tx, ty, a = b.x+b.w/2, b.y+b.h+fh, "tc"
+			case "ol":
+				tx, ty, a = b.x-fh, b.y+b.h/2, "cr"
+			case "il":
+				tx, ty, a = b.x+fh, b.y+b.h/2, "cl"
+			case "or":
+				tx, ty, a = b.x+b.w+fh, b.y+b.h/2, "cl"
+			case "ir":
+				tx, ty, a = b.x+b.w-fh, b.y+b.h/2, "cr"
+			default:
+				tx, ty, a = b.x+b.w/2, b.y+b.h/2, "cc"
+
 			}
-				
-				
+
 			bg.Text(tx, ty, b.t, a, 0, b.f)
 		}
 	}

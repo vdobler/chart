@@ -497,11 +497,11 @@ func (g *TextGraphics) Rect(x, y, w, h int, style DataStyle) {
 
 	// Border
 	if style.LineWidth > 0 {
-		for i:=0; i<w; i++ {
+		for i := 0; i < w; i++ {
 			g.tb.Put(x+i, y, style.Symbol)
 			g.tb.Put(x+i, y+h-1, style.Symbol)
 		}
-		for i:=1; i<h-1; i++ {
+		for i := 1; i < h-1; i++ {
 			g.tb.Put(x, y+i, style.Symbol)
 			g.tb.Put(x+w-1, y+i, style.Symbol)
 		}
@@ -518,8 +518,8 @@ func (g *TextGraphics) Rect(x, y, w, h int, style DataStyle) {
 		} else {
 			s = style.Symbol
 		}
-		for i:=1; i<h-1; i++ {
-			for j:=1; j<w-1; j++ {
+		for i := 1; i < h-1; i++ {
+			for j := 1; j < w-1; j++ {
 				g.tb.Put(x+j, y+i, s)
 			}
 		}
@@ -710,8 +710,8 @@ func (g *TextGraphics) Key(x, y int, key Key) {
 	vsep := KeyVertSep
 	if vsep < 1 {
 		vsep = 1
-	} 
-	y += int(vsep) 
+	}
+	y += int(vsep)
 	for ci, col := range m {
 		yy := y
 
