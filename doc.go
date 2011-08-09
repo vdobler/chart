@@ -1,4 +1,3 @@
-
 /*
 Package chart implements common chart/plot types.
 
@@ -23,7 +22,7 @@ Creating charts consists of the following steps:
 	4. Render chart to graphic output
 You may change the configuration at any step or render to different outputs.
 
- 
+
 
 */
 package chart

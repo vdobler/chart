@@ -23,12 +23,12 @@ type BoxChart struct {
 // BoxChartData encapsulates a data set in a box chart
 type BoxChartData struct {
 	Name    string
-	Style   DataStyle
+	Style   Style
 	Samples []Box
 }
 
 // AddData adds all boxes in data to the chart.
-func (c *BoxChart) AddData(name string, data []Box, style DataStyle) {
+func (c *BoxChart) AddData(name string, data []Box, style Style) {
 	c.Data = append(c.Data, BoxChartData{name, style, data})
 	ps := PlotStyle(PlotStylePoints | PlotStyleBox)
 	c.Key.Entries = append(c.Key.Entries, KeyEntry{Text: name, Style: style, PlotStyle: ps})
@@ -37,7 +37,7 @@ func (c *BoxChart) AddData(name string, data []Box, style DataStyle) {
 
 // NextDataSet adds a new (empty) data set to chart.  After adding the data set you
 // can fill this last data set with AddSet()
-func (c *BoxChart) NextDataSet(name string, style DataStyle) {
+func (c *BoxChart) NextDataSet(name string, style Style) {
 	c.Data = append(c.Data, BoxChartData{name, style, nil})
 	ps := PlotStyle(PlotStylePoints | PlotStyleBox)
 	c.Key.Entries = append(c.Key.Entries, KeyEntry{Text: name, Style: style, PlotStyle: ps})
@@ -53,7 +53,7 @@ func (c *BoxChart) AddSet(x float64, data []float64, outlier bool) {
 
 	if len(c.Data) == 0 {
 		c.Data = make([]BoxChartData, 1)
-		st := DataStyle{LineColor: "#000000", LineWidth: 1, LineStyle: SolidLine}
+		st := Style{LineColor: "#000000", LineWidth: 1, LineStyle: SolidLine}
 		c.Data[0] = BoxChartData{Name: "", Style: st}
 	}
 

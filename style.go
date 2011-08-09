@@ -79,7 +79,7 @@ var Palette = map[string]string{"title": "#aa9933", "label": "#000000", "axis": 
 // and style (color, symbol, width, filling). disalow e.g. in "datastyle lines"
 // linwidth of 0.
 //
-type DataStyle struct {
+type Style struct {
 	Symbol      int     // 0: no symbol; any codepoint: this symbol
 	SymbolColor string  // 
 	SymbolSize  float64 // 
@@ -121,7 +121,7 @@ type Font struct {
 	Color string // "": default, other: use this
 }
 
-func (d *DataStyle) empty() bool {
+func (d *Style) empty() bool {
 	return d.Symbol == 0 && d.SymbolColor == "" && d.LineStyle == 0 && d.LineColor == "" && d.FillColor == "" && d.SymbolSize == 0
 }
 
@@ -139,7 +139,7 @@ var StandardFillFactor = 0.5
 
 // AutoStyle produces a styles based on StandardColors, StandardLineStyles, and StandardSymbols.
 // Call with fill = true for charts with filled elements (hist, bar, cbar, pie).
-func AutoStyle(i int, fill bool) (style DataStyle) {
+func AutoStyle(i int, fill bool) (style Style) {
 	nc, nl, ns := len(StandardColors), len(StandardLineStyles), len(StandardSymbols)
 
 	si := i % ns
@@ -170,13 +170,13 @@ func AutoStyle(i int, fill bool) (style DataStyle) {
 }
 
 
-var DefaultStyle = map[string]DataStyle{"axis": DataStyle{LineColor: "#000000", LineWidth: 2, LineStyle: SolidLine},
-	"maxis": DataStyle{LineColor: "#000000", LineWidth: 2, LineStyle: SolidLine}, // mirrored axis
-	"tic":   DataStyle{LineColor: "#000000", LineWidth: 1, LineStyle: SolidLine},
-	"mtic":  DataStyle{LineColor: "#000000", LineWidth: 1, LineStyle: SolidLine},
-	"zero":  DataStyle{LineColor: "#404040", LineWidth: 1, LineStyle: SolidLine},
-	"grid":  DataStyle{LineColor: "#808080", LineWidth: 1, LineStyle: SolidLine},
-	"key":   DataStyle{LineColor: "#202020", LineWidth: 1, LineStyle: SolidLine, FillColor: "#f0f0f0", Alpha: 0.2},
+var DefaultStyle = map[string]Style{"axis": Style{LineColor: "#000000", LineWidth: 2, LineStyle: SolidLine},
+	"maxis": Style{LineColor: "#000000", LineWidth: 2, LineStyle: SolidLine}, // mirrored axis
+	"tic":   Style{LineColor: "#000000", LineWidth: 1, LineStyle: SolidLine},
+	"mtic":  Style{LineColor: "#000000", LineWidth: 1, LineStyle: SolidLine},
+	"zero":  Style{LineColor: "#404040", LineWidth: 1, LineStyle: SolidLine},
+	"grid":  Style{LineColor: "#808080", LineWidth: 1, LineStyle: SolidLine},
+	"key":   Style{LineColor: "#202020", LineWidth: 1, LineStyle: SolidLine, FillColor: "#f0f0f0", Alpha: 0.2},
 }
 
 var DefaultFont = map[string]Font{"title": Font{Size: +1}, "label": Font{}, "key": Font{Size: -1},

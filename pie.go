@@ -19,14 +19,14 @@ type PieChart struct {
 
 type CategoryChartData struct {
 	Name    string
-	Style   []DataStyle
+	Style   []Style
 	Samples []CatValue
 }
 
 
-func (c *PieChart) AddData(name string, data []CatValue, style []DataStyle) {
+func (c *PieChart) AddData(name string, data []CatValue, style []Style) {
 	if len(style) < len(data) {
-		ns := make([]DataStyle, len(data))
+		ns := make([]Style, len(data))
 		copy(style, ns)
 		for i := len(style); i < len(data); i++ {
 			ns[i] = AutoStyle(i-len(style), true)
@@ -191,7 +191,7 @@ func (c *PieChart) Plot(g Graphics) {
 
 		if c.Inner > 0 {
 			ri := int(float64(r) * c.Inner)
-			st := DataStyle{LineWidth: 0, FillColor: "#ffffff", Symbol: ' '}
+			st := Style{LineWidth: 0, FillColor: "#ffffff", Symbol: ' '}
 			g.Wedge(x0, y0, ri, 0, 15, st)
 		}
 
@@ -201,7 +201,7 @@ func (c *PieChart) Plot(g Graphics) {
 			if ra == r {
 				ra++
 			}
-			st := DataStyle{LineWidth: 0, FillColor: "#ffffff", Symbol: ' '}
+			st := Style{LineWidth: 0, FillColor: "#ffffff", Symbol: ' '}
 			g.Wedge(x0, y0, ra, 0, 15, st)
 		}
 	}

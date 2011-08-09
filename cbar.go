@@ -23,13 +23,13 @@ type CategoryBarChart struct {
 // CategoryBarChartData encapsulated a single data set in a CategoryBarChart.
 type CategoryBarChartData struct {
 	Name    string             // Name of this data set
-	Style   DataStyle          // Style
+	Style   Style              // Style
 	Samples map[string]float64 // Keys not in CategoryBarChart.Categories are ignored
 }
 
 // AddData will add data to the chart. Note that data may contain keys not present
 // in the Categories of the CategoryBarChart: These will be ignored.
-func (c *CategoryBarChart) AddData(name string, data map[string]float64, style DataStyle) {
+func (c *CategoryBarChart) AddData(name string, data map[string]float64, style Style) {
 	c.Data = append(c.Data, CategoryBarChartData{name, style, data})
 	if name != "" {
 		c.Key.Entries = append(c.Key.Entries, KeyEntry{Style: style, Text: name, PlotStyle: PlotStyleBox})

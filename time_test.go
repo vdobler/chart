@@ -7,12 +7,12 @@ import (
 
 type roundingtest struct {
 	date, expected string
-	delta TimeDelta
+	delta          TimeDelta
 }
 
 func TestRoundDown(t *testing.T) {
-	samples := []roundingtest{{"2011-07-04 16:33:23", "2011-01-01 00:00:00",Year{1}},
-		{"2011-07-04 16:33:23", "2010-01-01 00:00:00",Year{10}},
+	samples := []roundingtest{{"2011-07-04 16:33:23", "2011-01-01 00:00:00", Year{1}},
+		{"2011-07-04 16:33:23", "2010-01-01 00:00:00", Year{10}},
 	}
 
 	for _, sample := range samples {
@@ -28,4 +28,4 @@ func TestRoundDown(t *testing.T) {
 		}
 	}
 
-} 
+}

@@ -18,13 +18,13 @@ type ScatterChart struct {
 type ScatterChartData struct {
 	Name      string
 	PlotStyle PlotStyle
-	Style     DataStyle
+	Style     Style
 	Samples   []EPoint
 	Func      func(float64) float64
 }
 
 // AddFunc adds a function f to this chart.
-func (sc *ScatterChart) AddFunc(name string, f func(float64) float64, plotstyle PlotStyle, style DataStyle) {
+func (sc *ScatterChart) AddFunc(name string, f func(float64) float64, plotstyle PlotStyle, style Style) {
 	if plotstyle.undefined() {
 		plotstyle = PlotStyleLines
 	}
@@ -42,7 +42,7 @@ func (sc *ScatterChart) AddFunc(name string, f func(float64) float64, plotstyle 
 
 
 // AddData adds points in data to chart.
-func (sc *ScatterChart) AddData(name string, data []EPoint, plotstyle PlotStyle, style DataStyle) {
+func (sc *ScatterChart) AddData(name string, data []EPoint, plotstyle PlotStyle, style Style) {
 	if plotstyle.undefined() {
 		plotstyle = PlotStylePoints
 	}
@@ -97,7 +97,7 @@ func (sc *ScatterChart) AddDataGeneric(name string, data []XYErrValue, style Dat
 */
 
 // Make points from x and y and add to chart.
-func (sc *ScatterChart) AddDataPair(name string, x, y []float64, plotstyle PlotStyle, style DataStyle) {
+func (sc *ScatterChart) AddDataPair(name string, x, y []float64, plotstyle PlotStyle, style Style) {
 	n := min(len(x), len(y))
 	data := make([]EPoint, n)
 	nan := math.NaN()

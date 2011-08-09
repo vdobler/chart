@@ -34,12 +34,12 @@ type BarChart struct {
 // BarChartData encapsulates data sets in a bar chart.
 type BarChartData struct {
 	Name    string
-	Style   DataStyle
+	Style   Style
 	Samples []Point
 }
 
 // AddData adds the data to the chart.
-func (c *BarChart) AddData(name string, data []Point, style DataStyle) {
+func (c *BarChart) AddData(name string, data []Point, style Style) {
 	c.Data = append(c.Data, BarChartData{name, style, data})
 	if name != "" {
 		c.Key.Entries = append(c.Key.Entries, KeyEntry{Style: style, Text: name, PlotStyle: PlotStyleBox})
@@ -67,7 +67,7 @@ func (c *BarChart) AddData(name string, data []Point, style DataStyle) {
 }
 
 // AddDataPair is a convenience method to add all the (x[i],y[i]) pairs to the chart.
-func (c *BarChart) AddDataPair(name string, x, y []float64, style DataStyle) {
+func (c *BarChart) AddDataPair(name string, x, y []float64, style Style) {
 	n := min(len(x), len(y))
 	data := make([]Point, n)
 	for i := 0; i < n; i++ {

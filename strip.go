@@ -15,7 +15,7 @@ type StripChart struct {
 }
 
 // AddData adds data to the strip chart.
-func (sc *StripChart) AddData(name string, data []float64, style DataStyle) {
+func (sc *StripChart) AddData(name string, data []float64, style Style) {
 	n := len(sc.ScatterChart.Data) + 1
 	pd := make([]EPoint, len(data))
 	nan := math.NaN()
@@ -40,7 +40,7 @@ func (sc *StripChart) AddDataGeneric(name string, data []Value) {
 		pd[i].Y = float64(n)
 		pd[i].DeltaX, pd[i].DeltaY = nan, nan
 	}
-	sc.ScatterChart.AddData(name, pd, PlotStylePoints, DataStyle{})
+	sc.ScatterChart.AddData(name, pd, PlotStylePoints, Style{})
 }
 
 

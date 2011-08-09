@@ -446,7 +446,7 @@ func (g *TextGraphics) TextLen(t string, font Font) int {
 }
 
 
-func (g *TextGraphics) Line(x0, y0, x1, y1 int, style DataStyle) {
+func (g *TextGraphics) Line(x0, y0, x1, y1 int, style Style) {
 	symbol := style.Symbol
 	if symbol < ' ' || symbol > '~' {
 		symbol = 'x'
@@ -484,7 +484,7 @@ func (g *TextGraphics) Text(x, y int, t string, align string, rot int, font Font
 	g.tb.Text(x, y, t, a)
 }
 
-func (g *TextGraphics) Rect(x, y, w, h int, style DataStyle) {
+func (g *TextGraphics) Rect(x, y, w, h int, style Style) {
 	// Normalize coordinates
 	if h < 0 {
 		h = -h
@@ -526,9 +526,9 @@ func (g *TextGraphics) Rect(x, y, w, h int, style DataStyle) {
 	}
 }
 
-func (g *TextGraphics) Style(element string) DataStyle {
+func (g *TextGraphics) Style(element string) Style {
 	b := "#000000"
-	return DataStyle{Symbol: 'o', SymbolColor: b, LineColor: b, LineWidth: 1, LineStyle: SolidLine}
+	return Style{Symbol: 'o', SymbolColor: b, LineColor: b, LineWidth: 1, LineStyle: SolidLine}
 }
 
 func (g *TextGraphics) Font(element string) Font {
@@ -539,7 +539,7 @@ func (g *TextGraphics) String() string {
 	return g.tb.String()
 }
 
-func (g *TextGraphics) Symbol(x, y, s int, style DataStyle) {
+func (g *TextGraphics) Symbol(x, y, s int, style Style) {
 	g.tb.Put(x, y, s)
 }
 func (g *TextGraphics) Title(text string) {
@@ -649,11 +649,11 @@ func (g *TextGraphics) YAxis(yrange Range, x, x1 int) {
 	}
 }
 
-func (g *TextGraphics) Scatter(points []EPoint, plotstyle PlotStyle, style DataStyle) {
+func (g *TextGraphics) Scatter(points []EPoint, plotstyle PlotStyle, style Style) {
 	GenericScatter(g, points, plotstyle, style)
 }
 
-func (g *TextGraphics) Boxes(boxes []Box, width int, style DataStyle) {
+func (g *TextGraphics) Boxes(boxes []Box, width int, style Style) {
 	if width%2 == 0 {
 		width += 1
 	}
@@ -745,11 +745,11 @@ func (g *TextGraphics) Key(x, y int, key Key) {
 
 }
 
-func (g *TextGraphics) Bars(bars []Barinfo, style DataStyle) {
+func (g *TextGraphics) Bars(bars []Barinfo, style Style) {
 	GenericBars(g, bars, style)
 }
 
-func (g *TextGraphics) Wedge(x, y, ry int, phi, psi float64, style DataStyle) {
+func (g *TextGraphics) Wedge(x, y, ry int, phi, psi float64, style Style) {
 	rx := int(1.9 * float64(ry))
 	x += 10 // TODO: find a proper way here....
 	ryf, rxf := float64(ry), float64(rx)
@@ -765,7 +765,7 @@ func (g *TextGraphics) Wedge(x, y, ry int, phi, psi float64, style DataStyle) {
 
 	if style.FillColor != "" {
 		delta := 1 / (4 * rxf)
-		ls := DataStyle{LineColor: style.FillColor, LineWidth: 1, Symbol: style.Symbol}
+		ls := Style{LineColor: style.FillColor, LineWidth: 1, Symbol: style.Symbol}
 		for a := phi; a <= psi; a += delta {
 			xr, yr := int(math.Cos(a)*rxf)+x, int(math.Sin(a)*ryf)+y
 			g.Line(x, y, xr, yr, ls)

@@ -9,15 +9,15 @@ import (
 // Any type which implements BasicGraphics can use generic implementations
 // of the Graphics methods.
 type BasicGraphics interface {
-	Style(element string) DataStyle                         // retrieve style for element
+	Style(element string) Style                             // retrieve style for element
 	Font(element string) Font                               // retrieve font for element
 	FontMetrics(font Font) (fw float32, fh int, mono bool)  // Return fontwidth and -height in pixel
 	TextLen(t string, font Font) int                        // length=width of t in screen units
-	Line(x0, y0, x1, y1 int, style DataStyle)               // Draw line from (x0,y0) to (x1,y1)
-	Symbol(x, y, s int, style DataStyle)                    // Put symnbol s at (x,y)
+	Line(x0, y0, x1, y1 int, style Style)                   // Draw line from (x0,y0) to (x1,y1)
+	Symbol(x, y, s int, style Style)                        // Put symnbol s at (x,y)
 	Text(x, y int, t string, align string, rot int, f Font) // align: [[tcb]][lcr]
-	Rect(x, y, w, h int, style DataStyle)                   // draw (w x h) rectangle at (x,y)
-	Wedge(x, y, r int, phi, psi float64, style DataStyle)   // draw pie from phi to psi centered at (x,y) with radius r
+	Rect(x, y, w, h int, style Style)                       // draw (w x h) rectangle at (x,y)
+	Wedge(x, y, r int, phi, psi float64, style Style)       // draw pie from phi to psi centered at (x,y) with radius r
 }
 
 
@@ -36,9 +36,9 @@ type Graphics interface {
 	YAxis(yr Range, xs, xms int) // Same for y axis.
 	Title(text string)           // Draw title onto chart
 
-	Scatter(points []EPoint, plotstyle PlotStyle, style DataStyle) // Points, Lines and Line+Points
-	Boxes(boxes []Box, width int, style DataStyle)                 // Boxplots
-	Bars(bars []Barinfo, style DataStyle)                          // any type of histogram/bars
+	Scatter(points []EPoint, plotstyle PlotStyle, style Style) // Points, Lines and Line+Points
+	Boxes(boxes []Box, width int, style Style)                 // Boxplots
+	Bars(bars []Barinfo, style Style)                          // any type of histogram/bars
 	// Rings(wedeges []Wedgeinfo, x,y, r int) // Pie/ring diagram elements
 
 	Key(x, y int, key Key) // place key at x,y
@@ -52,11 +52,11 @@ type Barinfo struct {
 }
 
 type Wedgeinfo struct {
-	ro, ri   int       // Outer and inner radius of wedge ring, std. wedge if ri<=0
-	phi, psi float64   // Start and ende of wedge. Fuill circle if |phi-psi| > 4pi
-	t, tp    string    // label text and text position: [ico]
-	style    DataStyle // style of this wedge
-	f        Font      // font of text
+	ro, ri   int     // Outer and inner radius of wedge ring, std. wedge if ri<=0
+	phi, psi float64 // Start and ende of wedge. Fuill circle if |phi-psi| > 4pi
+	t, tp    string  // label text and text position: [ico]
+	style    Style   // style of this wedge
+	f        Font    // font of text
 }
 
 
@@ -86,9 +86,9 @@ func GenericTextLen(bg BasicGraphics, t string, font Font) (width int) {
 
 // GenericRect draws a rectangle of size w x h at (x,y).  Drawing is done
 // by simple lines only.
-func GenericRect(bg BasicGraphics, x, y, w, h int, style DataStyle) {
+func GenericRect(bg BasicGraphics, x, y, w, h int, style Style) {
 	if style.FillColor != "" {
-		fs := DataStyle{LineWidth: 1, LineColor: style.FillColor, LineStyle: SolidLine, Alpha: 0}
+		fs := Style{LineWidth: 1, LineColor: style.FillColor, LineStyle: SolidLine, Alpha: 0}
 		for i := 1; i < h-1; i++ {
 			bg.Line(x+1, y+i, x+w-1, y+i, fs)
 		}
@@ -240,7 +240,7 @@ func GenericYAxis(bg BasicGraphics, rng Range, x, xm int) {
 // as the length of the endmarks of the error bars. Both have suitable defaults
 // if the FontXyz are not set. Point coordinates and errors must be provided 
 // in screen coordinates.
-func GenericScatter(bg BasicGraphics, points []EPoint, plotstyle PlotStyle, style DataStyle) {
+func GenericScatter(bg BasicGraphics, points []EPoint, plotstyle PlotStyle, style Style) {
 	// First pass: Error bars
 	for _, p := range points {
 		ebs := style
@@ -280,7 +280,7 @@ func GenericScatter(bg BasicGraphics, points []EPoint, plotstyle PlotStyle, styl
 }
 
 // GenericBoxes draws box plots. (Default implementation for box plots).
-func GenericBoxes(bg BasicGraphics, boxes []Box, width int, style DataStyle) {
+func GenericBoxes(bg BasicGraphics, boxes []Box, width int, style Style) {
 	if width%2 == 0 {
 		width += 1
 	}
@@ -316,7 +316,7 @@ func GenericBoxes(bg BasicGraphics, boxes []Box, width int, style DataStyle) {
 }
 
 // TODO: Is Bars and Generic Bars useful at all? Replaceable by rect?
-func GenericBars(bg BasicGraphics, bars []Barinfo, style DataStyle) {
+func GenericBars(bg BasicGraphics, bars []Barinfo, style Style) {
 	for _, b := range bars {
 		bg.Rect(b.x, b.y, b.w, b.h, style)
 		if b.t != "" {
@@ -354,7 +354,7 @@ func GenericBars(bg BasicGraphics, bars []Barinfo, style DataStyle) {
 }
 
 // GenericWedge draws a pie/wedge just by lines
-func GenericWedge(bg BasicGraphics, x, y, r int, phi, psi float64, style DataStyle) {
+func GenericWedge(bg BasicGraphics, x, y, r int, phi, psi float64, style Style) {
 
 	xa, ya := int(math.Cos(phi)*float64(r))+x, int(math.Sin(phi)*float64(r))+y
 	xc, yc := int(math.Cos(psi)*float64(r))+x, int(math.Sin(psi)*float64(r))+y
@@ -369,7 +369,7 @@ func GenericWedge(bg BasicGraphics, x, y, r int, phi, psi float64, style DataSty
 
 	if style.FillColor != "" {
 		delta := 1 / (4 * rf)
-		ls := DataStyle{LineColor: style.FillColor, LineWidth: 2, Symbol: style.Symbol}
+		ls := Style{LineColor: style.FillColor, LineWidth: 2, Symbol: style.Symbol}
 		for a := phi; a <= psi; a += delta {
 			xr, yr := int(math.Cos(a)*rf)+x, int(math.Sin(a)*rf)+y
 			bg.Line(x, y, xr, yr, ls)

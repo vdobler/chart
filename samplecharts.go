@@ -33,9 +33,9 @@ func stripChart() {
 
 	c := chart.StripChart{}
 
-	c.AddData("Sample A", data1, chart.DataStyle{})
-	c.AddData("Sample B", data2, chart.DataStyle{})
-	c.AddData("Sample C", data3, chart.DataStyle{})
+	c.AddData("Sample A", data1, chart.Style{})
+	c.AddData("Sample B", data2, chart.Style{})
+	c.AddData("Sample C", data3, chart.Style{})
 
 	c.Title = "Sample Strip Chart (no Jitter)"
 	c.XRange.Label = "X - Axis"
@@ -98,11 +98,11 @@ func keyStyles() {
 	p.YRange.TicSetting.Delta = 3
 
 	p.AddFunc("Sin", func(x float64) float64 { return math.Sin(x) }, chart.PlotStyleLines,
-		chart.DataStyle{LineColor: "#a00000", LineWidth: 1, LineStyle: 1})
+		chart.Style{LineColor: "#a00000", LineWidth: 1, LineStyle: 1})
 	p.AddFunc("Cos", func(x float64) float64 { return math.Cos(x) }, chart.PlotStyleLines,
-		chart.DataStyle{LineColor: "#00a000", LineWidth: 1, LineStyle: 1})
+		chart.Style{LineColor: "#00a000", LineWidth: 1, LineStyle: 1})
 	p.AddFunc("Tan", func(x float64) float64 { return math.Tan(x) }, chart.PlotStyleLines,
-		chart.DataStyle{LineColor: "#0000a0", LineWidth: 1, LineStyle: 1})
+		chart.Style{LineColor: "#0000a0", LineWidth: 1, LineStyle: 1})
 
 	x, y := 0, 0
 	for _, pos := range []string{"itl", "itc", "itr", "icl", "icc", "icr", "ibl", "ibc", "ibr",
@@ -121,13 +121,13 @@ func keyStyles() {
 
 	p.Key.Pos = "itl"
 	p.AddFunc("Log", func(x float64) float64 { return math.Log(x) }, chart.PlotStyleLines,
-		chart.DataStyle{LineColor: "#ff6060", LineWidth: 1, LineStyle: 1})
+		chart.Style{LineColor: "#ff6060", LineWidth: 1, LineStyle: 1})
 	p.AddFunc("Exp", func(x float64) float64 { return math.Exp(x) }, chart.PlotStyleLines,
-		chart.DataStyle{LineColor: "#60ff60", LineWidth: 1, LineStyle: 1})
+		chart.Style{LineColor: "#60ff60", LineWidth: 1, LineStyle: 1})
 	p.AddFunc("Atan", func(x float64) float64 { return math.Atan(x) }, chart.PlotStyleLines,
-		chart.DataStyle{LineColor: "#6060ff", LineWidth: 1, LineStyle: 1})
+		chart.Style{LineColor: "#6060ff", LineWidth: 1, LineStyle: 1})
 	p.AddFunc("Y1", func(x float64) float64 { return math.Y1(x) }, chart.PlotStyleLines,
-		chart.DataStyle{LineColor: "#d0d000", LineWidth: 1, LineStyle: 1})
+		chart.Style{LineColor: "#d0d000", LineWidth: 1, LineStyle: 1})
 
 	for _, cols := range []int{-4, -3, -2, -1, 0, 1, 2, 3, 4} {
 		p.Key.Cols = cols
@@ -159,7 +159,7 @@ func scatterTics() {
 	svggraphics := chart.NewSvgGraphics(thesvg, 400, 300, "Arial", 12)
 
 	p := chart.ScatterChart{Title: "Sample Scatter Chart"}
-	p.AddDataPair("Sample A", data10, data1, chart.PlotStylePoints, chart.DataStyle{})
+	p.AddDataPair("Sample A", data10, data1, chart.PlotStylePoints, chart.Style{})
 	p.XRange.TicSetting.Delta = 5000
 	p.XRange.Label = "X - Value"
 	p.YRange.Label = "Y - Value"
@@ -200,7 +200,7 @@ func fancyScatter() {
 	x := []float64{-4, -3.3, -1.8, -1, 0.2, 0.8, 1.8, 3.1, 4, 5.3, 6, 7, 8, 9}
 	y := []float64{22, 18, -3, 0, 0.5, 2, 45, 12, 16.5, 24, 30, 55, 60, 70}
 	pl.AddDataPair("Mmnt", x, y, chart.PlotStyleLinesPoints,
-		chart.DataStyle{Symbol: '#', SymbolColor: "#0000ff", LineStyle: 0})
+		chart.Style{Symbol: '#', SymbolColor: "#0000ff", LineStyle: 0})
 	last := len(pl.Data) - 1
 	pl.Data[last].Samples[6].DeltaX = 2.5
 	pl.Data[last].Samples[6].OffX = 0.5
@@ -208,7 +208,7 @@ func fancyScatter() {
 	pl.Data[last].Samples[6].OffY = 2
 	pl.AddData("abcde", []chart.EPoint{chart.EPoint{-4, 40, 0, 0, 0, 0}, chart.EPoint{-3, 45, 0, 0, 0, 0},
 		chart.EPoint{-2, 35, 0, 0, 0, 0}}, chart.PlotStylePoints,
-		chart.DataStyle{Symbol: '0', SymbolColor: "#ff00ff", LineStyle: 1, LineWidth: 1})
+		chart.Style{Symbol: '0', SymbolColor: "#ff00ff", LineStyle: 1, LineWidth: 1})
 	pl.AddFunc("wxyz", func(x float64) float64 {
 		if x > 5.25 && x < 5.75 {
 			return 75
@@ -217,11 +217,11 @@ func fancyScatter() {
 			return 500
 		}
 		return x * x
-	}, chart.PlotStyleLines, chart.DataStyle{Symbol: 0, LineWidth: 2, LineColor: "#a00000", LineStyle: 1})
+	}, chart.PlotStyleLines, chart.Style{Symbol: 0, LineWidth: 2, LineColor: "#a00000", LineStyle: 1})
 	pl.AddFunc("30", func(x float64) float64 { return 30 }, chart.PlotStyleLines,
-		chart.DataStyle{Symbol: 0, LineWidth: 1, LineColor: "#00a000", LineStyle: 1})
+		chart.Style{Symbol: 0, LineWidth: 1, LineColor: "#00a000", LineStyle: 1})
 	pl.AddFunc("7777", func(x float64) float64 { return 7 }, chart.PlotStyleLines,
-		chart.DataStyle{Symbol: 0, LineWidth: 1, LineColor: "#0000a0", LineStyle: 1})
+		chart.Style{Symbol: 0, LineWidth: 1, LineColor: "#0000a0", LineStyle: 1})
 
 	pl.XRange.ShowZero = true
 	pl.XRange.TicSetting.Mirror = 1
@@ -272,7 +272,7 @@ func boxChart() {
 		p.AddSet(float64(x), points, true)
 	}
 
-	p.NextDataSet("Hallo", chart.DataStyle{LineColor: "#00c000", LineWidth: 1, LineStyle: chart.SolidLine})
+	p.NextDataSet("Hallo", chart.Style{LineColor: "#00c000", LineWidth: 1, LineStyle: chart.SolidLine})
 	for x := 12; x <= 50; x += 10 {
 		points := make([]float64, 60)
 		a := rand.Float64()*15 + 30
@@ -324,14 +324,14 @@ func histChart(name, title string, stacked bool) {
 	hc.Key.Hide = true
 	points := gauss(150, 10, 20, 0, 50)
 	hc.AddData("Sample 1", points,
-		chart.DataStyle{ /*LineColor: "#ff0000", LineWidth: 1, LineStyle: 1, FillColor: "#ff8080"*/ })
+		chart.Style{ /*LineColor: "#ff0000", LineWidth: 1, LineStyle: 1, FillColor: "#ff8080"*/ })
 	hc.Plot(svggraphics)
 	hc.Plot(txtgraphics)
 	fmt.Printf("%s\n", txtgraphics.String())
 
 	points2 := gauss(80, 4, 37, 0, 50)
 	hc.AddData("Sample 2", points2,
-		chart.DataStyle{ /*LineColor: "#00ff00", LineWidth: 1, LineStyle: 1, FillColor: "#80ff80"*/ })
+		chart.Style{ /*LineColor: "#00ff00", LineWidth: 1, LineStyle: 1, FillColor: "#80ff80"*/ })
 	thesvg.Gtransform("translate(400 0)")
 	hc.Plot(svggraphics)
 	hc.Plot(txtgraphics)
@@ -341,7 +341,7 @@ func histChart(name, title string, stacked bool) {
 	thesvg.Gtransform("translate(0 300)")
 	points3 := gauss(60, 15, 0, 0, 50)
 	hc.AddData("Sample 3", points3,
-		chart.DataStyle{ /*LineColor: "#0000ff", LineWidth: 1, LineStyle: 1, FillColor: "#8080ff"*/ })
+		chart.Style{ /*LineColor: "#0000ff", LineWidth: 1, LineStyle: 1, FillColor: "#8080ff"*/ })
 	hc.Plot(svggraphics)
 	hc.Plot(txtgraphics)
 	fmt.Printf("%s\n", txtgraphics.String())
@@ -349,7 +349,7 @@ func histChart(name, title string, stacked bool) {
 
 	thesvg.Gtransform("translate(400 300)")
 	points4 := gauss(40, 30, 15, 0, 50)
-	hc.AddData("Sample 4", points4, chart.DataStyle{ /*LineColor: "#000000", LineWidth: 1, LineStyle: 1*/ })
+	hc.AddData("Sample 4", points4, chart.Style{ /*LineColor: "#000000", LineWidth: 1, LineStyle: 1*/ })
 	hc.Plot(svggraphics)
 	hc.Plot(txtgraphics)
 	fmt.Printf("%s\n", txtgraphics.String())
@@ -377,7 +377,7 @@ func barChart() {
 	barc.AddDataPair("Amount",
 		[]float64{-10, 10, 20, 30, 35, 40, 50},
 		[]float64{90, 120, 180, 205, 230, 150, 190},
-		chart.DataStyle{Symbol: 'o', LineColor: "#ff0000", FillColor: "#ff8080", Alpha: 0,
+		chart.Style{Symbol: 'o', LineColor: "#ff0000", FillColor: "#ff8080", Alpha: 0,
 			LineStyle: chart.SolidLine, LineWidth: 2})
 	barc.Plot(svggraphics)
 	barc.Plot(txtgraphics)
@@ -387,7 +387,7 @@ func barChart() {
 	barc.AddDataPair("Test",
 		[]float64{-5, 15, 25, 35, 45, 55},
 		[]float64{110, 80, 95, 80, 120, 140},
-		chart.DataStyle{Symbol: '#', LineColor: "#00ff00", FillColor: "#00ff00", Alpha: 0,
+		chart.Style{Symbol: '#', LineColor: "#00ff00", FillColor: "#00ff00", Alpha: 0,
 			LineStyle: chart.SolidLine, LineWidth: 0})
 	thesvg.Gtransform("translate(400 0)")
 	barc.Plot(svggraphics)
@@ -422,13 +422,13 @@ func catBarChart() {
 	// Categorized Bar Chart
 	cbarc := chart.CategoryBarChart{Title: "Income", Categories: []string{"none", "low", "average", "high"}}
 	cbarc.AddData("Europe", map[string]float64{"none": 10, "low": 15, "average": 25, "high": 20},
-		chart.DataStyle{LineColor: "#0000ff", LineWidth: 4, FillColor: "#4040ff"})
+		chart.Style{LineColor: "#0000ff", LineWidth: 4, FillColor: "#4040ff"})
 	cbarc.Plot(svggraphics)
 	cbarc.Plot(txtgraphics)
 	fmt.Printf("%s\n", txtgraphics.String())
 
 	cbarc.AddData("Asia", map[string]float64{"none": 15, "low": 30, "average": 10, "high": 20},
-		chart.DataStyle{LineColor: "#aa00aa", LineWidth: 4, FillColor: "#aa40aa"})
+		chart.Style{LineColor: "#aa00aa", LineWidth: 4, FillColor: "#aa40aa"})
 	cbarc.YRange.MinMode.Fixed = true
 	cbarc.YRange.MinMode.Value = 0
 	cbarc.ShowVal = 1
@@ -450,9 +450,9 @@ func catBarChart() {
 	cbarc = chart.CategoryBarChart{Title: "Income", Categories: []string{"none", "low", "average", "high"}}
 	cbarc.YRange.ShowZero = true
 	cbarc.AddData("Europe", map[string]float64{"none": 10, "low": 15, "average": 25, "high": 20},
-		chart.DataStyle{LineColor: "#0000ff", LineWidth: 4, FillColor: "#0000ff"})
+		chart.Style{LineColor: "#0000ff", LineWidth: 4, FillColor: "#0000ff"})
 	cbarc.AddData("Asia", map[string]float64{"none": 15, "low": 30, "average": 10, "high": -20},
-		chart.DataStyle{LineColor: "#aa00aa", LineWidth: 4, FillColor: "#aa00aa"})
+		chart.Style{LineColor: "#aa00aa", LineWidth: 4, FillColor: "#aa00aa"})
 	cbarc.Key.Pos = "ibl"
 	cbarc.ShowVal = 3
 	thesvg.Gtransform("translate(400 300)")
@@ -483,7 +483,7 @@ func logAxis() {
 	lx := []float64{4e-2, 3e-1, 2e0, 1e1, 8e1, 7e2, 5e3}
 	ly := []float64{10, 30, 90, 270, 3 * 270, 9 * 270, 27 * 270}
 	lc.AddDataPair("Measurement", lx, ly, chart.PlotStylePoints,
-		chart.DataStyle{Symbol: '#', SymbolColor: "#9966ff", SymbolSize: 1.5})
+		chart.Style{Symbol: '#', SymbolColor: "#9966ff", SymbolSize: 1.5})
 	lc.Key.Hide = true
 	lc.XRange.MinMode.Expand, lc.XRange.MaxMode.Expand = chart.ExpandToTic, chart.ExpandToTic
 	lc.YRange.MinMode.Expand, lc.YRange.MaxMode.Expand = chart.ExpandToTic, chart.ExpandToTic
@@ -595,7 +595,7 @@ func textlen() {
 				font.Name, font.Size = f, s
 				tvl := sgr.TextLen(t, font)
 				sgr.Text(x+tvl/2, y-2, t, "cc", 0, font)
-				sgr.Line(x, y, x+tvl, y, chart.DataStyle{LineColor: "#ff0000", LineWidth: 2, LineStyle: chart.SolidLine})
+				sgr.Line(x, y, x+tvl, y, chart.Style{LineColor: "#ff0000", LineWidth: 2, LineStyle: chart.SolidLine})
 				r := fmt.Sprintf("%s (%d)", f, s)
 				sgr.Text(x+tvl+10, y-2, r, "cl", 0, df)
 				y += 30

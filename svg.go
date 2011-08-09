@@ -88,7 +88,7 @@ func (sg *SvgGraphics) TextLen(t string, font Font) int {
 }
 
 
-func (sg *SvgGraphics) Line(x0, y0, x1, y1 int, style DataStyle) {
+func (sg *SvgGraphics) Line(x0, y0, x1, y1 int, style Style) {
 	var s string
 	if style.LineColor != "" {
 		s = fmt.Sprintf("stroke:%s; ", style.LineColor)
@@ -141,7 +141,7 @@ func (sg *SvgGraphics) Text(x, y int, t string, align string, rot int, f Font) {
 	sg.svg.Text(x, y, t, trans, s)
 }
 
-func (sg *SvgGraphics) Symbol(x, y, s int, style DataStyle) {
+func (sg *SvgGraphics) Symbol(x, y, s int, style Style) {
 	st := ""
 	filled := "fill:solid"
 	empty := "fill:none"
@@ -206,7 +206,7 @@ func (sg *SvgGraphics) Symbol(x, y, s int, style DataStyle) {
 
 }
 
-func (sg *SvgGraphics) Rect(x, y, w, h int, style DataStyle) {
+func (sg *SvgGraphics) Rect(x, y, w, h int, style Style) {
 	var s string
 	if style.LineWidth > 1 {
 		d := style.LineWidth / 2
@@ -232,11 +232,11 @@ func (sg *SvgGraphics) Rect(x, y, w, h int, style DataStyle) {
 	// GenericRect(sg, x, y, w, h, style) // TODO
 }
 
-func (sg *SvgGraphics) Style(element string) DataStyle {
+func (sg *SvgGraphics) Style(element string) Style {
 	if v, ok := DefaultStyle[element]; ok {
 		return v
 	}
-	return DataStyle{Symbol: 'o', SymbolColor: "#808080", LineColor: "#808080", LineWidth: 1, LineStyle: SolidLine}
+	return Style{Symbol: 'o', SymbolColor: "#808080", LineColor: "#808080", LineWidth: 1, LineStyle: SolidLine}
 }
 
 func (sg *SvgGraphics) Font(element string) Font {
@@ -259,11 +259,11 @@ func (sg *SvgGraphics) YAxis(yr Range, xs, xms int) {
 	GenericYAxis(sg, yr, xs, xms)
 }
 
-func (sg *SvgGraphics) Scatter(points []EPoint, plotstyle PlotStyle, style DataStyle) {
+func (sg *SvgGraphics) Scatter(points []EPoint, plotstyle PlotStyle, style Style) {
 	GenericScatter(sg, points, plotstyle, style)
 }
 
-func (sg *SvgGraphics) Boxes(boxes []Box, width int, style DataStyle) {
+func (sg *SvgGraphics) Boxes(boxes []Box, width int, style Style) {
 	GenericBoxes(sg, boxes, width, style)
 }
 
@@ -271,11 +271,11 @@ func (sg *SvgGraphics) Key(x, y int, key Key) {
 	GenericKey(sg, x, y, key)
 }
 
-func (sg *SvgGraphics) Bars(bars []Barinfo, style DataStyle) {
+func (sg *SvgGraphics) Bars(bars []Barinfo, style Style) {
 	GenericBars(sg, bars, style)
 }
 
-func (sg *SvgGraphics) Wedge(x, y, r int, phi, psi float64, style DataStyle) {
+func (sg *SvgGraphics) Wedge(x, y, r int, phi, psi float64, style Style) {
 	// GenericWedge(sg, x, y, r, phi, psi, style); return
 
 	var s string

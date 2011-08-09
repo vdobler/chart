@@ -10,7 +10,7 @@ import (
 
 type HistChartData struct {
 	Name    string
-	Style   DataStyle
+	Style   Style
 	Samples []float64
 }
 
@@ -31,7 +31,7 @@ type HistChart struct {
 	TBinWidth      TimeDelta // for time XRange
 }
 
-func (c *HistChart) AddData(name string, data []float64, style DataStyle) {
+func (c *HistChart) AddData(name string, data []float64, style Style) {
 	if style.empty() {
 		style = AutoStyle(len(c.Data), true)
 	}
@@ -55,7 +55,7 @@ func (c *HistChart) AddData(name string, data []float64, style DataStyle) {
 	c.XRange.Max = c.XRange.DataMax
 }
 
-func (c *HistChart) AddDataInt(name string, data []int, style DataStyle) {
+func (c *HistChart) AddDataInt(name string, data []int, style Style) {
 	fdata := make([]float64, len(data))
 	for i, d := range data {
 		fdata[i] = float64(d)
@@ -63,7 +63,7 @@ func (c *HistChart) AddDataInt(name string, data []int, style DataStyle) {
 	c.AddData(name, fdata, style)
 }
 
-func (c *HistChart) AddDataGeneric(name string, data []Value, style DataStyle) {
+func (c *HistChart) AddDataGeneric(name string, data []Value, style Style) {
 	fdata := make([]float64, len(data))
 	for i, d := range data {
 		fdata[i] = d.XVal()
@@ -371,7 +371,7 @@ func (c *HistChart) Plot(g Graphics) {
 			if ws > 25 {
 				lw = 2
 			}
-			white := DataStyle{LineColor: "#ffffff", LineWidth: lw, LineStyle: SolidLine}
+			white := Style{LineColor: "#ffffff", LineWidth: lw, LineStyle: SolidLine}
 			for _, b := range bars {
 				g.Line(b.x, b.y-1, b.x+b.w+1, b.y-1, white)
 				g.Line(b.x+b.w+1, b.y-1, b.x+b.w+1, b.y+b.h, white)
