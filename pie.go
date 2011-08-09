@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math"
 	//	"os"
-	"strings"
+	// "strings"
 )
 
 
@@ -72,80 +72,6 @@ var PieChartTextAscpect float64 = 1.9 // how much wider is the x-radius
 var PieChartLabelPos = 0.75           // relativ to outer radius
 var PieChartShrinkage = 0.65          // Scaling factor of radius of next data set.
 var PieChartBorder = 0.05             // Fraction of white border outside next data sets.
-
-func (c *PieChart) PlotTxt(w, h int) string {
-	tb := NewTextBuf(w, h)
-
-	// TODO(vodo): handel w<h case
-	left, top := 2, 1
-	radiusy := float64(h-top*2) / 2
-	if c.Title != "" {
-		radiusy -= 1
-		top += 1
-	}
-	radiusx := PieChartTextAscpect * radiusy
-	x0, y0 := left+int(radiusx+0.5), h/2
-
-	dalpha := 1 / (1.5 * radiusx)
-
-	fmt.Printf("w,h = %d,%d;   left,top=%d,%d;    ry,rx=%d,%d;   x0,y0=%d,%d\n",
-		w, h, left, top, radiusy, radiusx, x0, y0)
-	if c.Title != "" {
-		tb.Text(left+int(radiusx), 0, c.Title, 0)
-	}
-
-	keidx := 0 // key-entry-index
-	for i, data := range c.Data {
-		// _ := c.Key.Entries[keidx].Text // data set name
-		keidx++
-
-		var sum float64
-		for _, d := range data.Samples {
-			sum += d.Val
-		}
-
-		var phi float64 = -math.Pi
-		for _, d := range data.Samples {
-			symbol := c.Key.Entries[keidx].Style.Symbol
-			keidx++
-			alpha := 2 * math.Pi * d.Val / sum
-			for r := c.Inner * radiusy; r <= radiusy+0.1; r += 0.2 {
-				for w := phi + dalpha; w < phi+alpha-dalpha; w += dalpha / 5 {
-					x, y := int(0.5+PieChartTextAscpect*r*math.Cos(w)), int(0.5+r*math.Sin(w))
-					tb.Put(x+x0, y+y0, symbol)
-				}
-			}
-			if i > 0 { // clear a border
-				r := radiusy
-				for w := float64(0); w <= 2*math.Pi; w += dalpha / 5 {
-					x, y := int(0.5+PieChartTextAscpect*r*math.Cos(w)), int(0.5+r*math.Sin(w))
-					tb.Put(x+x0, y+y0, ' ')
-				}
-			}
-			if c.ShowVal != 0 {
-				t := c.formatVal(d.Val, sum)
-				ry, rx := PieChartLabelPos*radiusy, PieChartLabelPos*radiusx
-				w := phi + alpha/2
-				x, y := int(0.5+rx*math.Cos(w)), int(0.5+ry*math.Sin(w))
-				tb.Text(x+x0, y+y0, t, 0)
-				if radiusy > 9 {
-					tb.Text(x+x0, y+y0-1, strings.Repeat(" ", len(t)), 0)
-					tb.Text(x+x0, y+y0+1, strings.Repeat(" ", len(t)), 0)
-				}
-			}
-			phi += alpha
-		}
-		radiusx, radiusy = radiusx*PieChartShrinkage, radiusy*PieChartShrinkage // next data set is smaler
-	}
-
-	// TODO(vodo) honour key placement
-	kb := c.Key.LayoutKeyTxt()
-	if kb != nil {
-		tb.Paste(w-kb.W-1, 2, kb)
-	}
-
-	return tb.String()
-}
 
 
 // Plot outputs the scatter chart sc to g.

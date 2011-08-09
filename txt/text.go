@@ -3,6 +3,7 @@ package chart
 import (
 	"fmt"
 	"math"
+	"github.com/vdobler/chart"
 )
 
 // Different edge styles for boxes
@@ -190,231 +191,6 @@ func (tb *TextBuf) String() string {
 }
 
 
-func LayoutTxt(w, h int, title, xlabel, ylabel string, hidextics, hideytics bool, key *Key, fw, fh int) (width, leftm, height, topm int, kb *TextBuf, numxtics, numytics int) {
-	if key.Pos == "" {
-		key.Pos = "itr"
-	}
-
-	if h < 5 {
-		h = 5
-	}
-	if w < 10 {
-		w = 10
-	}
-
-	width, leftm, height, topm = w-6*fw, 2*fw, h-1*fh, 0
-	xlabsep, ylabsep := fh, 3*fw
-	if title != "" {
-		topm += (5 * fh) / 2
-		height -= (5 * fh) / 2
-	}
-	if xlabel != "" {
-		height -= (3 * fh) / 2
-	}
-	if !hidextics {
-		height -= (3 * fh) / 2
-		xlabsep += (3 * fh) / 2
-	}
-	if ylabel != "" {
-		leftm += 2 * fh
-		width -= 2 * fh
-	}
-	if !hideytics {
-		leftm += 6 * fw
-		width -= 6 * fw
-		ylabsep += 6 * fw
-	}
-
-	if !key.Hide { // TODO: buggy, not device independent
-		kb = key.LayoutKeyTxt()
-		if kb != nil {
-			kw, kh := kb.W, kb.H
-			switch key.Pos[:2] {
-			case "ol":
-				width, leftm = width-kw-2, leftm+kw
-				key.X = 0
-			case "or":
-				width = width - kw - 2
-				key.X = w - kw
-			case "ot":
-				height, topm = height-kh-2, topm+kh
-				key.Y = 1
-			case "ob":
-				height = height - kh - 2
-				key.Y = topm + height + 4
-			case "it":
-				key.Y = topm + 1
-			case "ic":
-				key.Y = topm + (height-kh)/2
-			case "ib":
-				key.Y = topm + height - kh
-
-			}
-
-			switch key.Pos[:2] {
-			case "ol", "or":
-				switch key.Pos[2] {
-				case 't':
-					key.Y = topm
-				case 'c':
-					key.Y = topm + (height-kh)/2
-				case 'b':
-					key.Y = topm + height - kh + 1
-				}
-			case "ot", "ob":
-				switch key.Pos[2] {
-				case 'l':
-					key.X = leftm
-				case 'c':
-					key.X = leftm + (width-kw)/2
-				case 'r':
-					key.X = w - kw - 2
-				}
-			}
-			if key.Pos[0] == 'i' {
-				switch key.Pos[2] {
-				case 'l':
-					key.X = leftm + 2
-				case 'c':
-					key.X = leftm + (width-kw)/2
-				case 'r':
-					key.X = leftm + width - kw - 2
-				}
-
-			}
-		}
-	}
-
-	// fmt.Printf("width=%d, height=%d, leftm=%d, topm=%d\n", width, height, leftm, topm)
-
-	switch {
-	case width/fw < 20:
-		numxtics = 2
-	case width/fw < 30:
-		numxtics = 3
-	case width/fw < 60:
-		numxtics = 4
-	case width/fw < 80:
-		numxtics = 5
-	case width/fw < 100:
-		numxtics = 7
-	default:
-		numxtics = 10
-	}
-	// fmt.Printf("Requesting %d,%d tics.\n", ntics,height/3)
-
-	numytics = (h / fh) / 5
-
-	return
-}
-
-
-// Print xrange to tb at vertical position y.
-// Axis, tics, tic labels, axis label and range limits are drawn.
-// mirror: 0: no other axis, 1: axis without tics, 2: axis with tics,
-func TxtXRange(xrange Range, tb *TextBuf, y, y1 int, label string, mirror int) {
-	xa, xe := xrange.Data2Screen(xrange.Min), xrange.Data2Screen(xrange.Max)
-	for sx := xa; sx <= xe; sx++ {
-		tb.Put(sx, y, '-')
-		if mirror >= 1 {
-			tb.Put(sx, y1, '-')
-		}
-	}
-	if xrange.ShowZero && xrange.Min < 0 && xrange.Max > 0 {
-		z := xrange.Data2Screen(0)
-		for yy := y - 1; yy > y1+1; yy-- {
-			tb.Put(z, yy, ':')
-		}
-	}
-
-	if label != "" {
-		yy := y + 1
-		if !xrange.TicSetting.Hide {
-			yy++
-		}
-		tb.Text((xa+xe)/2, yy, label, 0)
-	}
-
-	for _, tic := range xrange.Tics {
-		x := xrange.Data2Screen(tic.Pos)
-		lx := xrange.Data2Screen(tic.LabelPos)
-		if xrange.Time {
-			tb.Put(x, y, '|')
-			if mirror >= 2 {
-				tb.Put(x, y1, '|')
-			}
-			tb.Put(x, y+1, '|')
-			if tic.Align == -1 {
-				tb.Text(lx+1, y+1, tic.Label, -1)
-			} else {
-				tb.Text(lx, y+1, tic.Label, 0)
-			}
-		} else {
-			tb.Put(x, y, '+')
-			if mirror >= 2 {
-				tb.Put(x, y1, '+')
-			}
-			tb.Text(lx, y+1, tic.Label, 0)
-		}
-		if xrange.ShowLimits {
-			if xrange.Time {
-				tb.Text(xa, y+2, xrange.TMin.Format("2006-01-02 15:04:05"), -1)
-				tb.Text(xe, y+2, xrange.TMax.Format("2006-01-02 15:04:05"), 1)
-			} else {
-				tb.Text(xa, y+2, fmt.Sprintf("%g", xrange.Min), -1)
-				tb.Text(xe, y+2, fmt.Sprintf("%g", xrange.Max), 1)
-			}
-		}
-	}
-}
-
-
-// Print yrange to tb at horizontal position x.
-// Axis, tics, tic labels, axis label and range limits are drawn.
-// mirror: 0: no other axis, 1: axis without tics, 2: axis with tics,
-func TxtYRange(yrange Range, tb *TextBuf, x, x1 int, label string, mirror int) {
-	ya, ye := yrange.Data2Screen(yrange.Min), yrange.Data2Screen(yrange.Max)
-	for sy := min(ya, ye); sy <= max(ya, ye); sy++ {
-		tb.Put(x, sy, '|')
-		if mirror >= 1 {
-			tb.Put(x1, sy, '|')
-		}
-	}
-	if yrange.ShowZero && yrange.Min < 0 && yrange.Max > 0 {
-		z := yrange.Data2Screen(0)
-		for xx := x + 1; xx < x1; xx += 2 {
-			tb.Put(xx, z, '-')
-		}
-	}
-
-	if label != "" {
-		tb.Text(1, (ya+ye)/2, label, 3)
-	}
-
-	for _, tic := range yrange.Tics {
-		y := yrange.Data2Screen(tic.Pos)
-		ly := yrange.Data2Screen(tic.LabelPos)
-		if yrange.Time {
-			tb.Put(x, y, '+')
-			if mirror >= 2 {
-				tb.Put(x1, y, '+')
-			}
-			if tic.Align == 0 { // centered tic
-				tb.Put(x-1, y, '-')
-				tb.Put(x-2, y, '-')
-			}
-			tb.Text(x, ly, tic.Label+" ", 1)
-		} else {
-			tb.Put(x, y, '+')
-			if mirror >= 2 {
-				tb.Put(x1, y, '+')
-			}
-			tb.Text(x-2, ly, tic.Label, 1)
-		}
-	}
-}
-
-
 // TextGraphics
 type TextGraphics struct {
 	tb   *TextBuf
@@ -437,16 +213,16 @@ func (g *TextGraphics) End() {}
 func (g *TextGraphics) Dimensions() (int, int) {
 	return g.w, g.h
 }
-func (g *TextGraphics) FontMetrics(font Font) (fw float32, fh int, mono bool) {
+func (g *TextGraphics) FontMetrics(font chart.Font) (fw float32, fh int, mono bool) {
 	return 1, 1, true
 }
 
-func (g *TextGraphics) TextLen(t string, font Font) int {
+func (g *TextGraphics) TextLen(t string, font chart.Font) int {
 	return len(t)
 }
 
 
-func (g *TextGraphics) Line(x0, y0, x1, y1 int, style Style) {
+func (g *TextGraphics) Line(x0, y0, x1, y1 int, style chart.Style) {
 	symbol := style.Symbol
 	if symbol < ' ' || symbol > '~' {
 		symbol = 'x'
@@ -454,7 +230,7 @@ func (g *TextGraphics) Line(x0, y0, x1, y1 int, style Style) {
 	g.tb.Line(x0, y0, x1, y1, symbol)
 }
 
-func (g *TextGraphics) Text(x, y int, t string, align string, rot int, font Font) {
+func (g *TextGraphics) Text(x, y int, t string, align string, rot int, font chart.Font) {
 	// align: -1: left; 0: centered; 1: right; 2: top, 3: center, 4: bottom
 	if len(align) == 2 {
 		align = align[1:]
@@ -484,7 +260,7 @@ func (g *TextGraphics) Text(x, y int, t string, align string, rot int, font Font
 	g.tb.Text(x, y, t, a)
 }
 
-func (g *TextGraphics) Rect(x, y, w, h int, style Style) {
+func (g *TextGraphics) Rect(x, y, w, h int, style chart.Style) {
 	// Normalize coordinates
 	if h < 0 {
 		h = -h
@@ -526,28 +302,28 @@ func (g *TextGraphics) Rect(x, y, w, h int, style Style) {
 	}
 }
 
-func (g *TextGraphics) Style(element string) Style {
+func (g *TextGraphics) Style(element string) chart.Style {
 	b := "#000000"
-	return Style{Symbol: 'o', SymbolColor: b, LineColor: b, LineWidth: 1, LineStyle: SolidLine}
+	return chart.Style{Symbol: 'o', SymbolColor: b, LineColor: b, LineWidth: 1, LineStyle: chart.SolidLine}
 }
 
-func (g *TextGraphics) Font(element string) Font {
-	return Font{}
+func (g *TextGraphics) Font(element string) chart.Font {
+	return chart.Font{}
 }
 
 func (g *TextGraphics) String() string {
 	return g.tb.String()
 }
 
-func (g *TextGraphics) Symbol(x, y, s int, style Style) {
+func (g *TextGraphics) Symbol(x, y, s int, style chart.Style) {
 	g.tb.Put(x, y, s)
 }
 func (g *TextGraphics) Title(text string) {
 	x, y := g.w/2, 0
-	g.Text(x, y, text, "tc", 0, Font{})
+	g.Text(x, y, text, "tc", 0, chart.Font{})
 }
 
-func (g *TextGraphics) XAxis(xrange Range, y, y1 int) {
+func (g *TextGraphics) XAxis(xrange chart.Range, y, y1 int) {
 	mirror := xrange.TicSetting.Mirror
 	xa, xe := xrange.Data2Screen(xrange.Min), xrange.Data2Screen(xrange.Max)
 	for sx := xa; sx <= xe; sx++ {
@@ -605,7 +381,7 @@ func (g *TextGraphics) XAxis(xrange Range, y, y1 int) {
 
 	// GenericXAxis(g, xr, ys, yms)
 }
-func (g *TextGraphics) YAxis(yrange Range, x, x1 int) {
+func (g *TextGraphics) YAxis(yrange chart.Range, x, x1 int) {
 	label := yrange.Label
 	mirror := yrange.TicSetting.Mirror
 	ya, ye := yrange.Data2Screen(yrange.Min), yrange.Data2Screen(yrange.Max)
@@ -649,11 +425,11 @@ func (g *TextGraphics) YAxis(yrange Range, x, x1 int) {
 	}
 }
 
-func (g *TextGraphics) Scatter(points []EPoint, plotstyle PlotStyle, style Style) {
-	GenericScatter(g, points, plotstyle, style)
+func (g *TextGraphics) Scatter(points []chart.EPoint, plotstyle chart.PlotStyle, style chart.Style) {
+	chart.GenericScatter(g, points, plotstyle, style)
 }
 
-func (g *TextGraphics) Boxes(boxes []Box, width int, style Style) {
+func (g *TextGraphics) Boxes(boxes []chart.Box, width int, style chart.Style) {
 	if width%2 == 0 {
 		width += 1
 	}
@@ -699,7 +475,17 @@ func (g *TextGraphics) Boxes(boxes []Box, width int, style Style) {
 	}
 }
 
-func (g *TextGraphics) Key(x, y int, key Key) {
+var (
+	KeyHorSep      float32 = 1.5
+	KeyVertSep     float32 = 0.5
+	KeyColSep      float32 = 2.0
+	KeySymbolWidth float32 = 4
+	KeySymbolSep   float32 = 1
+	KeyRowSep      float32 = 0.75
+)
+
+
+func (g *TextGraphics) Key(x, y int, key chart.Key) {
 	m := key.Place()
 	tw, th, cw, rh := key.Layout(g, m)
 	style := g.Style("key")
@@ -726,13 +512,13 @@ func (g *TextGraphics) Key(x, y int, key Key) {
 				g.tb.Text(x, yy, e.Text, -1)
 			} else {
 				// normal entry
-				if (plotStyle & PlotStyleLines) != 0 {
+				if (plotStyle & chart.PlotStyleLines) != 0 {
 					g.Line(x, yy, x+int(KeySymbolWidth), yy, e.Style)
 				}
-				if (plotStyle & PlotStylePoints) != 0 {
+				if (plotStyle & chart.PlotStylePoints) != 0 {
 					g.Symbol(x+int(KeySymbolWidth/2), yy, e.Style.Symbol, e.Style)
 				}
-				if (plotStyle & PlotStyleBox) != 0 {
+				if (plotStyle & chart.PlotStyleBox) != 0 {
 					g.tb.Put(x+int(KeySymbolWidth/2), yy, e.Style.Symbol)
 				}
 				g.tb.Text(x+int((KeySymbolWidth+KeySymbolSep)), yy, e.Text, -1)
@@ -745,11 +531,11 @@ func (g *TextGraphics) Key(x, y int, key Key) {
 
 }
 
-func (g *TextGraphics) Bars(bars []Barinfo, style Style) {
-	GenericBars(g, bars, style)
+func (g *TextGraphics) Bars(bars []chart.Barinfo, style chart.Style) {
+	chart.GenericBars(g, bars, style)
 }
 
-func (g *TextGraphics) Wedge(x, y, ry int, phi, psi float64, style Style) {
+func (g *TextGraphics) Wedge(x, y, ry int, phi, psi float64, style chart.Style) {
 	rx := int(1.9 * float64(ry))
 	x += 10 // TODO: find a proper way here....
 	ryf, rxf := float64(ry), float64(rx)
@@ -765,7 +551,7 @@ func (g *TextGraphics) Wedge(x, y, ry int, phi, psi float64, style Style) {
 
 	if style.FillColor != "" {
 		delta := 1 / (4 * rxf)
-		ls := Style{LineColor: style.FillColor, LineWidth: 1, Symbol: style.Symbol}
+		ls := chart.Style{LineColor: style.FillColor, LineWidth: 1, Symbol: style.Symbol}
 		for a := phi; a <= psi; a += delta {
 			xr, yr := int(math.Cos(a)*rxf)+x, int(math.Sin(a)*ryf)+y
 			g.Line(x, y, xr, yr, ls)
@@ -780,4 +566,36 @@ func (g *TextGraphics) Wedge(x, y, ry int, phi, psi float64, style Style) {
 	}
 	g.Line(xb, yb, xc, yc, style)
 
+}
+
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+func abs(a int) int {
+	if a < 0 {
+		return -a
+	}
+	return a
+}
+
+func sign(a int) int {
+	if a < 0 {
+		return -1
+	}
+	if a == 0 {
+		return 0
+	}
+	return 1
 }

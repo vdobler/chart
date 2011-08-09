@@ -1,7 +1,5 @@
 include $(GOROOT)/src/Make.inc
 
-DRIVERS=\
-	svg.go
 
 TARG=github.com/vdobler/chart
 GOFILES=\
@@ -13,24 +11,34 @@ GOFILES=\
 	graphics.go\
 	stat.go\
 	time.go\
-	text.go\
 	strip.go\
 	scatter.go\
 	box.go\
 	hist.go\
 	bar.go\
 	cbar.go\
-	pie.go\
-	$(DRIVERS)
+	pie.go
 
 include $(GOROOT)/src/Make.pkg
+
+DRIVERS=\
+	svg\
+	txt
 
 chart.$(O): $(GOFILES)
 	$(GC) -o chart.$(O) $^
 
-samplechart: samplecharts.go chart.$(O)
+samplechart: samplecharts.go chart.$(O) drivers
 	$(GC) -I. samplecharts.go
 	$(LD) -L. -o samplecharts samplecharts.$(O)
 
 format: $(GOFILES) samplecharts.go  
 	gofmt -w $^
+	for d in $(DRIVERS); do (cd $$d; make format); done
+
+drivers:
+	for d in $(DRIVERS); do (cd $$d; make install || exit 1) || exit 1; done
+
+CLEAN:
+	make clean
+	for d in $(DRIVERS); do (cd $$d; make clean); done

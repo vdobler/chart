@@ -1,9 +1,10 @@
-package chart
+package svg
 
 import (
 	"fmt"
 	"math"
 	"github.com/ajstarks/svgo"
+	"github.com/vdobler/chart"
 )
 
 
@@ -45,7 +46,7 @@ func (sg *SvgGraphics) Dimensions() (int, int) {
 	return sg.w, sg.h
 }
 
-func (sg *SvgGraphics) fontheight(font Font) (fh int) {
+func (sg *SvgGraphics) fontheight(font chart.Font) (fh int) {
 	if sg.fs <= 14 {
 		fh = sg.fs + font.Size
 	} else if sg.fs <= 20 {
@@ -60,7 +61,7 @@ func (sg *SvgGraphics) fontheight(font Font) (fh int) {
 	return
 }
 
-func (sg *SvgGraphics) FontMetrics(font Font) (fw float32, fh int, mono bool) {
+func (sg *SvgGraphics) FontMetrics(font chart.Font) (fw float32, fh int, mono bool) {
 	if font.Name == "" {
 		font.Name = sg.font
 	}
@@ -83,12 +84,12 @@ func (sg *SvgGraphics) FontMetrics(font Font) (fw float32, fh int, mono bool) {
 	return
 }
 
-func (sg *SvgGraphics) TextLen(t string, font Font) int {
-	return GenericTextLen(sg, t, font)
+func (sg *SvgGraphics) TextLen(t string, font chart.Font) int {
+	return chart.GenericTextLen(sg, t, font)
 }
 
 
-func (sg *SvgGraphics) Line(x0, y0, x1, y1 int, style Style) {
+func (sg *SvgGraphics) Line(x0, y0, x1, y1 int, style chart.Style) {
 	var s string
 	if style.LineColor != "" {
 		s = fmt.Sprintf("stroke:%s; ", style.LineColor)
@@ -99,7 +100,7 @@ func (sg *SvgGraphics) Line(x0, y0, x1, y1 int, style Style) {
 	sg.svg.Line(x0, y0, x1, y1, s)
 }
 
-func (sg *SvgGraphics) Text(x, y int, t string, align string, rot int, f Font) {
+func (sg *SvgGraphics) Text(x, y int, t string, align string, rot int, f chart.Font) {
 	if len(align) == 1 {
 		align = "c" + align
 	}
@@ -141,7 +142,7 @@ func (sg *SvgGraphics) Text(x, y int, t string, align string, rot int, f Font) {
 	sg.svg.Text(x, y, t, trans, s)
 }
 
-func (sg *SvgGraphics) Symbol(x, y, s int, style Style) {
+func (sg *SvgGraphics) Symbol(x, y, s int, style chart.Style) {
 	st := ""
 	filled := "fill:solid"
 	empty := "fill:none"
@@ -153,7 +154,10 @@ func (sg *SvgGraphics) Symbol(x, y, s int, style Style) {
 	if f == 0 {
 		f = 1
 	}
-	lw := max(1, style.LineWidth)
+	lw := 1
+	if style.LineWidth > 1 {
+		lw = style.LineWidth
+	}
 
 	const n = 5               // default size
 	a := int(n*f + 0.5)       // standard
@@ -206,7 +210,7 @@ func (sg *SvgGraphics) Symbol(x, y, s int, style Style) {
 
 }
 
-func (sg *SvgGraphics) Rect(x, y, w, h int, style Style) {
+func (sg *SvgGraphics) Rect(x, y, w, h int, style chart.Style) {
 	var s string
 	if style.LineWidth > 1 {
 		d := style.LineWidth / 2
@@ -232,50 +236,50 @@ func (sg *SvgGraphics) Rect(x, y, w, h int, style Style) {
 	// GenericRect(sg, x, y, w, h, style) // TODO
 }
 
-func (sg *SvgGraphics) Style(element string) Style {
-	if v, ok := DefaultStyle[element]; ok {
+func (sg *SvgGraphics) Style(element string) chart.Style {
+	if v, ok := chart.DefaultStyle[element]; ok {
 		return v
 	}
-	return Style{Symbol: 'o', SymbolColor: "#808080", LineColor: "#808080", LineWidth: 1, LineStyle: SolidLine}
+	return chart.Style{Symbol: 'o', SymbolColor: "#808080", LineColor: "#808080", LineWidth: 1, LineStyle: chart.SolidLine}
 }
 
-func (sg *SvgGraphics) Font(element string) Font {
-	if v, ok := DefaultFont[element]; ok {
+func (sg *SvgGraphics) Font(element string) chart.Font {
+	if v, ok := chart.DefaultFont[element]; ok {
 		return v
 	}
-	return Font{}
+	return chart.Font{}
 }
 
 func (sg *SvgGraphics) Title(text string) {
-	_, fh, _ := sg.FontMetrics(Font{})
+	_, fh, _ := sg.FontMetrics(chart.Font{})
 	x, y := sg.w/2, fh/2
 	sg.Text(x, y, text, "tc", 0, sg.Font("title"))
 }
 
-func (sg *SvgGraphics) XAxis(xr Range, ys, yms int) {
-	GenericXAxis(sg, xr, ys, yms)
+func (sg *SvgGraphics) XAxis(xr chart.Range, ys, yms int) {
+	chart.GenericXAxis(sg, xr, ys, yms)
 }
-func (sg *SvgGraphics) YAxis(yr Range, xs, xms int) {
-	GenericYAxis(sg, yr, xs, xms)
-}
-
-func (sg *SvgGraphics) Scatter(points []EPoint, plotstyle PlotStyle, style Style) {
-	GenericScatter(sg, points, plotstyle, style)
+func (sg *SvgGraphics) YAxis(yr chart.Range, xs, xms int) {
+	chart.GenericYAxis(sg, yr, xs, xms)
 }
 
-func (sg *SvgGraphics) Boxes(boxes []Box, width int, style Style) {
-	GenericBoxes(sg, boxes, width, style)
+func (sg *SvgGraphics) Scatter(points []chart.EPoint, plotstyle chart.PlotStyle, style chart.Style) {
+	chart.GenericScatter(sg, points, plotstyle, style)
 }
 
-func (sg *SvgGraphics) Key(x, y int, key Key) {
-	GenericKey(sg, x, y, key)
+func (sg *SvgGraphics) Boxes(boxes []chart.Box, width int, style chart.Style) {
+	chart.GenericBoxes(sg, boxes, width, style)
 }
 
-func (sg *SvgGraphics) Bars(bars []Barinfo, style Style) {
-	GenericBars(sg, bars, style)
+func (sg *SvgGraphics) Key(x, y int, key chart.Key) {
+	chart.GenericKey(sg, x, y, key)
 }
 
-func (sg *SvgGraphics) Wedge(x, y, r int, phi, psi float64, style Style) {
+func (sg *SvgGraphics) Bars(bars []chart.Barinfo, style chart.Style) {
+	chart.GenericBars(sg, bars, style)
+}
+
+func (sg *SvgGraphics) Wedge(x, y, r int, phi, psi float64, style chart.Style) {
 	// GenericWedge(sg, x, y, r, phi, psi, style); return
 
 	var s string
