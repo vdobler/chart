@@ -9,15 +9,15 @@ import (
 // Any type which implements BasicGraphics can use generic implementations
 // of the Graphics methods.
 type BasicGraphics interface {
-	Style(element string) Style                             // retrieve style for element
-	Font(element string) Font                               // retrieve font for element
+	Style(element string) Style                             // Retrieve style for element
+	Font(element string) Font                               // Retrieve font for element
 	FontMetrics(font Font) (fw float32, fh int, mono bool)  // Return fontwidth and -height in pixel
-	TextLen(t string, font Font) int                        // length=width of t in screen units
+	TextLen(t string, font Font) int                        // Length=width of t in screen units if set on font 
 	Line(x0, y0, x1, y1 int, style Style)                   // Draw line from (x0,y0) to (x1,y1)
-	Symbol(x, y, s int, style Style)                        // Put symnbol s at (x,y)
-	Text(x, y int, t string, align string, rot int, f Font) // align: [[tcb]][lcr]
-	Rect(x, y, w, h int, style Style)                       // draw (w x h) rectangle at (x,y)
-	Wedge(x, y, r int, phi, psi float64, style Style)       // draw pie from phi to psi centered at (x,y) with radius r
+	Symbol(x, y, s int, style Style)                        // Put symbol s at (x,y)
+	Text(x, y int, t string, align string, rot int, f Font) // Put t at (x,y) rotated by rot aligned [[tcb]][lcr]
+	Rect(x, y, w, h int, style Style)                       // Draw (w x h) rectangle at (x,y)
+	Wedge(x, y, r int, phi, psi float64, style Style)       // Draw pie from phi to psi centered at (x,y) with radius r
 }
 
 
@@ -34,12 +34,12 @@ type Graphics interface {
 	// screen coordinates,
 	XAxis(xr Range, ys, yms int) // Draw x axis xr at screen position ys (and yms if mirrored)
 	YAxis(yr Range, xs, xms int) // Same for y axis.
-	Title(text string)           // Draw title onto chart
+	Title(text string)           // Draw title onto chart, box if l,r,y != 0
 
 	Scatter(points []EPoint, plotstyle PlotStyle, style Style) // Points, Lines and Line+Points
 	Boxes(boxes []Box, width int, style Style)                 // Boxplots
 	Bars(bars []Barinfo, style Style)                          // any type of histogram/bars
-	// Rings(wedeges []Wedgeinfo, x,y, r int) // Pie/ring diagram elements
+	Rings(wedeges []Wedgeinfo, x, y, r int)                    // Pie/ring diagram elements
 
 	Key(x, y int, key Key) // place key at x,y
 }
@@ -52,11 +52,11 @@ type Barinfo struct {
 }
 
 type Wedgeinfo struct {
-	ro, ri   int     // Outer and inner radius of wedge ring, std. wedge if ri<=0
-	phi, psi float64 // Start and ende of wedge. Fuill circle if |phi-psi| > 4pi
-	t, tp    string  // label text and text position: [ico]
-	style    Style   // style of this wedge
-	f        Font    // font of text
+	Ro, Ri   int     // Outer and inner radius of wedge ring, std. wedge if ri<=0
+	Phi, Psi float64 // Start and ende of wedge. Fuill circle if |phi-psi| > 4pi
+	Text, Tp string  // label text and text position: [ico]
+	Style    Style   // style of this wedge
+	Font     Font    // font of text
 }
 
 

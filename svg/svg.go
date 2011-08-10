@@ -251,9 +251,10 @@ func (sg *SvgGraphics) Font(element string) chart.Font {
 }
 
 func (sg *SvgGraphics) Title(text string) {
-	_, fh, _ := sg.FontMetrics(chart.Font{})
+	font := sg.Font("title")
+	_, fh, _ := sg.FontMetrics(font)
 	x, y := sg.w/2, fh/2
-	sg.Text(x, y, text, "tc", 0, sg.Font("title"))
+	sg.Text(x, y, text, "tc", 0, font)
 }
 
 func (sg *SvgGraphics) XAxis(xr chart.Range, ys, yms int) {
@@ -308,5 +309,89 @@ func (sg *SvgGraphics) Wedge(x, y, r int, phi, psi float64, style chart.Style) {
 		d += fmt.Sprintf("z")
 
 		sg.svg.Path(d, s)
+	}
+}
+
+func (sg *SvgGraphics) Rings(wedges []chart.Wedgeinfo, x, y, r int) {
+	for _, w := range wedges {
+		var s string
+		linecol := w.Style.LineColor
+		if linecol != "" {
+			s = fmt.Sprintf("stroke:%s; ", linecol)
+		} else {
+			linecol = "#808080"
+		}
+		s += fmt.Sprintf("stroke-width: %d; ", w.Style.LineWidth)
+		s += fmt.Sprintf("opacity: %.2f; ", 1-w.Style.Alpha)
+		var sf string
+		if w.Style.FillColor != "" {
+			sf = fmt.Sprintf("fill: %s; fill-opacity: %.2f", w.Style.FillColor, 1-w.Style.Alpha)
+		} else {
+			sf = "fill-opacity: 0"
+		}
+
+		ro, ri := w.Ro, w.Ri
+
+		if math.Fabs(w.Phi-w.Psi) >= 4*math.Pi {
+			sg.svg.Circle(x, y, ro, s+sf)
+			if ri > 0 {
+				sf = "fill: #ffffff; fill-opacity: 1"
+				sg.svg.Circle(x, y, ri, s+sf)
+			}
+			continue
+		}
+
+		var d string
+		p := 0.4 * float64(w.Style.LineWidth)
+		cphi, sphi := math.Cos(w.Phi), math.Sin(w.Phi)
+		cpsi, spsi := math.Cos(w.Psi), math.Sin(w.Psi)
+
+		if ri <= 0 {
+			// real wedge drawn as center -> outer radius -> arc -> closed to center
+			rf := float64(ro)
+			a := math.Sin((w.Psi - w.Phi) / 2)
+			dx, dy := p*math.Cos((w.Phi+w.Psi)/2)/a, p*math.Sin((w.Phi+w.Psi)/2)/a
+			d = fmt.Sprintf("M %d,%d ", x+int(dx+0.5), y+int(dy+0.5))
+
+			dx, dy = p*math.Cos(w.Phi+math.Pi/2), p*math.Sin(w.Phi+math.Pi/2)
+			d += fmt.Sprintf("L %d,%d ", int(rf*cphi+0.5+dx)+x, int(rf*sphi+0.5+dy)+y)
+
+			dx, dy = p*math.Cos(w.Psi-math.Pi/2), p*math.Sin(w.Psi-math.Pi/2)
+			d += fmt.Sprintf("A %d,%d 0 0 1 %d,%d ", ro, ro, int(rf*cpsi+0.5+dx)+x, int(rf*spsi+0.5+dy)+y)
+			d += fmt.Sprintf("z")
+		} else {
+			// ring drawn as inner radius -> outer radius -> outer arc -> inner radius -inner arc
+			rof, rif := float64(ro), float64(ri)
+			dx, dy := p*math.Cos(w.Phi+math.Pi/2), p*math.Sin(w.Phi+math.Pi/2)
+			a, b := int(rif*cphi+0.5+dx)+x, int(rif*sphi+0.5+dy)+y
+			d = fmt.Sprintf("M %d,%d ", a, b)
+			d += fmt.Sprintf("L %d,%d ", int(rof*cphi+0.5+dx)+x, int(rof*sphi+0.5+dy)+y)
+
+			dx, dy = p*math.Cos(w.Psi-math.Pi/2), p*math.Sin(w.Psi-math.Pi/2)
+			d += fmt.Sprintf("A %d,%d 0 0 1 %d,%d ", ro, ro, int(rof*cpsi+0.5+dx)+x, int(rof*spsi+0.5+dy)+y)
+			d += fmt.Sprintf("L %d,%d ", int(rif*cpsi+0.5+dx)+x, int(rif*spsi+0.5+dy)+y)
+			d += fmt.Sprintf("A %d,%d 0 0 0 %d,%d ", ri, ri, a, b)
+			d += fmt.Sprintf("z")
+
+		}
+
+		sg.svg.Path(d, s+sf)
+
+		if w.Text != "" {
+			_, fh, _ := sg.FontMetrics(w.Font)
+			alpha := (w.Phi + w.Psi) / 2
+			var rt int
+			if ri > 0 {
+				rt = (ri + ro) / 2
+			} else {
+				rt = ro - 3*fh
+				if rt <= ro/2 {
+					rt = ro - 2*fh
+				}
+			}
+			tx, ty := int(float64(rt)*math.Cos(alpha)+0.5)+x, int(float64(rt)*math.Sin(alpha)+0.5)+y
+
+			sg.Text(tx, ty, w.Text, "cc", 0, w.Font)
+		}
 	}
 }

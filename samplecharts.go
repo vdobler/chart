@@ -565,7 +565,11 @@ func pieChart() {
 
 	piec.AddDataPair("America", []string{"North", "Middel", "South"}, []float64{20, 10, 15})
 	thesvg.Gtransform("translate(400 300)")
+	piec.Inner = 0
 	piec.Key.Cols = 2
+	piec.ShowVal = 2
+	chart.PieChartShrinkage = 0.5
+	chart.PieChartBorder = 0.1
 	piec.Plot(svggraphics)
 	piec.Plot(txtgraphics)
 	fmt.Printf("%s\n", txtgraphics.String())

@@ -568,6 +568,8 @@ func (g *TextGraphics) Wedge(x, y, ry int, phi, psi float64, style chart.Style) 
 
 }
 
+func (g *TextGraphics) Rings(wedges []chart.Wedgeinfo, x, y, r int) {
+}
 
 func min(a, b int) int {
 	if a < b {

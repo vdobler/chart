@@ -2,6 +2,7 @@
 *~
 *.8
 _obj/*
+*.a
 _test/*
 _test*
 8.out

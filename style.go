@@ -154,7 +154,7 @@ func AutoStyle(i int, fill bool) (style Style) {
 
 	if fill {
 		style.LineStyle = SolidLine
-		style.LineWidth = 2
+		style.LineWidth = 3
 		if i < nc {
 			style.FillColor = lighter(style.LineColor, StandardFillFactor)
 		} else if i <= 2*nc {
@@ -177,10 +177,11 @@ var DefaultStyle = map[string]Style{"axis": Style{LineColor: "#000000", LineWidt
 	"zero":  Style{LineColor: "#404040", LineWidth: 1, LineStyle: SolidLine},
 	"grid":  Style{LineColor: "#808080", LineWidth: 1, LineStyle: SolidLine},
 	"key":   Style{LineColor: "#202020", LineWidth: 1, LineStyle: SolidLine, FillColor: "#f0f0f0", Alpha: 0.2},
+	"title": Style{LineColor: "#000000", LineWidth: 1, LineStyle: SolidLine, FillColor: "#ecc750", Alpha: 0},
 }
 
 var DefaultFont = map[string]Font{"title": Font{Size: +1}, "label": Font{}, "key": Font{Size: -1},
-	"tic": Font{}, "rangelimit": Font{},
+	"tic": Font{}, "rangelimit": Font{Size: -1},
 }
 
 func hsv2rgb(h, s, v int) (r, g, b int) {

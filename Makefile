@@ -25,10 +25,8 @@ DRIVERS=\
 	svg\
 	txt
 
-chart.$(O): $(GOFILES)
-	$(GC) -o chart.$(O) $^
 
-samplechart: samplecharts.go chart.$(O) drivers
+samplechart: samplecharts.go install drivers
 	$(GC) -I. samplecharts.go
 	$(LD) -L. -o samplecharts samplecharts.$(O)
 

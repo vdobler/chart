@@ -3,9 +3,22 @@ Charts for Go
 
 Basic charts in go.
 
-Targeted are the usefull R charts:
-- Strip Chart
-- Histogram
-- Scatter Plot
-- QQ Plots
+The following chart types are implemented:
+ - Strip Charts
+ - Scatter / Function-Plot Charts
+ - Histograms
+ - Bar and Categorical Bar Charts
+ - Pie/Ring Charts
+
+Still missing are:
+ - Q-Q Plots
+ - Trellis Plots
+
+Package chart itself provideds the charts/plots itself, the charts/plots
+can be output to different graphic devices/drivers.  Currently only
+ - txt (ASCII art charts)
+ - svg (scalable vector graphics via github.com/ajstarks/svgo)
+are implemented.  Still missing (but to come):
+ - cairo (via bitbucket.org/dethe/gocairo)
+ - go image (via native image/draw)
 

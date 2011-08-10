@@ -69,7 +69,6 @@ func (c *PieChart) formatVal(v, sum float64) (s string) {
 }
 
 var PieChartTextAscpect float64 = 1.9 // how much wider is the x-radius
-var PieChartLabelPos = 0.75           // relativ to outer radius
 var PieChartShrinkage = 0.65          // Scaling factor of radius of next data set.
 var PieChartBorder = 0.05             // Fraction of white border outside next data sets.
 
@@ -83,6 +82,7 @@ func (c *PieChart) Plot(g Graphics) {
 	width += 0
 
 	r := height / 2
+	r0 := r
 	x0, y0 := leftm+r, topm+r
 
 	g.Begin()
@@ -100,26 +100,26 @@ func (c *PieChart) Plot(g Graphics) {
 			sum += d.Val
 		}
 
+		wedges := make([]Wedgeinfo, len(data.Samples))
+		var ri int = 0
+		if c.Inner > 0 {
+			ri = int(float64(r) * c.Inner)
+		}
+
 		var phi float64 = -math.Pi
 		for j, d := range data.Samples {
 			style := data.Style[j]
 			alpha := 2 * math.Pi * d.Val / sum
-			g.Wedge(x0, y0, r, phi, phi+alpha, style)
 
-			if i > 0 {
-				// clear a border
+			var t string
+			if c.ShowVal > 0 {
+				t = c.formatVal(d.Val, sum)
 			}
-			if c.ShowVal != 0 {
-				// put text
-			}
+			wedges[j] = Wedgeinfo{Ro: r, Ri: ri, Phi: phi, Psi: phi + alpha, Text: t, Tp: "c", Style: style, Font: Font{}}
+
 			phi += alpha
 		}
-
-		if c.Inner > 0 {
-			ri := int(float64(r) * c.Inner)
-			st := Style{LineWidth: 0, FillColor: "#ffffff", Symbol: ' '}
-			g.Wedge(x0, y0, ri, 0, 15, st)
-		}
+		g.Rings(wedges, x0, y0, r0)
 
 		r = int(float64(r) * PieChartShrinkage)
 		if i < len(c.Data)-1 {
