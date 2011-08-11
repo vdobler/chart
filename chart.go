@@ -77,6 +77,85 @@ type Range struct {
 	Screen2Data func(int) float64     // Inverse of Data2Screen
 }
 
+// Prepare the range r for use, especially set up all values needed for autoscale() to work properly
+func (r *Range) init() {
+	// All the min stuff
+	if r.MinMode.Fixed {
+		// copy TValue to Value if set and time axis
+		if r.Time && r.MinMode.TValue != nil {
+			r.MinMode.Value = float64(r.MinMode.TValue.Seconds())
+		}
+		r.DataMin = r.MinMode.Value
+	} else if r.MinMode.Constrained {
+		// copy TLower/TUpper to Lower/Upper if set and time axis
+		if r.Time && r.MinMode.TLower != nil {
+			r.MinMode.Lower = float64(r.MinMode.TLower.Seconds())
+		}
+		if r.Time && r.MinMode.TUpper != nil {
+			r.MinMode.Upper = float64(r.MinMode.TUpper.Seconds())
+		}
+		if r.MinMode.Lower == 0 && r.MinMode.Upper == 0 {
+			// Constrained but un-initialized: Full autoscaling
+			r.MinMode.Lower = -math.MaxFloat64
+			r.MinMode.Upper = math.MaxFloat64
+		}
+		r.DataMin = r.MinMode.Upper
+	} else {
+		r.DataMin = math.MaxFloat64
+	}
+
+	// All the max stuff
+	if r.MaxMode.Fixed {
+		// copy TValue to Value if set and time axis
+		if r.Time && r.MaxMode.TValue != nil {
+			r.MaxMode.Value = float64(r.MaxMode.TValue.Seconds())
+		}
+		r.DataMax = r.MaxMode.Value
+	} else if r.MaxMode.Constrained {
+		// copy TLower/TUpper to Lower/Upper if set and time axis
+		if r.Time && r.MaxMode.TLower != nil {
+			r.MaxMode.Lower = float64(r.MaxMode.TLower.Seconds())
+		}
+		if r.Time && r.MaxMode.TUpper != nil {
+			r.MaxMode.Upper = float64(r.MaxMode.TUpper.Seconds())
+		}
+		if r.MaxMode.Lower == 0 && r.MaxMode.Upper == 0 {
+			// Constrained but un-initialized: Full autoscaling
+			r.MaxMode.Lower = -math.MaxFloat64
+			r.MaxMode.Upper = math.MaxFloat64
+		}
+		r.DataMax = r.MaxMode.Upper
+	} else {
+		r.DataMax = -math.MaxFloat64
+	}
+
+	fmt.Printf("At end of init: DataMin / DataMax  =   %g / %g\n", r.DataMin, r.DataMax)
+}
+
+
+// Update DataMin and DataMax according to the RangeModes.
+func (r *Range) autoscale(x float64) {
+
+	if x < r.DataMin && !r.MinMode.Fixed {
+		if !r.MinMode.Constrained {
+			// full autoscaling
+			r.DataMin = x
+		} else {
+			r.DataMin = fmin(fmax(x, r.MinMode.Lower), r.DataMin)
+		}
+	}
+
+	if x > r.DataMax && !r.MaxMode.Fixed {
+		if !r.MaxMode.Constrained {
+			// full autoscaling
+			r.DataMax = x
+		} else {
+			r.DataMax = fmax(fmin(x, r.MaxMode.Upper), r.DataMax)
+		}
+	}
+}
+
+
 var wochentage = []string{"So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"}
 
 func calendarWeek(t *time.Time) int {
@@ -345,7 +424,6 @@ func (r *Range) fDelta(delta, mindelta float64) float64 {
 	}
 
 	// Set up nice tic delta of the form 1,2,5 * 10^n
-	fmt.Printf("\n==================\n%f\nCalling math.Pow10(%d)\n===================\n", math.Log10(delta), int(math.Floor(math.Log10(delta))))
 	de := math.Pow10(int(math.Floor(math.Log10(delta))))
 	f := delta / de
 	switch {

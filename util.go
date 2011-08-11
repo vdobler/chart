@@ -71,3 +71,17 @@ func clip(x, l, u int) int {
 	}
 	return x
 }
+
+func fmax(a, b float64) float64 {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+func fmin(a, b float64) float64 {
+	if a < b {
+		return a
+	}
+	return b
+}

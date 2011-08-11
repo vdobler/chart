@@ -25,156 +25,63 @@ type ScatterChartData struct {
 }
 
 // AddFunc adds a function f to this chart.
-func (sc *ScatterChart) AddFunc(name string, f func(float64) float64, plotstyle PlotStyle, style Style) {
+func (c *ScatterChart) AddFunc(name string, f func(float64) float64, plotstyle PlotStyle, style Style) {
 	if plotstyle.undefined() {
 		plotstyle = PlotStyleLines
 	}
 	if style.empty() {
-		style = AutoStyle(len(sc.Data), false)
+		style = AutoStyle(len(c.Data), false)
 	}
 
 	scd := ScatterChartData{Name: name, PlotStyle: plotstyle, Style: style, Samples: nil, Func: f}
-	sc.Data = append(sc.Data, scd)
+	c.Data = append(c.Data, scd)
 	if name != "" {
 		ke := KeyEntry{Text: name, PlotStyle: plotstyle, Style: style}
-		sc.Key.Entries = append(sc.Key.Entries, ke)
+		c.Key.Entries = append(c.Key.Entries, ke)
 	}
 }
 
 
 // AddData adds points in data to chart.
-func (sc *ScatterChart) AddData(name string, data []EPoint, plotstyle PlotStyle, style Style) {
+func (c *ScatterChart) AddData(name string, data []EPoint, plotstyle PlotStyle, style Style) {
 
 	// Update styles if non given
 	if plotstyle.undefined() {
 		plotstyle = PlotStylePoints
 	}
 	if style.empty() {
-		style = AutoStyle(len(sc.Data), false)
+		style = AutoStyle(len(c.Data), false)
 	}
 
 	// Init axis
-	if len(sc.Data) == 0 {
-		sc.XRange.init()
-		sc.YRange.init()
+	if len(c.Data) == 0 {
+		c.XRange.init()
+		c.YRange.init()
 	}
 
 	// Add data
 	scd := ScatterChartData{Name: name, PlotStyle: plotstyle, Style: style, Samples: data, Func: nil}
-	sc.Data = append(sc.Data, scd)
-
-	// Add key/legend entry
-	if name != "" {
-		ke := KeyEntry{Style: style, PlotStyle: plotstyle, Text: name}
-		sc.Key.Entries = append(sc.Key.Entries, ke)
-	}
+	c.Data = append(c.Data, scd)
 
 	// Autoscale
 	for _, d := range data {
 		xl, yl, xh, yh := d.BoundingBox()
-		sc.XRange.autoscale(xl)
-		sc.XRange.autoscale(xh)
-		sc.YRange.autoscale(yl)
-		sc.YRange.autoscale(yh)
+		c.XRange.autoscale(xl)
+		c.XRange.autoscale(xh)
+		c.YRange.autoscale(yl)
+		c.YRange.autoscale(yh)
 	}
 
-}
-
-
-func fmax(a, b float64) float64 {
-	if a > b {
-		return a
-	}
-	return b
-}
-func fmin(a, b float64) float64 {
-	if a < b {
-		return a
-	}
-	return b
-}
-
-// Prepare the range r for use, especially set up all values needed for autoscale() to work properly
-func (r *Range) init() {
-	// All the min stuff
-	if r.MinMode.Fixed {
-		// copy TValue to Value if set and time axis
-		if r.Time && r.MinMode.TValue != nil {
-			r.MinMode.Value = float64(r.MinMode.TValue.Seconds())
-		}
-		r.DataMin = r.MinMode.Value
-	} else if r.MinMode.Constrained {
-		// copy TLower/TUpper to Lower/Upper if set and time axis
-		if r.Time && r.MinMode.TLower != nil {
-			r.MinMode.Lower = float64(r.MinMode.TLower.Seconds())
-		}
-		if r.Time && r.MinMode.TUpper != nil {
-			r.MinMode.Upper = float64(r.MinMode.TUpper.Seconds())
-		}
-		if r.MinMode.Lower == 0 && r.MinMode.Upper == 0 {
-			// Constrained but un-initialized: Full autoscaling
-			r.MinMode.Lower = -math.MaxFloat64
-			r.MinMode.Upper = math.MaxFloat64
-		}
-		r.DataMin = r.MinMode.Upper
-	} else {
-		r.DataMin = math.MaxFloat64
-	}
-
-	// All the max stuff
-	if r.MaxMode.Fixed {
-		// copy TValue to Value if set and time axis
-		if r.Time && r.MaxMode.TValue != nil {
-			r.MaxMode.Value = float64(r.MaxMode.TValue.Seconds())
-		}
-		r.DataMax = r.MaxMode.Value
-	} else if r.MaxMode.Constrained {
-		// copy TLower/TUpper to Lower/Upper if set and time axis
-		if r.Time && r.MaxMode.TLower != nil {
-			r.MaxMode.Lower = float64(r.MaxMode.TLower.Seconds())
-		}
-		if r.Time && r.MaxMode.TUpper != nil {
-			r.MaxMode.Upper = float64(r.MaxMode.TUpper.Seconds())
-		}
-		if r.MaxMode.Lower == 0 && r.MaxMode.Upper == 0 {
-			// Constrained but un-initialized: Full autoscaling
-			r.MaxMode.Lower = -math.MaxFloat64
-			r.MaxMode.Upper = math.MaxFloat64
-		}
-		r.DataMax = r.MaxMode.Upper
-	} else {
-		r.DataMax = -math.MaxFloat64
-	}
-
-	fmt.Printf("At end of init: DataMin / DataMax  =   %g / %g\n", r.DataMin, r.DataMax)
-}
-
-
-// Update DataMin and DataMax according to the RangeModes.
-func (r *Range) autoscale(x float64) {
-
-	if x < r.DataMin && !r.MinMode.Fixed {
-		if !r.MinMode.Constrained {
-			// full autoscaling
-			r.DataMin = x
-		} else {
-			r.DataMin = fmin(fmax(x, r.MinMode.Lower), r.DataMin)
-		}
-	}
-
-	if x > r.DataMax && !r.MaxMode.Fixed {
-		if !r.MaxMode.Constrained {
-			// full autoscaling
-			r.DataMax = x
-		} else {
-			r.DataMax = fmax(fmin(x, r.MaxMode.Upper), r.DataMax)
-		}
+	// Add key/legend entry
+	if name != "" {
+		ke := KeyEntry{Style: style, PlotStyle: plotstyle, Text: name}
+		c.Key.Entries = append(c.Key.Entries, ke)
 	}
 }
 
-/*
+
 // Add points in data to chart.
-func (sc *ScatterChart) AddDataGeneric(name string, data []XYErrValue, style DataStyle) {
+func (c *ScatterChart) AddDataGeneric(name string, data []XYErrValue, plotstyle PlotStyle, style Style) {
 	edata := make([]EPoint, len(data))
 	for i, d := range data {
 		x, y := d.XVal(), d.YVal()
@@ -184,51 +91,51 @@ func (sc *ScatterChart) AddDataGeneric(name string, data []XYErrValue, style Dat
 		xo, yo := xh-dx/2-x, yh-dy/2-y
 		edata[i] = EPoint{X: x, Y: y, DeltaX: dx, DeltaY: dy, OffX: xo, OffY: yo}
 	}
-	sc.AddData(name, edata, style)
+	c.AddData(name, edata, plotstyle, style)
 }
-*/
+
 
 // Make points from x and y and add to chart.
-func (sc *ScatterChart) AddDataPair(name string, x, y []float64, plotstyle PlotStyle, style Style) {
+func (c *ScatterChart) AddDataPair(name string, x, y []float64, plotstyle PlotStyle, style Style) {
 	n := min(len(x), len(y))
 	data := make([]EPoint, n)
 	nan := math.NaN()
 	for i := 0; i < n; i++ {
 		data[i] = EPoint{X: x[i], Y: y[i], DeltaX: nan, DeltaY: nan}
 	}
-	sc.AddData(name, data, plotstyle, style)
+	c.AddData(name, data, plotstyle, style)
 }
 
 
 // Plot outputs the scatter chart sc to g.
-func (sc *ScatterChart) Plot(g Graphics) {
-	layout := Layout(g, sc.Title, sc.XRange.Label, sc.YRange.Label,
-		sc.XRange.TicSetting.Hide, sc.YRange.TicSetting.Hide, &sc.Key)
+func (c *ScatterChart) Plot(g Graphics) {
+	layout := Layout(g, c.Title, c.XRange.Label, c.YRange.Label,
+		c.XRange.TicSetting.Hide, c.YRange.TicSetting.Hide, &c.Key)
 
 	width, height := layout.Width, layout.Height
 	topm, leftm := layout.Top, layout.Left
 	numxtics, numytics := layout.NumXtics, layout.NumYtics
 
 	fmt.Printf("\nSet up of X-Range (%d)\n", numxtics)
-	sc.XRange.Setup(numxtics, numxtics+2, width, leftm, false)
+	c.XRange.Setup(numxtics, numxtics+2, width, leftm, false)
 	fmt.Printf("\nSet up of Y-Range (%d)\n", numytics)
-	sc.YRange.Setup(numytics, numytics+2, height, topm, true)
+	c.YRange.Setup(numytics, numytics+2, height, topm, true)
 
 	g.Begin()
 
-	if sc.Title != "" {
-		g.Title(sc.Title)
+	if c.Title != "" {
+		g.Title(c.Title)
 	}
 
-	g.XAxis(sc.XRange, topm+height, topm)
-	g.YAxis(sc.YRange, leftm, leftm+width)
+	g.XAxis(c.XRange, topm+height, topm)
+	g.YAxis(c.YRange, leftm, leftm+width)
 
 	// Plot Data
 	nan := math.NaN()
-	xf, yf := sc.XRange.Data2Screen, sc.YRange.Data2Screen
-	xmin, xmax := sc.XRange.Min, sc.XRange.Max
-	ymin, ymax := sc.YRange.Min, sc.YRange.Max
-	for _, data := range sc.Data {
+	xf, yf := c.XRange.Data2Screen, c.YRange.Data2Screen
+	xmin, xmax := c.XRange.Min, c.XRange.Max
+	ymin, ymax := c.YRange.Min, c.YRange.Max
+	for _, data := range c.Data {
 		style := data.Style
 		if data.Samples != nil {
 			// Samples
@@ -293,21 +200,21 @@ func (sc *ScatterChart) Plot(g Graphics) {
 			points := make([]EPoint, 0, pcap)
 
 			for sx := leftm; sx < leftm+width; sx += step {
-				x := sc.XRange.Screen2Data(sx)
+				x := c.XRange.Screen2Data(sx)
 				y := data.Func(x)
 				// TODO: half sample width if too f''(x) too big
-				if y >= sc.YRange.Min && y <= sc.YRange.Max {
+				if y >= c.YRange.Min && y <= c.YRange.Max {
 					sy := yf(y)
 					p := EPoint{X: float64(sx), Y: float64(sy), DeltaX: nan, DeltaY: nan}
 					points = append(points, p)
 				} else {
 					// TODO: buggy
-					if y <= sc.YRange.Min {
-						sy := yf(sc.YRange.Min)
+					if y <= c.YRange.Min {
+						sy := yf(c.YRange.Min)
 						p := EPoint{X: float64(sx), Y: float64(sy), DeltaX: nan, DeltaY: nan}
 						points = append(points, p)
-					} else { // y > sc.YRange.Max 
-						sy := yf(sc.YRange.Max)
+					} else { // y > c.YRange.Max 
+						sy := yf(c.YRange.Max)
 						p := EPoint{X: float64(sx), Y: float64(sy), DeltaX: nan, DeltaY: nan}
 						points = append(points, p)
 					}
@@ -319,8 +226,8 @@ func (sc *ScatterChart) Plot(g Graphics) {
 		}
 	}
 
-	if !sc.Key.Hide {
-		g.Key(layout.KeyX, layout.KeyY, sc.Key)
+	if !c.Key.Hide {
+		g.Key(layout.KeyX, layout.KeyY, c.Key)
 	}
 
 	g.End()

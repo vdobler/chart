@@ -30,27 +30,16 @@ type CategoryBarChartData struct {
 // AddData will add data to the chart. Note that data may contain keys not present
 // in the Categories of the CategoryBarChart: These will be ignored.
 func (c *CategoryBarChart) AddData(name string, data map[string]float64, style Style) {
+	if len(c.Data) == 0 { // first data set
+		c.YRange.init()
+	}
 	c.Data = append(c.Data, CategoryBarChartData{name, style, data})
+	for _, v := range data {
+		c.YRange.autoscale(v)
+	}
 	if name != "" {
 		c.Key.Entries = append(c.Key.Entries, KeyEntry{Style: style, Text: name, PlotStyle: PlotStyleBox})
 	}
-
-	if len(c.Data) == 1 { // first data set
-		for _, v := range data {
-			c.YRange.DataMin = v
-			c.YRange.DataMax = v
-			break
-		}
-	}
-	for _, v := range data {
-		if v < c.YRange.DataMin {
-			c.YRange.DataMin = v
-		} else if v > c.YRange.DataMax {
-			c.YRange.DataMax = v
-		}
-	}
-	c.YRange.Min = c.YRange.DataMin
-	c.YRange.Max = c.YRange.DataMax
 }
 
 

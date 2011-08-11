@@ -40,30 +40,19 @@ type BarChartData struct {
 
 // AddData adds the data to the chart.
 func (c *BarChart) AddData(name string, data []Point, style Style) {
+	if len(c.Data) == 0 {
+		c.XRange.init()
+		c.YRange.init()
+	}
 	c.Data = append(c.Data, BarChartData{name, style, data})
+	for _, d := range data {
+		c.XRange.autoscale(d.X)
+		c.YRange.autoscale(d.Y)
+	}
+
 	if name != "" {
 		c.Key.Entries = append(c.Key.Entries, KeyEntry{Style: style, Text: name, PlotStyle: PlotStyleBox})
 	}
-	if len(c.Data) == 1 { // first data set 
-		c.XRange.DataMin = data[0].X
-		c.XRange.DataMax = data[0].X
-		c.YRange.DataMin = data[0].Y
-		c.YRange.DataMax = data[0].Y
-	}
-	for _, d := range data {
-		if d.X < c.XRange.DataMin {
-			c.XRange.DataMin = d.X
-		} else if d.X > c.XRange.DataMax {
-			c.XRange.DataMax = d.X
-		}
-		if d.Y < c.YRange.DataMin {
-			c.YRange.DataMin = d.Y
-		} else if d.Y > c.YRange.DataMax {
-			c.YRange.DataMax = d.Y
-		}
-	}
-	c.XRange.Min = c.XRange.DataMin
-	c.XRange.Max = c.XRange.DataMax
 }
 
 // AddDataPair is a convenience method to add all the (x[i],y[i]) pairs to the chart.

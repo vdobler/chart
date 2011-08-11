@@ -32,27 +32,24 @@ type HistChart struct {
 }
 
 func (c *HistChart) AddData(name string, data []float64, style Style) {
+	// Style
 	if style.empty() {
 		style = AutoStyle(len(c.Data), true)
 	}
+
+	// Init axis, add data, autoscale
+	if len(c.Data) == 0 {
+		c.XRange.init()
+	}
 	c.Data = append(c.Data, HistChartData{name, style, data})
+	for _, d := range data {
+		c.XRange.autoscale(d)
+	}
+
+	// Key/Legend
 	if name != "" {
 		c.Key.Entries = append(c.Key.Entries, KeyEntry{Text: name, Style: style, PlotStyle: PlotStyleBox})
 	}
-
-	if len(c.Data) == 1 { // first data set 
-		c.XRange.DataMin = data[0]
-		c.XRange.DataMax = data[0]
-	}
-	for _, d := range data {
-		if d < c.XRange.DataMin {
-			c.XRange.DataMin = d
-		} else if d > c.XRange.DataMax {
-			c.XRange.DataMax = d
-		}
-	}
-	c.XRange.Min = c.XRange.DataMin
-	c.XRange.Max = c.XRange.DataMax
 }
 
 func (c *HistChart) AddDataInt(name string, data []int, style Style) {
@@ -185,10 +182,10 @@ func (c *HistChart) Plot(g Graphics) {
 	counts, max := c.binify(binStart, c.BinWidth, binCnt)
 
 	// Fix lower end of y axis
-	c.YRange.DataMax = float64(max)
 	c.YRange.DataMin = 0
 	c.YRange.MinMode.Fixed = true
 	c.YRange.MinMode.Value = 0
+	c.YRange.autoscale(float64(max))
 	c.YRange.Setup(numytics, numytics+2, height, topm, true)
 
 	g.Begin()
