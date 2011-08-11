@@ -345,6 +345,7 @@ func (r *Range) fDelta(delta, mindelta float64) float64 {
 	}
 
 	// Set up nice tic delta of the form 1,2,5 * 10^n
+	fmt.Printf("\n==================\n%f\nCalling math.Pow10(%d)\n===================\n", math.Log10(delta), int(math.Floor(math.Log10(delta))))
 	de := math.Pow10(int(math.Floor(math.Log10(delta))))
 	f := delta / de
 	switch {
@@ -397,7 +398,7 @@ func (r *Range) fSetup(desiredNumberOfTics, maxNumberOfTics int, delta, mindelta
 	} else {
 		first := delta * math.Ceil(r.Min/delta)
 		num := int(-first/delta + math.Floor(r.Max/delta) + 1.5)
-		fmt.Printf("Range: (%g,%g) --> (%g,%g), Tic-Delta: %g, %d tics from %g\n",
+		fmt.Printf("Range: (%.2f,%.2f) --> (%g,%g), Tic-Delta: %g, %d tics from %g\n",
 			r.DataMin, r.DataMax, r.Min, r.Max, delta, num, first)
 
 		// Set up tics
@@ -440,6 +441,9 @@ func (r *Range) Setup(desiredNumberOfTics, maxNumberOfTics, sWidth, sOffset int,
 	}
 	delta := (r.DataMax - r.DataMin) / float64(desiredNumberOfTics-1)
 	mindelta := (r.DataMax - r.DataMin) / float64(maxNumberOfTics-1)
+
+	fmt.Printf("Data: [%.2f:%.2f] --> delta/mindelta = %.2f/%.2f (desired %d/max %d)\n",
+		r.DataMin, r.DataMax, delta, mindelta, desiredNumberOfTics, maxNumberOfTics)
 
 	if r.Time {
 		r.tSetup(desiredNumberOfTics, maxNumberOfTics, delta, mindelta)

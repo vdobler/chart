@@ -54,14 +54,14 @@ type EPoint struct {
 func (p EPoint) XVal() float64 { return p.X }
 func (p EPoint) YVal() float64 { return p.Y }
 func (p EPoint) XErr() (float64, float64) {
-	xl, _, xh, _ := p.boundingBox()
+	xl, _, xh, _ := p.BoundingBox()
 	return xl, xh
 }
 func (p EPoint) YErr() (float64, float64) {
-	_, yl, _, yh := p.boundingBox()
+	_, yl, _, yh := p.BoundingBox()
 	return yl, yh
 }
-func (p EPoint) boundingBox() (xl, yl, xh, yh float64) { // bounding box
+func (p EPoint) BoundingBox() (xl, yl, xh, yh float64) { // bounding box
 	xl, xh, yl, yh = p.X, p.X, p.Y, p.Y
 	if !math.IsNaN(p.DeltaX) {
 		xl -= p.DeltaX/2 - p.OffX

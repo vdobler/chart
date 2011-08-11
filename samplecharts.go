@@ -250,6 +250,116 @@ func fancyScatter() {
 
 
 //
+// Autoscaling
+//
+func autoscale() {
+	N := 200
+	points := make([]chart.EPoint, N)
+	for i := 0; i < N-1; i++ {
+		points[i].X = rand.Float64()*10000 - 5000 // Full range is [-5000:5000]
+		points[i].Y = rand.Float64()*10000 - 5000 // Full range is [-5000:5000]
+		points[i].DeltaX = rand.Float64() * 400
+		points[i].DeltaY = rand.Float64() * 400
+	}
+	points[N-1].X = -650
+	points[N-1].Y = -2150
+	points[N-1].DeltaX = 400
+	points[N-1].DeltaY = 400
+	points[N-1].OffX = 100
+	points[N-1].OffY = -150
+
+	s2f, _ := os.Create("xautoscale.svg")
+	mysvg := svg.New(s2f)
+	mysvg.Start(1000, 600)
+	mysvg.Title("My Plot")
+	mysvg.Rect(0, 0, 1000, 600, "fill: #ffffff")
+
+	{
+		s := chart.ScatterChart{Title: "Full Autoscaling"}
+		s.Key.Hide = true
+		s.XRange.TicSetting.Mirror = 1
+		s.YRange.TicSetting.Mirror = 1
+
+		s.AddData("Data", points, chart.PlotStylePoints, chart.Style{Symbol: 'o', SymbolColor: "#00ee00"})
+
+		svggraphics := svgchart.NewSvgGraphics(mysvg, 500, 300, "Arial", 11)
+		s.Plot(svggraphics)
+
+		txtgraphics := txtchart.NewTextGraphics(100, 30)
+		s.Plot(txtgraphics)
+		fmt.Printf("%s\n", txtgraphics.String())
+	}
+
+	{
+		s := chart.ScatterChart{Title: "Xmin: -1850, Xmax clipped to [500:900]"}
+		s.Key.Hide = true
+		s.XRange.TicSetting.Mirror = 1
+		s.YRange.TicSetting.Mirror = 1
+		s.XRange.MinMode.Fixed, s.XRange.MinMode.Value = true, -1850
+		s.XRange.MaxMode.Constrained = true
+		s.XRange.MaxMode.Lower, s.XRange.MaxMode.Upper = 500, 900
+
+		s.AddData("Data", points, chart.PlotStylePoints, chart.Style{Symbol: '0', SymbolColor: "#ee0000"})
+		mysvg.Gtransform("translate(500 0)")
+		svggraphics := svgchart.NewSvgGraphics(mysvg, 500, 300, "Arial", 11)
+		s.Plot(svggraphics)
+		txtgraphics := txtchart.NewTextGraphics(100, 30)
+		s.Plot(txtgraphics)
+		fmt.Printf("%s\n", txtgraphics.String())
+		mysvg.Gend()
+	}
+
+	{
+		s := chart.ScatterChart{Title: "Xmin: -1850, Ymax clipped to [9000:11000]"}
+		s.Key.Hide = true
+		s.XRange.TicSetting.Mirror = 1
+		s.YRange.TicSetting.Mirror = 1
+		s.XRange.MinMode.Fixed, s.XRange.MinMode.Value = true, -1850
+		s.YRange.MaxMode.Constrained = true
+		s.YRange.MaxMode.Lower, s.YRange.MaxMode.Upper = 9000, 11000
+
+		s.AddData("Data", points, chart.PlotStylePoints, chart.Style{Symbol: '0', SymbolColor: "#0000ee"})
+		mysvg.Gtransform("translate(0 300)")
+		svggraphics := svgchart.NewSvgGraphics(mysvg, 500, 300, "Arial", 11)
+		s.Plot(svggraphics)
+		txtgraphics := txtchart.NewTextGraphics(100, 30)
+		s.Plot(txtgraphics)
+		fmt.Printf("%s\n", txtgraphics.String())
+		mysvg.Gend()
+	}
+
+	{
+		s := chart.ScatterChart{Title: "Tiny fraction"}
+		s.Key.Hide = true
+		s.XRange.TicSetting.Mirror = 1
+		s.YRange.TicSetting.Mirror = 1
+
+		s.YRange.MinMode.Constrained = true
+		s.YRange.MinMode.Lower, s.YRange.MinMode.Upper = -2250, -2050
+		s.YRange.MaxMode.Constrained = true
+		s.YRange.MaxMode.Lower, s.YRange.MaxMode.Upper = -1950, -1700
+
+		s.XRange.MinMode.Constrained = true
+		s.XRange.MinMode.Lower, s.XRange.MinMode.Upper = -900, -800
+		s.XRange.MaxMode.Constrained = true
+		s.XRange.MaxMode.Lower, s.XRange.MaxMode.Upper = -850, -650
+
+		s.AddData("Data", points, chart.PlotStylePoints, chart.Style{Symbol: '0', SymbolColor: "#eecc"})
+		mysvg.Gtransform("translate(500 300)")
+		svggraphics := svgchart.NewSvgGraphics(mysvg, 500, 300, "Arial", 11)
+		s.Plot(svggraphics)
+		txtgraphics := txtchart.NewTextGraphics(100, 30)
+		s.Plot(txtgraphics)
+		fmt.Printf("%s\n", txtgraphics.String())
+		mysvg.Gend()
+	}
+
+	mysvg.End()
+	s2f.Close()
+}
+
+
+//
 // Box Charts
 //
 func boxChart() {
@@ -621,6 +731,7 @@ func textlen() {
 
 
 func main() {
+
 	stripChart()
 
 	scatterTics()
@@ -643,6 +754,8 @@ func main() {
 	pieChart()
 
 	textlen()
+
+	autoscale()
 
 	/*
 		 steps := []int64{ 1, 5, 7, 8, 10, 30, 50, 100, 150, 300, 500, 800, 1000, 1500, 3000, 5000,8000, 10000, 15000, 20000, 30000, 50000, 70000, 100000, 200000, 400000, 800000, 1200000, 1800000, 2000000, 2200000, 2500000, 3000000, 5000000, 9000000, 2 * 9000000, 4 * 9000000 }

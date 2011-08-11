@@ -251,7 +251,7 @@ func GenericScatter(bg BasicGraphics, points []EPoint, plotstyle PlotStyle, styl
 		if ebs.LineWidth == 0 {
 			ebs.LineWidth = 1
 		}
-		xl, yl, xh, yh := p.boundingBox()
+		xl, yl, xh, yh := p.BoundingBox()
 		// fmt.Printf("Draw %d: %f %f-%f\n", i, p.DeltaX, xl,xh)
 		if !math.IsNaN(p.DeltaX) {
 			bg.Line(int(xl), int(p.Y), int(xh), int(p.Y), ebs)

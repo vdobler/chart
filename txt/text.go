@@ -319,7 +319,7 @@ func (g *TextGraphics) Symbol(x, y, s int, style chart.Style) {
 	g.tb.Put(x, y, s)
 }
 func (g *TextGraphics) Title(text string) {
-	x, y := g.w/2, 0
+	x, y := g.w/2, 1
 	g.Text(x, y, text, "tc", 0, chart.Font{})
 }
 
@@ -426,7 +426,34 @@ func (g *TextGraphics) YAxis(yrange chart.Range, x, x1 int) {
 }
 
 func (g *TextGraphics) Scatter(points []chart.EPoint, plotstyle chart.PlotStyle, style chart.Style) {
-	chart.GenericScatter(g, points, plotstyle, style)
+	// First pass: Error bars
+	for _, p := range points {
+		xl, yl, xh, yh := p.BoundingBox()
+		if !math.IsNaN(p.DeltaX) {
+			g.tb.Line(int(xl), int(p.Y), int(xh), int(p.Y), '-')
+		}
+		if !math.IsNaN(p.DeltaY) {
+			g.tb.Line(int(p.X), int(yl), int(p.X), int(yh), '|')
+		}
+	}
+
+	// Second pass: Line
+	if (plotstyle&chart.PlotStyleLines) != 0 && len(points) > 0 {
+		lastx, lasty := points[0].X, points[0].Y
+		for i := 1; i < len(points); i++ {
+			x, y := points[i].X, points[i].Y
+			g.tb.Line(int(lastx), int(lasty), int(x), int(y), style.Symbol)
+			lastx, lasty = x, y
+		}
+	}
+
+	// Third pass: symbols
+	if (plotstyle&chart.PlotStylePoints) != 0 && len(points) != 0 {
+		for _, p := range points {
+			g.tb.Put(int(p.X), int(p.Y), style.Symbol)
+		}
+	}
+	// chart.GenericScatter(g, points, plotstyle, style)
 }
 
 func (g *TextGraphics) Boxes(boxes []chart.Box, width int, style chart.Style) {
