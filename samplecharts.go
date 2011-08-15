@@ -193,7 +193,7 @@ func scatterTics() {
 //
 // Full fletched scatter plots
 //
-func fancyScatter() {
+func scatterChart() {
 	pl := chart.ScatterChart{Title: "Scatter + Lines"}
 	pl.XRange.Label, pl.YRange.Label = "X - Value", "Y - Value"
 	pl.Key.Pos = "itl"
@@ -201,17 +201,18 @@ func fancyScatter() {
 	pl.XRange.TicSetting.Grid = 1
 	x := []float64{-4, -3.3, -1.8, -1, 0.2, 0.8, 1.8, 3.1, 4, 5.3, 6, 7, 8, 9}
 	y := []float64{22, 18, -3, 0, 0.5, 2, 45, 12, 16.5, 24, 30, 55, 60, 70}
-	pl.AddDataPair("Mmnt", x, y, chart.PlotStyleLinesPoints,
-		chart.Style{Symbol: '#', SymbolColor: "#0000ff", LineStyle: 0})
+	pl.AddDataPair("Data", x, y, chart.PlotStyleLinesPoints,
+		chart.Style{Symbol: '#', SymbolColor: "#0000ff", LineStyle: chart.SolidLine})
 	last := len(pl.Data) - 1
 	pl.Data[last].Samples[6].DeltaX = 2.5
 	pl.Data[last].Samples[6].OffX = 0.5
 	pl.Data[last].Samples[6].DeltaY = 16
 	pl.Data[last].Samples[6].OffY = 2
-	pl.AddData("abcde", []chart.EPoint{chart.EPoint{-4, 40, 0, 0, 0, 0}, chart.EPoint{-3, 45, 0, 0, 0, 0},
+
+	pl.AddData("Points", []chart.EPoint{chart.EPoint{-4, 40, 0, 0, 0, 0}, chart.EPoint{-3, 45, 0, 0, 0, 0},
 		chart.EPoint{-2, 35, 0, 0, 0, 0}}, chart.PlotStylePoints,
 		chart.Style{Symbol: '0', SymbolColor: "#ff00ff", LineStyle: 1, LineWidth: 1})
-	pl.AddFunc("wxyz", func(x float64) float64 {
+	pl.AddFunc("Theory", func(x float64) float64 {
 		if x > 5.25 && x < 5.75 {
 			return 75
 		}
@@ -222,7 +223,7 @@ func fancyScatter() {
 	}, chart.PlotStyleLines, chart.Style{Symbol: 0, LineWidth: 2, LineColor: "#a00000", LineStyle: 1})
 	pl.AddFunc("30", func(x float64) float64 { return 30 }, chart.PlotStyleLines,
 		chart.Style{Symbol: 0, LineWidth: 1, LineColor: "#00a000", LineStyle: 1})
-	pl.AddFunc("7777", func(x float64) float64 { return 7 }, chart.PlotStyleLines,
+	pl.AddFunc("", func(x float64) float64 { return 7 }, chart.PlotStyleLines,
 		chart.Style{Symbol: 0, LineWidth: 1, LineColor: "#0000a0", LineStyle: 1})
 
 	pl.XRange.ShowZero = true
@@ -240,22 +241,23 @@ func fancyScatter() {
 	mysvg.Title("My Plot")
 	mysvg.Rect(0, 0, 1000, 600, "fill: #ffffff")
 	svggraphics := svgchart.NewSvgGraphics(mysvg, 1000, 600, "Arial", 18)
-	txtgraphics := txtchart.NewTextGraphics(100, 30)
 	pl.Plot(svggraphics)
-	pl.Plot(txtgraphics)
-	fmt.Printf("%s\n", txtgraphics.String())
 	mysvg.End()
 	s2f.Close()
+
+	txtgraphics := txtchart.NewTextGraphics(100, 30)
+	pl.Plot(txtgraphics)
+	fmt.Printf("%s\n", txtgraphics.String())
 }
 
 
 //
-// Function plots
+// Function plots with fancy clippings
 //
 func functionPlots() {
 	p := chart.ScatterChart{Title: "Functions"}
 	p.XRange.Label, p.YRange.Label = "X - Value", "Y - Value"
-	p.Key.Pos = "itl"
+	p.Key.Pos = "ibl"
 	p.XRange.MinMode.Fixed, p.XRange.MaxMode.Fixed = true, true
 	p.XRange.MinMode.Value, p.XRange.MaxMode.Value = -10, 10
 	p.YRange.MinMode.Fixed, p.YRange.MaxMode.Fixed = true, true
@@ -263,16 +265,24 @@ func functionPlots() {
 
 	p.XRange.TicSetting.Delta = 2
 	p.YRange.TicSetting.Delta = 5
-	p.AddFunc("cos", func(x float64) float64 { return 5 * math.Cos(x) },
+	p.XRange.TicSetting.Mirror = 1
+	p.YRange.TicSetting.Mirror = 1
+
+	p.AddFunc("i+n", func(x float64) float64 {
+		if x > -7 && x < -5 {
+			return math.Inf(-1)
+		} else if x > -1.5 && x < 1.5 {
+			return math.NaN()
+		} else if x > 5 && x < 7 {
+			return math.Inf(1)
+		}
+		return -0.75 * x
+	},
 		chart.PlotStyleLines, chart.Style{Symbol: 'o', LineWidth: 2, LineColor: "#a00000", LineStyle: 1})
-	p.AddFunc("8", func(x float64) float64 { return 8 }, chart.PlotStyleLines,
-		chart.Style{Symbol: '*', LineWidth: 1, LineColor: "#00a000", LineStyle: 1})
 	p.AddFunc("sin", func(x float64) float64 { return 13 * math.Sin(x) }, chart.PlotStyleLines,
 		chart.Style{Symbol: '#', LineWidth: 1, LineColor: "#0000a0", LineStyle: 1})
 	p.AddFunc("2x", func(x float64) float64 { return 2 * x }, chart.PlotStyleLines,
-		chart.Style{Symbol: 'A', LineWidth: 1, LineColor: "#00a000", LineStyle: 1})
-	p.XRange.TicSetting.Mirror = 1
-	p.YRange.TicSetting.Mirror = 1
+		chart.Style{Symbol: 'X', LineWidth: 1, LineColor: "#00a000", LineStyle: 1})
 
 	s2f, _ := os.Create("xscatter3.svg")
 	mysvg := svg.New(s2f)
@@ -286,6 +296,25 @@ func functionPlots() {
 	fmt.Printf("%s\n", txtgraphics.String())
 	mysvg.End()
 	s2f.Close()
+
+	{
+		p := chart.ScatterChart{Title: "Functions"}
+		p.Key.Hide = true
+		p.XRange.MinMode.Fixed, p.XRange.MaxMode.Fixed = true, true
+		p.XRange.MinMode.Value, p.XRange.MaxMode.Value = -2, 2
+		p.YRange.MinMode.Fixed, p.YRange.MaxMode.Fixed = true, true
+		p.YRange.MinMode.Value, p.YRange.MaxMode.Value = -2, 2
+		p.XRange.TicSetting.Delta = 1
+		p.YRange.TicSetting.Delta = 1
+		p.XRange.TicSetting.Mirror = 1
+		p.YRange.TicSetting.Mirror = 1
+		p.NSamples = 5
+		p.AddFunc("10x", func(x float64) float64 { return 10 * x }, chart.PlotStyleLines,
+			chart.Style{Symbol: 'o', LineWidth: 2, LineColor: "#00a000", LineStyle: 1})
+		txtgraphics := txtchart.NewTextGraphics(125, 35)
+		p.Plot(txtgraphics)
+		fmt.Printf("%s\n", txtgraphics.String())
+	}
 }
 
 
@@ -771,36 +800,38 @@ func textlen() {
 
 
 func main() {
+
+	// Basic chart types
+
+	barChart()
+
+	catBarChart()
+
+	boxChart()
+
+	stripChart()
+
+	pieChart()
+
+	scatterChart()
+
+	histChart("xhist2.svg", "Histogram", true)
+	histChart("xhist1.svg", "Histogram", false)
+
+	// Some specialities
+
+	logAxis()
+
+	scatterTics()
+
+	autoscale()
+
+	keyStyles()
+
 	functionPlots()
 
-	/*
-
-		stripChart()
-
-		scatterTics()
-
-		keyStyles()
-
-		boxChart()
-
-		fancyScatter()
-
-		histChart("xhist2.svg", "Histogram", true)
-		histChart("xhist1.svg", "Histogram", false)
-
-		barChart()
-
-		catBarChart()
-
-		logAxis()
-
-		pieChart()
-
-		textlen()
-
-		autoscale()
-
-	*/
+	// Helper to determine parameters of fonts
+	textlen()
 
 	/*
 		 steps := []int64{ 1, 5, 7, 8, 10, 30, 50, 100, 150, 300, 500, 800, 1000, 1500, 3000, 5000,8000, 10000, 15000, 20000, 30000, 50000, 70000, 100000, 200000, 400000, 800000, 1200000, 1800000, 2000000, 2200000, 2500000, 3000000, 5000000, 9000000, 2 * 9000000, 4 * 9000000 }

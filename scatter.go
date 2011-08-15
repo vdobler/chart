@@ -1,7 +1,6 @@
 package chart
 
 import (
-	"fmt"
 	"math"
 )
 
@@ -52,6 +51,18 @@ func (c *ScatterChart) AddData(name string, data []EPoint, plotstyle PlotStyle, 
 	}
 	if style.empty() {
 		style = AutoStyle(len(c.Data), false)
+	}
+	// Fix missing values in style
+	if (plotstyle & PlotStyleLines) != 0 {
+		if style.LineWidth <= 0 {
+			style.LineWidth = 1
+		}
+		if style.LineColor == "" {
+			style.LineColor = style.SymbolColor
+		}
+	}
+	if (plotstyle&PlotStylePoints) != 0 && style.Symbol == 0 {
+		style.Symbol = '#'
 	}
 
 	// Init axis
@@ -117,9 +128,9 @@ func (c *ScatterChart) Plot(g Graphics) {
 	topm, leftm := layout.Top, layout.Left
 	numxtics, numytics := layout.NumXtics, layout.NumYtics
 
-	fmt.Printf("\nSet up of X-Range (%d)\n", numxtics)
+	// fmt.Printf("\nSet up of X-Range (%d)\n", numxtics)
 	c.XRange.Setup(numxtics, numxtics+2, width, leftm, false)
-	fmt.Printf("\nSet up of Y-Range (%d)\n", numytics)
+	// fmt.Printf("\nSet up of Y-Range (%d)\n", numytics)
 	c.YRange.Setup(numytics, numytics+2, height, topm, true)
 
 	g.Begin()
@@ -132,35 +143,12 @@ func (c *ScatterChart) Plot(g Graphics) {
 	g.YAxis(c.YRange, leftm, leftm+width)
 
 	// Plot Data
-	nan := math.NaN()
 	xf, yf := c.XRange.Data2Screen, c.YRange.Data2Screen
 	xmin, xmax := c.XRange.Min, c.XRange.Max
 	ymin, ymax := c.YRange.Min, c.YRange.Max
 	spf := screenPointFunc(xf, yf, xmin, xmax, ymin, ymax)
 
-	if c.NSamples == 0 {
-		c.NSamples = 31 // 31 sample points
-		if width/c.NSamples > 25 {
-			c.NSamples = 51
-			if width/c.NSamples > 25 {
-				c.NSamples = 101
-			}
-		} else if width/c.NSamples < 4 {
-			c.NSamples = 21
-			if width/c.NSamples < 3 {
-				c.NSamples = 11
-			}
-		}
-	}
-
-	step := width / c.NSamples
-	if step < 1 {
-		step = 1
-	}
-	pcap := width/step + 2
-
-	for zz, data := range c.Data {
-		fmt.Printf("\n\n==============================\n============= %d =============\n", zz)
+	for i, data := range c.Data {
 		style := data.Style
 		if data.Samples != nil {
 			// Samples
@@ -174,70 +162,7 @@ func (c *ScatterChart) Plot(g Graphics) {
 			}
 			g.Scatter(points, data.PlotStyle, style)
 		} else if data.Func != nil {
-			// Functions. TODO(vodo) proper clipping
-			points := make([]EPoint, 0, pcap)
-			var lastP *EPoint = nil                                              // screen coordinates of last point (nil if no point)
-			var lastIn bool = false                                              // was last point in valid yrange? (undef if lastP==nil)
-			symax, symin := float64(yf(c.YRange.Min)), float64(yf(c.YRange.Max)) // y limits in screen coords
-
-			for six := leftm; six < leftm+width; six += step {
-				x := c.XRange.Screen2Data(six)
-				sx := float64(six)
-				y := data.Func(x)
-
-				// Handle NaN and +/- Inf
-				if math.IsNaN(y) {
-					g.Scatter(points, data.PlotStyle, style)
-					points = points[0:0] // make([]EPoint, 0, pcap-len(points)+2) 
-					lastP = nil
-					continue
-				}
-
-				// TODO: hacky and buggy
-				if math.IsInf(y, -1) {
-					y = -math.MaxFloat64 / 1000
-				} else if math.IsInf(y, +1) {
-					y = math.MaxFloat64 / 1000
-				}
-
-				sy := float64(yf(y))
-				fmt.Printf("x=%.1f, y=%.1f\n", x, y)
-
-				if sy >= symin && sy <= symax {
-					p := EPoint{X: sx, Y: sy, DeltaX: nan, DeltaY: nan}
-					if lastP != nil && !lastIn {
-						pc := c.clipPoint(p, *lastP, symin, symax)
-						fmt.Printf("Added front clip point %v\n", pc)
-						points = append(points, pc)
-					}
-					fmt.Printf("Added point %v\n", p)
-					points = append(points, p)
-					lastIn = true
-				} else {
-					if lastP == nil {
-						lastP = &EPoint{X: sx, Y: sy}
-						fmt.Printf("Skippppp\n")
-						continue
-					}
-					if lastIn {
-						pc := c.clipPoint(*lastP, EPoint{X: sx, Y: sy}, symin, symax)
-						points = append(points, pc)
-						g.Scatter(points, data.PlotStyle, style)
-						fmt.Printf("Added clip point %v and drawing\n", pc)
-						points = points[0:0]
-						lastIn = false
-					} else if (lastP.Y < symin && sy > symax) || (lastP.Y > symax && sy < symin) {
-						p2 := c.clip2Point(*lastP, EPoint{X: sx, Y: sy})
-						fmt.Printf("Added 2clip points %v / %v and drawing\n", p2[0], p2[1])
-						g.Scatter(p2, data.PlotStyle, style)
-					}
-
-				}
-
-				lastP = &EPoint{X: sx, Y: sy}
-			}
-			fmt.Printf("drawing last %d points\n", len(points))
-			g.Scatter(points, data.PlotStyle, style)
+			c.drawFunction(g, i)
 		}
 	}
 
@@ -248,9 +173,91 @@ func (c *ScatterChart) Plot(g Graphics) {
 	g.End()
 }
 
+// Output function (ih in Data)
+func (c *ScatterChart) drawFunction(g Graphics, i int) {
+	function := c.Data[i].Func
+	style := c.Data[i].Style
+	plotstyle := c.Data[i].PlotStyle
+
+	yf := c.YRange.Data2Screen
+	symax, symin := float64(yf(c.YRange.Min)), float64(yf(c.YRange.Max)) // y limits in screen coords
+	sxmin, sxmax := c.XRange.Data2Screen(c.XRange.Min), c.XRange.Data2Screen(c.XRange.Max)
+	width := sxmax - sxmin
+	if c.NSamples == 0 {
+		step := 6
+		if width < 70 {
+			step = 3
+		}
+		if width < 50 {
+			step = 2
+		}
+		if width < 30 {
+			step = 1
+		}
+		c.NSamples = width / step
+	}
+	step := width / c.NSamples
+	if step < 1 {
+		step = 1
+	}
+	pcap := width/step + 2
+	points := make([]EPoint, 0, pcap)
+	var lastP *EPoint = nil // screen coordinates of last point (nil if no point)
+	var lastIn bool = false // was last point in valid yrange? (undef if lastP==nil)
+
+	for six := sxmin; six < sxmax; six += step {
+		x := c.XRange.Screen2Data(six)
+		sx := float64(six)
+		y := function(x)
+
+		// Handle NaN and +/- Inf
+		if math.IsNaN(y) {
+			g.Scatter(points, plotstyle, style)
+			points = points[0:0]
+			lastP = nil
+			continue
+		}
+
+		sy := float64(yf(y))
+
+		if sy >= symin && sy <= symax {
+			p := EPoint{X: sx, Y: sy}
+			if lastP != nil && !lastIn {
+				pc := c.clipPoint(p, *lastP, symin, symax)
+				// fmt.Printf("Added front clip point %v\n", pc)
+				points = append(points, pc)
+			}
+			// fmt.Printf("Added point %v\n", p)
+			points = append(points, p)
+			lastIn = true
+		} else {
+			if lastP == nil {
+				lastP = &EPoint{X: sx, Y: sy}
+				continue
+			}
+			if lastIn {
+				pc := c.clipPoint(*lastP, EPoint{X: sx, Y: sy}, symin, symax)
+				points = append(points, pc)
+				g.Scatter(points, plotstyle, style)
+				// fmt.Printf("Added clip point %v and drawing\n", pc)
+				points = points[0:0]
+				lastIn = false
+			} else if (lastP.Y < symin && sy > symax) || (lastP.Y > symax && sy < symin) {
+				p2 := c.clip2Point(*lastP, EPoint{X: sx, Y: sy}, symin, symax)
+				// fmt.Printf("Added 2clip points %v / %v and drawing\n", p2[0], p2[1])
+				g.Scatter(p2, plotstyle, style)
+			}
+
+		}
+
+		lastP = &EPoint{X: sx, Y: sy}
+	}
+	g.Scatter(points, plotstyle, style)
+}
+
 // Point in is in valid y range, out is out. Return p which clips the line from in to out to valid y range
 func (c *ScatterChart) clipPoint(in, out EPoint, min, max float64) (p EPoint) {
-	fmt.Printf("clipPoint: in (%g,%g), out(%g,%g)  min/max=%g/%g\n", in.X, in.Y, out.X, out.Y, min, max)
+	// fmt.Printf("clipPoint: in (%g,%g), out(%g,%g)  min/max=%g/%g\n", in.X, in.Y, out.X, out.Y, min, max)
 	dx, dy := in.X-out.X, in.Y-out.Y
 
 	var y float64
@@ -259,16 +266,28 @@ func (c *ScatterChart) clipPoint(in, out EPoint, min, max float64) (p EPoint) {
 	} else {
 		y = max
 	}
-	fmt.Printf("y=%g\n", y)
 	x := in.X + dx*(y-in.Y)/dy
 	p.X, p.Y = x, y
+	p.DeltaX, p.DeltaY = math.NaN(), math.NaN()
 	return
 }
 
-// Point in is in valid y range, out is out. Return p which clips the line from in to out to valid y range
-func (c *ScatterChart) clip2Point(a, b EPoint) []EPoint {
+// Clip line from a to b (both outside min/max range)
+func (c *ScatterChart) clip2Point(a, b EPoint, min, max float64) []EPoint {
+	if a.Y > b.Y {
+		a, b = b, a
+	}
+	dx, dy := b.X-a.X, b.Y-a.Y
+	s := dx / dy
+
 	pc := make([]EPoint, 2)
 
+	pc[0].X = a.X + s*(min-a.Y)
+	pc[0].Y = min
+	pc[0].DeltaX, pc[0].DeltaY = math.NaN(), math.NaN()
+	pc[1].X = a.X + s*(max-a.Y)
+	pc[1].Y = max
+	pc[1].DeltaX, pc[1].DeltaY = math.NaN(), math.NaN()
 	return pc
 }
 

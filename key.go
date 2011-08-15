@@ -2,7 +2,6 @@ package chart
 
 import (
 	"strings"
-	"fmt"
 )
 
 // Key encapsulates settings for keys/legends in a chart.
@@ -211,7 +210,7 @@ func GenericKey(bg BasicGraphics, x, y int, key Key) {
 	if vsep < 1 {
 		vsep = 1
 	} // make sure there _is_ room (as KeyVertSep < 1)
-	fmt.Printf("Key: y = %d  after  %d\n", y, y+int(vsep)+fh/2)
+	// fmt.Printf("Key: y = %d  after  %d\n", y, y+int(vsep)+fh/2)
 	y += int(vsep) + fh/2
 	for ci, col := range m {
 		yy := y

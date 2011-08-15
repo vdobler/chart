@@ -265,7 +265,6 @@ func (sg *SvgGraphics) YAxis(yr chart.Range, xs, xms int) {
 }
 
 func (sg *SvgGraphics) Scatter(points []chart.EPoint, plotstyle chart.PlotStyle, style chart.Style) {
-	fmt.Printf("svg.Scatter: Generic Scatter\n")
 	chart.GenericScatter(sg, points, plotstyle, style)
 }
 
