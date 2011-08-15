@@ -488,10 +488,47 @@ func gauss(n int, s, a, l, u float64) []float64 {
 	return points
 }
 
+func kernels() {
+	file, _ := os.Create("xkernels.svg")
+	thesvg := svg.New(file)
+	thesvg.Start(800, 600)
+	thesvg.Title("Kernels")
+	thesvg.Rect(0, 0, 800, 600, "fill: #ffffff")
+	svggraphics := svgchart.NewSvgGraphics(thesvg, 800, 600, "Arial", 14)
+
+	p := chart.ScatterChart{Title: "Kernels"}
+	p.XRange.Label, p.YRange.Label = "u", "K(u)"
+	p.XRange.MinMode.Fixed, p.XRange.MaxMode.Fixed = true, true
+	p.XRange.MinMode.Value, p.XRange.MaxMode.Value = -2, 2
+	p.YRange.MinMode.Fixed, p.YRange.MaxMode.Fixed = true, true
+	p.YRange.MinMode.Value, p.YRange.MaxMode.Value = -0.1, 1.1
+
+	p.XRange.TicSetting.Delta = 1
+	p.YRange.TicSetting.Delta = 0.2
+	p.XRange.TicSetting.Mirror = 1
+	p.YRange.TicSetting.Mirror = 1
+
+	p.AddFunc("Bisquare", chart.BisquareKernel,
+		chart.PlotStyleLines, chart.Style{Symbol: 'o', LineWidth: 1, LineColor: "#a00000", LineStyle: 1})
+	p.AddFunc("Epanechnikov", chart.EpanechnikovKernel,
+		chart.PlotStyleLines, chart.Style{Symbol: 'X', LineWidth: 1, LineColor: "#00a000", LineStyle: 1})
+	p.AddFunc("Rectangular", chart.RectangularKernel,
+		chart.PlotStyleLines, chart.Style{Symbol: '=', LineWidth: 1, LineColor: "#0000a0", LineStyle: 1})
+	p.AddFunc("Gauss", chart.GaussKernel,
+		chart.PlotStyleLines, chart.Style{Symbol: '*', LineWidth: 1, LineColor: "#a000a0", LineStyle: 1})
+
+	p.Plot(svggraphics)
+
+	thesvg.End()
+	file.Close()
+
+}
+
 //
 // Box Charts
 //
-func histChart(name, title string, stacked bool) {
+func histChart(name, title string, stacked, counts bool) {
+	kernels()
 	file, _ := os.Create(name)
 	thesvg := svg.New(file)
 	thesvg.Start(800, 600)
@@ -500,42 +537,49 @@ func histChart(name, title string, stacked bool) {
 	svggraphics := svgchart.NewSvgGraphics(thesvg, 400, 300, "Arial", 12)
 	txtgraphics := txtchart.NewTextGraphics(120, 30)
 
-	hc := chart.HistChart{Title: title, ShowVal: true, Stacked: stacked}
+	hc := chart.HistChart{Title: title, ShowVal: true, Stacked: stacked, Counts: counts}
 	hc.XRange.Label, hc.YRange.Label = "Sample Value", "Count"
 	hc.Key.Hide = true
 	points := gauss(150, 10, 20, 0, 50)
 	hc.AddData("Sample 1", points,
 		chart.Style{ /*LineColor: "#ff0000", LineWidth: 1, LineStyle: 1, FillColor: "#ff8080"*/ })
+	hc.Kernel = chart.BisquareKernel //  chart.GaussKernel // chart.EpanechnikovKernel // chart.RectangularKernel // chart.BisquareKernel
 	hc.Plot(svggraphics)
 	hc.Plot(txtgraphics)
 	fmt.Printf("%s\n", txtgraphics.String())
 
-	points2 := gauss(80, 4, 37, 0, 50)
-	hc.AddData("Sample 2", points2,
-		chart.Style{ /*LineColor: "#00ff00", LineWidth: 1, LineStyle: 1, FillColor: "#80ff80"*/ })
-	thesvg.Gtransform("translate(400 0)")
-	hc.Plot(svggraphics)
-	hc.Plot(txtgraphics)
-	fmt.Printf("%s\n", txtgraphics.String())
-	thesvg.Gend()
+	if true {
+		points2 := gauss(80, 4, 37, 0, 50)
+		// hc.Kernel = nil
+		hc.AddData("Sample 2", points2,
+			chart.Style{ /*LineColor: "#00ff00", LineWidth: 1, LineStyle: 1, FillColor: "#80ff80"*/ })
+		thesvg.Gtransform("translate(400 0)")
+		hc.YRange.TicSetting.Delta = 0
+		hc.Plot(svggraphics)
+		hc.Plot(txtgraphics)
+		fmt.Printf("%s\n", txtgraphics.String())
+		thesvg.Gend()
 
-	thesvg.Gtransform("translate(0 300)")
-	points3 := gauss(60, 15, 0, 0, 50)
-	hc.AddData("Sample 3", points3,
-		chart.Style{ /*LineColor: "#0000ff", LineWidth: 1, LineStyle: 1, FillColor: "#8080ff"*/ })
-	hc.Plot(svggraphics)
-	hc.Plot(txtgraphics)
-	fmt.Printf("%s\n", txtgraphics.String())
-	thesvg.Gend()
+		thesvg.Gtransform("translate(0 300)")
+		points3 := gauss(60, 15, 0, 0, 50)
+		hc.AddData("Sample 3", points3,
+			chart.Style{ /*LineColor: "#0000ff", LineWidth: 1, LineStyle: 1, FillColor: "#8080ff"*/ })
+		hc.YRange.TicSetting.Delta = 0
+		hc.Plot(svggraphics)
+		hc.Plot(txtgraphics)
+		fmt.Printf("%s\n", txtgraphics.String())
+		thesvg.Gend()
 
-	thesvg.Gtransform("translate(400 300)")
-	points4 := gauss(40, 30, 15, 0, 50)
-	hc.AddData("Sample 4", points4, chart.Style{ /*LineColor: "#000000", LineWidth: 1, LineStyle: 1*/ })
-	hc.Plot(svggraphics)
-	hc.Plot(txtgraphics)
-	fmt.Printf("%s\n", txtgraphics.String())
-	thesvg.Gend()
-
+		thesvg.Gtransform("translate(400 300)")
+		points4 := gauss(40, 30, 15, 0, 50)
+		hc.AddData("Sample 4", points4, chart.Style{ /*LineColor: "#000000", LineWidth: 1, LineStyle: 1*/ })
+		hc.Kernel = nil
+		hc.YRange.TicSetting.Delta = 0
+		hc.Plot(svggraphics)
+		hc.Plot(txtgraphics)
+		fmt.Printf("%s\n", txtgraphics.String())
+		thesvg.Gend()
+	}
 	thesvg.End()
 	file.Close()
 }
@@ -803,36 +847,40 @@ func main() {
 
 	// Basic chart types
 
-	barChart()
+	/*
+		barChart()
 
-	catBarChart()
+		catBarChart()
 
-	boxChart()
+		boxChart()
 
-	stripChart()
+		stripChart()
 
-	pieChart()
+		pieChart()
 
-	scatterChart()
+		scatterChart()
+	*/
+	histChart("xhist1.svg", "Histogram", false, false)
+	//histChart("xhist2.svg", "Histogram", true, false)
+	//histChart("xhist3.svg", "Histogram", false, true)
+	//histChart("xhist4.svg", "Histogram", true, true)
 
-	histChart("xhist2.svg", "Histogram", true)
-	histChart("xhist1.svg", "Histogram", false)
+	/*
+		// Some specialities
 
-	// Some specialities
+		logAxis()
 
-	logAxis()
+		scatterTics()
 
-	scatterTics()
+		autoscale()
 
-	autoscale()
+		keyStyles()
 
-	keyStyles()
+		functionPlots()
 
-	functionPlots()
-
-	// Helper to determine parameters of fonts
-	textlen()
-
+		// Helper to determine parameters of fonts
+		textlen()
+	*/
 	/*
 		 steps := []int64{ 1, 5, 7, 8, 10, 30, 50, 100, 150, 300, 500, 800, 1000, 1500, 3000, 5000,8000, 10000, 15000, 20000, 30000, 50000, 70000, 100000, 200000, 400000, 800000, 1200000, 1800000, 2000000, 2200000, 2500000, 3000000, 5000000, 9000000, 2 * 9000000, 4 * 9000000 }
 		 for _, step := range steps {

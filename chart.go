@@ -182,7 +182,7 @@ func FmtFloat(f float64) string {
 	af := math.Fabs(f)
 	if f == 0 {
 		return "0"
-	} else if 0.1 <= af && af < 10 {
+	} else if 1 <= af && af < 10 {
 		return fmt.Sprintf("%.1f", f)
 	} else if 10 <= af && af <= 1000 {
 		return fmt.Sprintf("%.0f", f)
@@ -418,7 +418,7 @@ func (r *Range) tSetup(desiredNumberOfTics, maxNumberOfTics int, delta, mindelta
 }
 
 func (r *Range) fDelta(delta, mindelta float64) float64 {
-	// fmt.Printf("fDelta(%.3f, %.3f)\n", delta, mindelta)
+	fmt.Printf("fDelta(%.3f, %.3f)\n", delta, mindelta)
 	if r.Log {
 		return 10
 	}
@@ -439,7 +439,7 @@ func (r *Range) fDelta(delta, mindelta float64) float64 {
 	}
 	delta = f * de
 	if delta < mindelta {
-		// fmt.Printf("Redoing delta")
+		fmt.Printf("Redoing delta")
 		// recalculate tic delta
 		switch f {
 		case 1, 5:
@@ -454,9 +454,11 @@ func (r *Range) fDelta(delta, mindelta float64) float64 {
 }
 
 func (r *Range) fSetup(desiredNumberOfTics, maxNumberOfTics int, delta, mindelta float64) {
+	fmt.Printf("YYYY: %.3f %.3f\n", delta, mindelta)
 	if r.TicSetting.Delta != 0 {
 		delta = r.TicSetting.Delta
 	} else {
+		fmt.Printf(":::::::\n")
 		delta = r.fDelta(delta, mindelta)
 	}
 
@@ -476,7 +478,7 @@ func (r *Range) fSetup(desiredNumberOfTics, maxNumberOfTics int, delta, mindelta
 	} else {
 		first := delta * math.Ceil(r.Min/delta)
 		num := int(-first/delta + math.Floor(r.Max/delta) + 1.5)
-		// fmt.Printf("Range: (%.2f,%.2f) --> (%g,%g), Tic-Delta: %g, %d tics from %g\n", r.DataMin, r.DataMax, r.Min, r.Max, delta, num, first)
+		fmt.Printf("Range: (%.2f,%.2f) --> (%g,%g), Tic-Delta: %g, %d tics from %g\n", r.DataMin, r.DataMax, r.Min, r.Max, delta, num, first)
 
 		// Set up tics
 		r.Tics = make([]Tic, num)
@@ -519,8 +521,8 @@ func (r *Range) Setup(desiredNumberOfTics, maxNumberOfTics, sWidth, sOffset int,
 	delta := (r.DataMax - r.DataMin) / float64(desiredNumberOfTics-1)
 	mindelta := (r.DataMax - r.DataMin) / float64(maxNumberOfTics-1)
 
-	//fmt.Printf("Data: [%.2f:%.2f] --> delta/mindelta = %.2f/%.2f (desired %d/max %d)\n",
-	//	r.DataMin, r.DataMax, delta, mindelta, desiredNumberOfTics, maxNumberOfTics)
+	fmt.Printf("Data: [%.2f:%.2f] --> delta/mindelta = %.2f/%.2f (desired %d/max %d)\n",
+		r.DataMin, r.DataMax, delta, mindelta, desiredNumberOfTics, maxNumberOfTics)
 
 	if r.Time {
 		r.tSetup(desiredNumberOfTics, maxNumberOfTics, delta, mindelta)
