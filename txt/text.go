@@ -439,10 +439,11 @@ func (g *TextGraphics) Scatter(points []chart.EPoint, plotstyle chart.PlotStyle,
 
 	// Second pass: Line
 	if (plotstyle&chart.PlotStyleLines) != 0 && len(points) > 0 {
-		lastx, lasty := points[0].X, points[0].Y
+		lastx, lasty := int(points[0].X), int(points[0].Y)
 		for i := 1; i < len(points); i++ {
-			x, y := points[i].X, points[i].Y
-			g.tb.Line(int(lastx), int(lasty), int(x), int(y), style.Symbol)
+			x, y := int(points[i].X), int(points[i].Y)
+			// fmt.Printf("LineSegment %d (%d,%d) -> (%d,%d)\n", i, lastx,lasty,x,y)
+			g.tb.Line(lastx, lasty, x, y, style.Symbol)
 			lastx, lasty = x, y
 		}
 	}

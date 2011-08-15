@@ -241,16 +241,18 @@ func GenericYAxis(bg BasicGraphics, rng Range, x, xm int) {
 // if the FontXyz are not set. Point coordinates and errors must be provided 
 // in screen coordinates.
 func GenericScatter(bg BasicGraphics, points []EPoint, plotstyle PlotStyle, style Style) {
+	fmt.Printf("GenericScatter\n")
+
 	// First pass: Error bars
+	ebs := style
+	ebs.LineColor, ebs.LineWidth = ebs.FillColor, 1
+	if ebs.LineColor == "" {
+		ebs.LineColor = "#404040"
+	}
+	if ebs.LineWidth == 0 {
+		ebs.LineWidth = 1
+	}
 	for _, p := range points {
-		ebs := style
-		ebs.LineColor, ebs.LineWidth = ebs.FillColor, 1
-		if ebs.LineColor == "" {
-			ebs.LineColor = "#404040"
-		}
-		if ebs.LineWidth == 0 {
-			ebs.LineWidth = 1
-		}
 		xl, yl, xh, yh := p.BoundingBox()
 		// fmt.Printf("Draw %d: %f %f-%f\n", i, p.DeltaX, xl,xh)
 		if !math.IsNaN(p.DeltaX) {
@@ -263,8 +265,10 @@ func GenericScatter(bg BasicGraphics, points []EPoint, plotstyle PlotStyle, styl
 
 	// Second pass: Line
 	if (plotstyle&PlotStyleLines) != 0 && len(points) > 0 {
+		fmt.Printf("Lines\n")
 		lastx, lasty := points[0].X, points[0].Y
 		for i := 1; i < len(points); i++ {
+			fmt.Printf("Next line to %d\n", i)
 			x, y := points[i].X, points[i].Y
 			bg.Line(int(lastx), int(lasty), int(x), int(y), style)
 			lastx, lasty = x, y
@@ -273,6 +277,7 @@ func GenericScatter(bg BasicGraphics, points []EPoint, plotstyle PlotStyle, styl
 
 	// Third pass: symbols
 	if (plotstyle&PlotStylePoints) != 0 && len(points) != 0 {
+		fmt.Printf("Points\n")
 		for _, p := range points {
 			bg.Symbol(int(p.X), int(p.Y), style.Symbol, style)
 		}

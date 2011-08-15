@@ -250,6 +250,46 @@ func fancyScatter() {
 
 
 //
+// Function plots
+//
+func functionPlots() {
+	p := chart.ScatterChart{Title: "Functions"}
+	p.XRange.Label, p.YRange.Label = "X - Value", "Y - Value"
+	p.Key.Pos = "itl"
+	p.XRange.MinMode.Fixed, p.XRange.MaxMode.Fixed = true, true
+	p.XRange.MinMode.Value, p.XRange.MaxMode.Value = -10, 10
+	p.YRange.MinMode.Fixed, p.YRange.MaxMode.Fixed = true, true
+	p.YRange.MinMode.Value, p.YRange.MaxMode.Value = -10, 10
+
+	p.XRange.TicSetting.Delta = 2
+	p.YRange.TicSetting.Delta = 5
+	p.AddFunc("cos", func(x float64) float64 { return 5 * math.Cos(x) },
+		chart.PlotStyleLines, chart.Style{Symbol: 'o', LineWidth: 2, LineColor: "#a00000", LineStyle: 1})
+	p.AddFunc("8", func(x float64) float64 { return 8 }, chart.PlotStyleLines,
+		chart.Style{Symbol: '*', LineWidth: 1, LineColor: "#00a000", LineStyle: 1})
+	p.AddFunc("sin", func(x float64) float64 { return 13 * math.Sin(x) }, chart.PlotStyleLines,
+		chart.Style{Symbol: '#', LineWidth: 1, LineColor: "#0000a0", LineStyle: 1})
+	p.AddFunc("2x", func(x float64) float64 { return 2 * x }, chart.PlotStyleLines,
+		chart.Style{Symbol: 'A', LineWidth: 1, LineColor: "#00a000", LineStyle: 1})
+	p.XRange.TicSetting.Mirror = 1
+	p.YRange.TicSetting.Mirror = 1
+
+	s2f, _ := os.Create("xscatter3.svg")
+	mysvg := svg.New(s2f)
+	mysvg.Start(1000, 600)
+	mysvg.Title("Functions")
+	mysvg.Rect(0, 0, 1000, 600, "fill: #ffffff")
+	txtgraphics := txtchart.NewTextGraphics(125, 35)
+	svggraphics := svgchart.NewSvgGraphics(mysvg, 1000, 600, "Arial", 14)
+	p.Plot(svggraphics)
+	p.Plot(txtgraphics)
+	fmt.Printf("%s\n", txtgraphics.String())
+	mysvg.End()
+	s2f.Close()
+}
+
+
+//
 // Autoscaling
 //
 func autoscale() {
@@ -731,31 +771,36 @@ func textlen() {
 
 
 func main() {
+	functionPlots()
 
-	stripChart()
+	/*
 
-	scatterTics()
+		stripChart()
 
-	keyStyles()
+		scatterTics()
 
-	boxChart()
+		keyStyles()
 
-	fancyScatter()
+		boxChart()
 
-	histChart("xhist2.svg", "Histogram", true)
-	histChart("xhist1.svg", "Histogram", false)
+		fancyScatter()
 
-	barChart()
+		histChart("xhist2.svg", "Histogram", true)
+		histChart("xhist1.svg", "Histogram", false)
 
-	catBarChart()
+		barChart()
 
-	logAxis()
+		catBarChart()
 
-	pieChart()
+		logAxis()
 
-	textlen()
+		pieChart()
 
-	autoscale()
+		textlen()
+
+		autoscale()
+
+	*/
 
 	/*
 		 steps := []int64{ 1, 5, 7, 8, 10, 30, 50, 100, 150, 300, 500, 800, 1000, 1500, 3000, 5000,8000, 10000, 15000, 20000, 30000, 50000, 70000, 100000, 200000, 400000, 800000, 1200000, 1800000, 2000000, 2200000, 2500000, 3000000, 5000000, 9000000, 2 * 9000000, 4 * 9000000 }
