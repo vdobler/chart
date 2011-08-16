@@ -37,7 +37,9 @@ type Kernel func(x float64) float64
 
 const sqrt2piinv = 0.39894228 // 1.0 / math.Sqrt(2.0*math.Pi)
 
+// Some common smoothing kernels. All == 0 outside [-1,1[.
 var (
+	// 1/2 
 	RectangularKernel = func(x float64) float64 {
 		if x >= -1 && x < 1 {
 			return 0.5
@@ -45,6 +47,15 @@ var (
 		return 0
 	}
 
+	// 1 - |x|
+	TriangularKernel = func(x float64) float64 {
+		if x >= -1 && x < 1 {
+			return 1 - math.Fabs(x)
+		}
+		return 0
+	}
+
+	// 15/16 * (1-x^2)^2
 	BisquareKernel Kernel = func(x float64) float64 {
 		if x >= -1 && x < 1 {
 			a := (1 - x*x)
@@ -53,21 +64,24 @@ var (
 		return 0
 	}
 
+	// 35/32 * (1-x^2)^3
+	TriweightKernel Kernel = func(x float64) float64 {
+		if x >= -1 && x < 1 {
+			a := (1 - x*x)
+			return 35.0 / 32.0 * a * a * a
+		}
+		return 0
+	}
+
+	// 3/4 * (1-x^2)
 	EpanechnikovKernel Kernel = func(x float64) float64 {
 		if x >= -1 && x < 1 {
 			return 3.0 / 4.0 * (1.0 - x*x)
 		}
 		return 0
 	}
-	//   int_-1^1 3/4 (1-x^2) dx
-	// = 3/4 int_-1^1 (1-x^2) dx
-	// = 3/4 ( int_-1^1 1 dx - int_-1^1 x^2 dx)
-	// = 3/4 ( 2 - 1/3x^3|_-1^1 )
-	// = 3/4 ( 2 - (1/3 - -1/3) )
-	// = 3/4 ( 2 - 2/3 )
-	// = 3/4 * 4/3
-	// = 1
 
+	// 1/sqrt(2pi) * exp(-1/2x^2)
 	GaussKernel Kernel = func(x float64) float64 {
 		return sqrt2piinv * math.Exp(-0.5*x*x)
 	}
@@ -191,10 +205,8 @@ func (c *HistChart) binify(binStart, binWidth float64, binCnt int) (freqs [][]fl
 			}
 		}
 		freqs[i] = freq
-		fmt.Printf("ff = %.4f\n", ff)
-		fmt.Printf("freq: %v\n", freq)
 	}
-	fmt.Printf("Maximum : %.2f\n", max)
+	debug.Printf("Maximum : %.2f\n", max)
 	if c.Stacked { // recalculate max
 		max = 0
 		for bin := 0; bin < binCnt; bin++ {
@@ -207,7 +219,7 @@ func (c *HistChart) binify(binStart, binWidth float64, binCnt int) (freqs [][]fl
 				max = sum
 			}
 		}
-		fmt.Printf("Re-Maxed (stacked) to: %.2f\n", max)
+		debug.Printf("Re-Maxed (stacked) to: %.2f\n", max)
 	}
 	return
 }
@@ -236,14 +248,14 @@ func (c *HistChart) findBinWidth() {
 	binCnt := int((c.XRange.Max-c.XRange.Min)/bw + 0.5)
 	if binCnt >= int(2*obc) {
 		bw *= 2 // TODO: not so nice if bw is of form 2*10^n (use 2.5 in this case to match tics)
-		fmt.Printf("Increased bin width to %.3f (optimum bin cnt = %d,  was %d).\n",
+		debug.Printf("Increased bin width to %.3f (optimum bin cnt = %d,  was %d).\n",
 			bw, int(obc+0.5), binCnt)
 	} else if binCnt < int(3*obc) {
 		bw /= 2
-		fmt.Printf("Reduced bin width to %.3f (optimum bin cnt = %d,  was %d).\n",
+		debug.Printf("Reduced bin width to %.3f (optimum bin cnt = %d,  was %d).\n",
 			bw, int(obc+0.5), binCnt)
 	} else {
-		fmt.Printf("Bin width of %.3f is ok (optimum bin cnt = %d,  was %d).\n",
+		debug.Printf("Bin width of %.3f is ok (optimum bin cnt = %d,  was %d).\n",
 			bw, int(obc+0.5), binCnt)
 	}
 
@@ -415,7 +427,7 @@ func (c *HistChart) smoothed(i, binCnt int) (points []EPoint, max float64) {
 		}
 		xx := float64(c.XRange.Data2Screen(x))
 		// yy := float64(c.YRange.Data2Screen(f))
-		fmt.Printf("Consructed %.3f, %.4f\n", x, f)
+		// fmt.Printf("Consructed %.3f, %.4f\n", x, f)
 		points = append(points, EPoint{X: xx, Y: f, DeltaX: nan, DeltaY: nan})
 	}
 	fmt.Printf("Dataset %d: ff=%.4f\n", i, ff)

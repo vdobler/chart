@@ -244,7 +244,7 @@ func GenericScatter(bg BasicGraphics, points []EPoint, plotstyle PlotStyle, styl
 
 	// First pass: Error bars
 	ebs := style
-	ebs.LineColor, ebs.LineWidth = ebs.FillColor, 1
+	ebs.LineColor, ebs.LineWidth, ebs.LineStyle = ebs.FillColor, 1, SolidLine
 	if ebs.LineColor == "" {
 		ebs.LineColor = "#404040"
 	}

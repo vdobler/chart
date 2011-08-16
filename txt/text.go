@@ -2,6 +2,7 @@ package chart
 
 import (
 	"fmt"
+	"log"
 	"math"
 	"github.com/vdobler/chart"
 )
@@ -34,10 +35,9 @@ func NewTextBuf(w, h int) (tb *TextBuf) {
 
 // Put character c at (x,y)
 func (tb *TextBuf) Put(x, y, c int) {
-	if x < 0 || y < 0 || x >= tb.W || y >= tb.H {
+	if x < 0 || y < 0 || x >= tb.W || y >= tb.H || c < ' ' {
+		debug.Printf("Ooooops Put(): %d, %d, %d='%c' \n", x, y, c, c)
 		return
-		// fmt.Printf("Ooooops Put(): %d, %d  '%c' \n", x, y, c)
-		x, y = 0, 0
 	}
 	i := (tb.W+1)*y + x
 	tb.Buf[i] = c
@@ -628,4 +628,16 @@ func sign(a int) int {
 		return 0
 	}
 	return 1
+}
+
+
+// Debugging and tracing
+type debugging bool
+
+const debug debugging = true
+
+func (d debugging) Printf(fmt string, args ...interface{}) {
+	if d {
+		log.Printf(fmt, args...)
+	}
 }

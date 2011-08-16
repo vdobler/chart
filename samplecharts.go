@@ -212,7 +212,7 @@ func scatterChart() {
 
 	pl.AddData("Points", []chart.EPoint{chart.EPoint{-4, 40, 0, 0, 0, 0}, chart.EPoint{-3, 45, 0, 0, 0, 0},
 		chart.EPoint{-2, 35, 0, 0, 0, 0}}, chart.PlotStylePoints,
-		chart.Style{Symbol: '0', SymbolColor: "#ff00ff", LineStyle: 1, LineWidth: 1})
+		chart.Style{Symbol: '0', SymbolColor: "#ff00ff"})
 	pl.AddFunc("Theory", func(x float64) float64 {
 		if x > 5.25 && x < 5.75 {
 			return 75
@@ -221,11 +221,11 @@ func scatterChart() {
 			return 500
 		}
 		return x * x
-	}, chart.PlotStyleLines, chart.Style{Symbol: 0, LineWidth: 2, LineColor: "#a00000", LineStyle: 1})
+	}, chart.PlotStyleLines, chart.Style{Symbol: '%', LineWidth: 2, LineColor: "#a00000", LineStyle: chart.DashDotDotLine})
 	pl.AddFunc("30", func(x float64) float64 { return 30 }, chart.PlotStyleLines,
-		chart.Style{Symbol: 0, LineWidth: 1, LineColor: "#00a000", LineStyle: 1})
+		chart.Style{Symbol: '+', LineWidth: 1, LineColor: "#00a000", LineStyle: 1})
 	pl.AddFunc("", func(x float64) float64 { return 7 }, chart.PlotStyleLines,
-		chart.Style{Symbol: 0, LineWidth: 1, LineColor: "#0000a0", LineStyle: 1})
+		chart.Style{Symbol: '@', LineWidth: 1, LineColor: "#0000a0", LineStyle: 1})
 
 	pl.XRange.ShowZero = true
 	pl.XRange.TicSetting.Mirror = 1
@@ -653,13 +653,13 @@ func catBarChart() {
 	// Categorized Bar Chart
 	cbarc := chart.CategoryBarChart{Title: "Income", Categories: []string{"none", "low", "average", "high"}}
 	cbarc.AddData("Europe", map[string]float64{"none": 10, "low": 15, "average": 25, "high": 20},
-		chart.Style{LineColor: "#0000ff", LineWidth: 4, FillColor: "#4040ff"})
+		chart.Style{Symbol: '#', LineColor: "#0000ff", LineWidth: 4, FillColor: "#4040ff"})
 	cbarc.Plot(svggraphics)
 	cbarc.Plot(txtgraphics)
 	fmt.Printf("%s\n", txtgraphics.String())
 
 	cbarc.AddData("Asia", map[string]float64{"none": 15, "low": 30, "average": 10, "high": 20},
-		chart.Style{LineColor: "#aa00aa", LineWidth: 4, FillColor: "#aa40aa"})
+		chart.Style{Symbol: '0', LineColor: "#aa00aa", LineWidth: 4, FillColor: "#aa40aa"})
 	cbarc.YRange.MinMode.Fixed = true
 	cbarc.YRange.MinMode.Value = 0
 	cbarc.ShowVal = 1
@@ -681,9 +681,9 @@ func catBarChart() {
 	cbarc = chart.CategoryBarChart{Title: "Income", Categories: []string{"none", "low", "average", "high"}}
 	cbarc.YRange.ShowZero = true
 	cbarc.AddData("Europe", map[string]float64{"none": 10, "low": 15, "average": 25, "high": 20},
-		chart.Style{LineColor: "#0000ff", LineWidth: 4, FillColor: "#0000ff"})
+		chart.Style{Symbol: '%', LineColor: "#0000ff", LineWidth: 4, FillColor: "#0000ff"})
 	cbarc.AddData("Asia", map[string]float64{"none": 15, "low": 30, "average": 10, "high": -20},
-		chart.Style{LineColor: "#aa00aa", LineWidth: 4, FillColor: "#aa00aa"})
+		chart.Style{Symbol: '&', LineColor: "#aa00aa", LineWidth: 4, FillColor: "#aa00aa"})
 	cbarc.Key.Pos = "ibl"
 	cbarc.ShowVal = 3
 	thesvg.Gtransform("translate(400 300)")
@@ -853,19 +853,17 @@ func main() {
 
 	// Basic chart types
 
-	/*
-		barChart()
+	barChart()
 
-		catBarChart()
+	catBarChart()
 
-		boxChart()
+	boxChart()
 
-		stripChart()
+	stripChart()
 
-		pieChart()
+	pieChart()
 
-		scatterChart()
-	*/
+	scatterChart()
 	histChart("xhist1.svg", "Histogram", false, false)
 	histChart("xhist2.svg", "Histogram", true, false)
 	histChart("xhist3.svg", "Histogram", false, true)

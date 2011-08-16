@@ -68,17 +68,6 @@ var Palette = map[string]string{"title": "#aa9933", "label": "#000000", "axis": 
 }
 
 // DataStyle contains all information about all graphic elements in a chart.
-// TODOs:
-//  - remove Font..., not part of DataStyle and relevant only for Text
-//  - keep Symbol as "show this symbol in strip/scatter/box plots"
-//  - add new Char as "char/symbol to use as text replacement for color"
-//    that would be for "lines without symbols", hist, bar, cbar, pie
-//    box
-//
-// differentiate between drawing data/plot-style in scatter (points, lines, linespoints)
-// and style (color, symbol, width, filling). disalow e.g. in "datastyle lines"
-// linwidth of 0.
-//
 type Style struct {
 	Symbol      int     // 0: no symbol; any codepoint: this symbol
 	SymbolColor string  // 
@@ -114,6 +103,7 @@ const (
 	LongDashLine
 	LongDotLine
 )
+
 
 type Font struct {
 	Name  string // "": default

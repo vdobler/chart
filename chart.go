@@ -2,6 +2,7 @@ package chart
 
 import (
 	"fmt"
+	"log"
 	"math"
 	"time"
 	//	"os"
@@ -675,4 +676,16 @@ func Layout(g Graphics, title, xlabel, ylabel string, hidextics, hideytics bool,
 	ld.Left, ld.Top = leftm, topm
 
 	return
+}
+
+
+// Debugging and tracing
+type debugging bool
+
+const debug debugging = true
+
+func (d debugging) Printf(fmt string, args ...interface{}) {
+	if d {
+		log.Printf(fmt, args...)
+	}
 }

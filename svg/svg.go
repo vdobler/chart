@@ -35,7 +35,8 @@ func (sg *SvgGraphics) Begin() {
 	if fs == 0 {
 		fs = 12
 	}
-	sg.svg.Gstyle(fmt.Sprintf("stroke:#000000; stroke-width:1; font-family: %s; font-size: %d; opacity: 1; fill-opacity: 1", font, fs))
+	sg.svg.Gstyle(fmt.Sprintf("stroke:#000000; stroke-width:1; font-family: %s; font-size: %d; opacity: 1; fill-opacity: 1",
+		font, fs))
 }
 
 func (sg *SvgGraphics) End() {
@@ -89,14 +90,10 @@ func (sg *SvgGraphics) TextLen(t string, font chart.Font) int {
 }
 
 
-func (sg *SvgGraphics) Line(x0, y0, x1, y1 int, style chart.Style) {
-	var s string
-	if style.LineColor != "" {
-		s = fmt.Sprintf("stroke:%s; ", style.LineColor)
-	}
-	s += fmt.Sprintf("stroke-width: %d; ", style.LineWidth)
-	s += fmt.Sprintf("opacity: %.2f; ", 1-style.Alpha)
+var dashlength [][]int = [][]int{[]int{}, []int{4, 1}, []int{1, 1}, []int{4, 1, 1, 1, 1, 1}, []int{4, 4}, []int{1, 3}}
 
+func (sg *SvgGraphics) Line(x0, y0, x1, y1 int, style chart.Style) {
+	s := linestyle(style)
 	sg.svg.Line(x0, y0, x1, y1, s)
 }
 
@@ -264,8 +261,61 @@ func (sg *SvgGraphics) YAxis(yr chart.Range, xs, xms int) {
 	chart.GenericYAxis(sg, yr, xs, xms)
 }
 
+func linestyle(style chart.Style) (s string) {
+	lw := style.LineWidth
+	if style.LineColor != "" {
+		s = fmt.Sprintf("stroke:%s; ", style.LineColor)
+	}
+	s += fmt.Sprintf("stroke-width: %d; fill:none; ", lw)
+	s += fmt.Sprintf("opacity: %.2f; ", 1-style.Alpha)
+	if style.LineStyle != chart.SolidLine {
+		s += fmt.Sprintf("stroke-dasharray:")
+		for _, d := range dashlength[style.LineStyle] {
+			s += fmt.Sprintf(" %d", d*lw)
+		}
+	}
+	return
+}
+
 func (sg *SvgGraphics) Scatter(points []chart.EPoint, plotstyle chart.PlotStyle, style chart.Style) {
-	chart.GenericScatter(sg, points, plotstyle, style)
+	// First pass: Error bars
+	ebs := style
+	ebs.LineColor, ebs.LineWidth, ebs.LineStyle = ebs.FillColor, 1, chart.SolidLine
+	if ebs.LineColor == "" {
+		ebs.LineColor = "#404040"
+	}
+	if ebs.LineWidth == 0 {
+		ebs.LineWidth = 1
+	}
+	for _, p := range points {
+		xl, yl, xh, yh := p.BoundingBox()
+		// fmt.Printf("Draw %d: %f %f-%f\n", i, p.DeltaX, xl,xh)
+		if !math.IsNaN(p.DeltaX) {
+			sg.Line(int(xl), int(p.Y), int(xh), int(p.Y), ebs)
+		}
+		if !math.IsNaN(p.DeltaY) {
+			sg.Line(int(p.X), int(yl), int(p.X), int(yh), ebs)
+		}
+	}
+
+	// Second pass: Line
+	if (plotstyle&chart.PlotStyleLines) != 0 && len(points) > 0 {
+		path := fmt.Sprintf("M %d,%d", int(points[0].X), int(points[0].Y))
+		for i := 1; i < len(points); i++ {
+			path += fmt.Sprintf("L %d,%d", int(points[i].X), int(points[i].Y))
+		}
+		st := linestyle(style)
+		sg.svg.Path(path, st)
+	}
+
+	// Third pass: symbols
+	if (plotstyle&chart.PlotStylePoints) != 0 && len(points) != 0 {
+		for _, p := range points {
+			sg.Symbol(int(p.X), int(p.Y), style.Symbol, style)
+		}
+	}
+
+	// chart.GenericScatter(sg, points, plotstyle, style)
 }
 
 func (sg *SvgGraphics) Boxes(boxes []chart.Box, width int, style chart.Style) {
