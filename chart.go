@@ -454,11 +454,9 @@ func (r *Range) fDelta(delta, mindelta float64) float64 {
 }
 
 func (r *Range) fSetup(desiredNumberOfTics, maxNumberOfTics int, delta, mindelta float64) {
-	fmt.Printf("YYYY: %.3f %.3f\n", delta, mindelta)
 	if r.TicSetting.Delta != 0 {
 		delta = r.TicSetting.Delta
 	} else {
-		fmt.Printf(":::::::\n")
 		delta = r.fDelta(delta, mindelta)
 	}
 

@@ -109,7 +109,7 @@ func (c *ScatterChart) AddDataGeneric(name string, data []XYErrValue, plotstyle 
 
 // Make points from x and y and add to chart.
 func (c *ScatterChart) AddDataPair(name string, x, y []float64, plotstyle PlotStyle, style Style) {
-	n := min(len(x), len(y))
+	n := imin(len(x), len(y))
 	data := make([]EPoint, n)
 	nan := math.NaN()
 	for i := 0; i < n; i++ {

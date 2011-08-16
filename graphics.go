@@ -105,7 +105,7 @@ func GenericXAxis(bg BasicGraphics, rng Range, y, ym int) {
 	ticfont := bg.Font("tic")
 	var ticLen int = 0
 	if !rng.TicSetting.Hide {
-		ticLen = min(10, max(4, fontheight/2))
+		ticLen = imin(10, imax(4, fontheight/2))
 	}
 
 	// Axis itself, mirrord axis and zero
@@ -172,7 +172,7 @@ func GenericYAxis(bg BasicGraphics, rng Range, x, xm int) {
 	_, fontheight, _ := bg.FontMetrics(bg.Font("label"))
 	var ticLen int = 0
 	if !rng.TicSetting.Hide {
-		ticLen = min(10, max(4, fontheight/2))
+		ticLen = imin(10, imax(4, fontheight/2))
 	}
 
 	// Axis itself, mirrord axis and zero

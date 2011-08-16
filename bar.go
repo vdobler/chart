@@ -57,7 +57,7 @@ func (c *BarChart) AddData(name string, data []Point, style Style) {
 
 // AddDataPair is a convenience method to add all the (x[i],y[i]) pairs to the chart.
 func (c *BarChart) AddDataPair(name string, x, y []float64, style Style) {
-	n := min(len(x), len(y))
+	n := imin(len(x), len(y))
 	data := make([]Point, n)
 	for i := 0; i < n; i++ {
 		data[i] = Point{X: x[i], Y: y[i]}
@@ -144,7 +144,7 @@ func (c *BarChart) Plot(g Graphics) {
 		if !c.SameBarWidth {
 			barWidth = c.barWidth(i)
 		}
-		sbw := max(1, xf(2*barWidth)-xf(barWidth)-1) // screen bar width TODO
+		sbw := imax(1, xf(2*barWidth)-xf(barWidth)-1) // screen bar width TODO
 		bars := make([]Barinfo, len(data.Samples))
 
 		for i, point := range data.Samples {

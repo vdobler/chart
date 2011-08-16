@@ -155,7 +155,7 @@ func (c *HistChart) widthFactor() (gf, sf float64) {
 }
 
 
-// Prepare binCnt bins if width binWidth starting from binStart and count
+// Prepare binCnt bins of width binWidth starting from binStart and count
 // data samples per bin for each data set.  If c.Counts is true than the
 // absolute counts are returned instead if the frequencies.  max is the
 // largest y-value which will occur in our plot.
@@ -166,21 +166,24 @@ func (c *HistChart) binify(binStart, binWidth float64, binCnt int) (freqs [][]fl
 	max = 0
 	for i, data := range c.Data {
 		freq := make([]float64, binCnt)
+		drops := 0
 		for _, x := range data.Samples {
 			bin := x2bin(x)
 			if bin < 0 || bin >= binCnt {
-				fmt.Printf("!!!!! Lost %.3f (bin=%d)\n", x, bin)
+				// fmt.Printf("!!!!! Lost %.3f (bin=%d)\n", x, bin)
+				drops++
 				continue
 			}
 			freq[bin] = freq[bin] + 1
+			//fmt.Printf("Value %.2f sorted into bin %d, count now %d\n", x, bin, int(freq[bin]))
 		}
 		// scale if requested and determine max
-		n := float64(len(data.Samples))
-		fmt.Printf("Dataset %d has %d samples\n", i, int(n))
+		n := float64(len(data.Samples) - drops)
+		fmt.Printf("Dataset %d has %d samples (by %d drops).\n", i, int(n), drops)
 		ff := 0.0
 		for bin := 0; bin < binCnt; bin++ {
 			if !c.Counts {
-				freq[bin] = freq[bin] / n
+				freq[bin] = 100 * freq[bin] / n
 			}
 			ff += freq[bin]
 			if freq[bin] > max {
@@ -209,6 +212,44 @@ func (c *HistChart) binify(binStart, binWidth float64, binCnt int) (freqs [][]fl
 	return
 }
 
+func (c *HistChart) findBinWidth() {
+	bw := c.XRange.TicSetting.Delta
+	if bw == 0 { // this should not happen...
+		bw = 1
+	}
+
+	// Average sample count (n) and "optimum" bin count obc
+	n := 0
+	for _, data := range c.Data {
+		for _, x := range data.Samples {
+			// Count only data in valid x-range.
+			if x >= c.XRange.Min && x <= c.XRange.Max {
+				n++
+			}
+		}
+	}
+	n /= len(c.Data)
+	obc := math.Sqrt(float64(n))
+	fmt.Printf("Average size of %d data sets: %d (obc=%d)\n", len(c.Data), n, int(obc+0.5))
+
+	// Increase/decrease bin width if tic delta yields massively bad choice
+	binCnt := int((c.XRange.Max-c.XRange.Min)/bw + 0.5)
+	if binCnt >= int(2*obc) {
+		bw *= 2 // TODO: not so nice if bw is of form 2*10^n (use 2.5 in this case to match tics)
+		fmt.Printf("Increased bin width to %.3f (optimum bin cnt = %d,  was %d).\n",
+			bw, int(obc+0.5), binCnt)
+	} else if binCnt < int(3*obc) {
+		bw /= 2
+		fmt.Printf("Reduced bin width to %.3f (optimum bin cnt = %d,  was %d).\n",
+			bw, int(obc+0.5), binCnt)
+	} else {
+		fmt.Printf("Bin width of %.3f is ok (optimum bin cnt = %d,  was %d).\n",
+			bw, int(obc+0.5), binCnt)
+	}
+
+	c.BinWidth = bw
+}
+
 
 func (c *HistChart) Plot(g Graphics) {
 	layout := Layout(g, c.Title, c.XRange.Label, c.YRange.Label,
@@ -224,20 +265,33 @@ func (c *HistChart) Plot(g Graphics) {
 	leftm, width = leftm+int(2*fw), width-int(2*fw)
 	topm, height = topm, height-int(1*fh)
 
-	c.XRange.Setup(2*numxtics, 2*numxtics+5, width, leftm, false)
+	c.XRange.Setup(numxtics, numxtics+4, width, leftm, false)
 
 	// TODO(vodo) a) BinWidth might be input, alignment to tics should be nice, binCnt, ...
 	if c.BinWidth == 0 {
-		c.BinWidth = c.XRange.TicSetting.Delta
+		c.findBinWidth()
 	}
-	if c.BinWidth == 0 {
-		c.BinWidth = 1
-	}
-	binCnt := int((c.XRange.Max-c.XRange.Min)/c.BinWidth + 0.5)
-	c.FirstBin = c.XRange.Min + c.BinWidth/2
-	binStart := c.XRange.Min // BUG: if min not on tic: ugly
-	fmt.Printf("%d bins from %.2f width %.2f\n", binCnt, binStart, c.BinWidth)
+
+	xmin, xmax := c.XRange.Min, c.XRange.Max
+	binStart := c.BinWidth * math.Ceil(xmin/c.BinWidth)
+	c.FirstBin = binStart + c.BinWidth/2
+	binCnt := int(math.Floor(c.XRange.Max-binStart) / c.BinWidth)
+	fmt.Printf("Using %d bins from %.3f to %.3f width %.3f  (xrange: %.3f--%.3f)\n",
+		binCnt, binStart, binStart+c.BinWidth*float64(binCnt), c.BinWidth, xmin, xmax)
 	counts, max := c.binify(binStart, c.BinWidth, binCnt)
+
+	// Calculate smoothed density plots and re-max y.
+	var smoothed [][]EPoint
+	if !c.Stacked && c.Kernel != nil {
+		smoothed = make([][]EPoint, len(c.Data))
+		for d := range c.Data {
+			p, m := c.smoothed(d, binCnt)
+			smoothed[d] = p
+			if m > max {
+				max = m
+			}
+		}
+	}
 
 	// Fix lower end of y axis
 	fmt.Printf("Settup up Y-Range\n")
@@ -275,15 +329,19 @@ func (c *HistChart) Plot(g Graphics) {
 
 	fmt.Printf("gf=%.3f, sf=%.3f, bw=%.3f   ===>  ww=%.2f,   w=%.2f,  s=%.2f\n", gf, sf, c.BinWidth, ww, w, s)
 	for d := numSets - 1; d >= 0; d-- {
-		bars := make([]Barinfo, binCnt)
+		bars := make([]Barinfo, 0, binCnt)
 		ws := 0
 		for b := 0; b < binCnt; b++ {
+			if counts[d][b] == 0 {
+				continue
+			}
 			xb := binStart + (float64(b)+0.5)*c.BinWidth
 			x := xb - ww/2 + float64(d)*(s+w)
 			xs := xf(x)
 			xss := xf(x + w)
 			ws = xss - xs
-			bars[b].x, bars[b].w = xs, xss-xs
+			thebar := Barinfo{x: xs, w: xss - xs}
+
 			off := 0.0
 			if c.Stacked {
 				for dd := d - 1; dd >= 0; dd-- {
@@ -291,12 +349,19 @@ func (c *HistChart) Plot(g Graphics) {
 				}
 			}
 			a, aa := yf(float64(off+counts[d][b])), yf(float64(off))
-			bars[b].y, bars[b].h = a, abs(a-aa)
+			thebar.y, thebar.h = a, iabs(a-aa)
+			bars = append(bars, thebar)
 		}
 		g.Bars(bars, c.Data[d].Style)
 
 		if !c.Stacked && c.Kernel != nil {
-			c.drawSmoothed(g, d)
+			style := Style{Symbol:/*c.Data[d].Style.Symbol*/ 'X', LineColor: c.Data[d].Style.LineColor,
+				LineWidth: 1, LineStyle: SolidLine}
+			for j := range smoothed[d] {
+				// now YRange is set up: transform to screen coordinates
+				smoothed[d][j].Y = float64(c.YRange.Data2Screen(smoothed[d][j].Y))
+			}
+			g.Scatter(smoothed[d], PlotStyleLines, style)
 		}
 		if !c.Stacked && sf < 0 && gf != 0 && fh > 1 {
 			// Whitelining
@@ -318,14 +383,16 @@ func (c *HistChart) Plot(g Graphics) {
 	g.End()
 }
 
-func (c *HistChart) drawSmoothed(g Graphics, i int) {
-	style := Style{Symbol: c.Data[i].Style.Symbol, LineColor: c.Data[i].Style.LineColor,
-		LineWidth: 1, LineStyle: SolidLine}
+// Smooth data set i. The Y-value of the returned points is not jet in screen coordinates
+// but in data coordinates! (Reason: YRange not set up jet)
+func (c *HistChart) smoothed(i, binCnt int) (points []EPoint, max float64) {
 	nan := math.NaN()
 
-	step := (c.XRange.Max - c.XRange.Min) / 25
-	points := make([]EPoint, 0, 50)
-	h := 4.0
+	samples := imax(25, binCnt*5)
+
+	step := (c.XRange.Max - c.XRange.Min) / float64(samples)
+	points = make([]EPoint, 0, 50)
+	h := c.BinWidth
 	K := c.Kernel
 	n := float64(len(c.Data[i].Samples))
 
@@ -338,13 +405,20 @@ func (c *HistChart) drawSmoothed(g Graphics, i int) {
 		f /= h
 		if !c.Counts {
 			f /= n
+			f *= 100 // as display is in %
 		}
-		ff += f
+
+		// Rescale kernel density estimation by width of bars:
+		f *= c.BinWidth
+		if f > max {
+			max = f
+		}
 		xx := float64(c.XRange.Data2Screen(x))
-		yy := float64(c.YRange.Data2Screen(f))
-		fmt.Printf("Consructed %.3f, %.3f\n", x, f)
-		points = append(points, EPoint{X: xx, Y: yy, DeltaX: nan, DeltaY: nan})
+		// yy := float64(c.YRange.Data2Screen(f))
+		fmt.Printf("Consructed %.3f, %.4f\n", x, f)
+		points = append(points, EPoint{X: xx, Y: f, DeltaX: nan, DeltaY: nan})
 	}
 	fmt.Printf("Dataset %d: ff=%.4f\n", i, ff)
-	g.Scatter(points, PlotStyleLines, style)
+
+	return
 }

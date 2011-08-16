@@ -41,7 +41,7 @@ func (c *PieChart) AddData(name string, data []CatValue, style []Style) {
 }
 
 func (c *PieChart) AddDataPair(name string, cat []string, val []float64) {
-	n := min(len(cat), len(val))
+	n := imin(len(cat), len(val))
 	data := make([]CatValue, n)
 	for i := 0; i < n; i++ {
 		data[i].Cat, data[i].Val = cat[i], val[i]

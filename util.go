@@ -31,28 +31,28 @@ func maximum(data []float64) float64 {
 }
 
 
-func min(a, b int) int {
+func imin(a, b int) int {
 	if a < b {
 		return a
 	}
 	return b
 }
 
-func max(a, b int) int {
+func imax(a, b int) int {
 	if a > b {
 		return a
 	}
 	return b
 }
 
-func abs(a int) int {
+func iabs(a int) int {
 	if a < 0 {
 		return -a
 	}
 	return a
 }
 
-func sign(a int) int {
+func isign(a int) int {
 	if a < 0 {
 		return -1
 	}
@@ -63,10 +63,10 @@ func sign(a int) int {
 }
 
 func clip(x, l, u int) int {
-	if x < min(l, u) {
+	if x < imin(l, u) {
 		return l
 	}
-	if x > max(l, u) {
+	if x > imax(l, u) {
 		return u
 	}
 	return x
