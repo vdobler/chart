@@ -439,6 +439,7 @@ func boxChart() {
 	thesvg.Title("Srip Chart")
 	thesvg.Rect(0, 0, 800, 600, "fill: #ffffff")
 	svggraphics := svgchart.NewSvgGraphics(thesvg, 400, 300, "Arial", 12)
+	txtgraphics := txtchart.NewTextGraphics(120, 40)
 
 	p := chart.BoxChart{Title: "Box Chart"}
 	p.XRange.Label, p.YRange.Label = "Value", "Count"
@@ -454,7 +455,7 @@ func boxChart() {
 		p.AddSet(float64(x), points, true)
 	}
 
-	p.NextDataSet("Hallo", chart.Style{LineColor: "#00c000", LineWidth: 1, LineStyle: chart.SolidLine})
+	p.NextDataSet("Sample B", chart.Style{Symbol: 'x', LineColor: "#00c000", LineWidth: 1, LineStyle: chart.SolidLine})
 	for x := 12; x <= 50; x += 10 {
 		points := make([]float64, 60)
 		a := rand.Float64()*15 + 30
@@ -467,14 +468,30 @@ func boxChart() {
 	}
 
 	p.Plot(svggraphics)
+	p.Plot(txtgraphics)
+	fmt.Printf("%s\n", txtgraphics.String())
+
+	thesvg.Gtransform("translate(400 0)")
+	p = chart.BoxChart{Title: "Categorical Box Chart"}
+	p.XRange.Label, p.YRange.Label = "Population", "Count"
+	p.XRange.Fixed(-1, 3, 1)
+	p.XRange.Category = []string{"Rural", "Urban", "Island"}
+
+	p.NextDataSet("", chart.Style{Symbol: '%', LineColor: "#0000cc", LineWidth: 1, LineStyle: chart.SolidLine})
+	p.AddSet(0, bigauss(100, 0, 5, 10, 0, 0, 0, 50), true)
+	p.AddSet(1, bigauss(100, 25, 5, 5, 2, 25, 0, 50), true)
+	p.AddSet(2, bigauss(50, 50, 4, 8, 4, 16, 0, 50), true)
+	p.Plot(svggraphics)
+	p.Plot(txtgraphics)
+	fmt.Printf("%s\n", txtgraphics.String())
+	thesvg.Gend()
+
 	thesvg.End()
 	file.Close()
 
-	txtgraphics := txtchart.NewTextGraphics(100, 60)
-	p.Plot(txtgraphics)
-	fmt.Printf("%s\n", txtgraphics.String())
 }
 
+// gaussian distribution with n samples, stddev of s, offset of a, forced to [l,u]
 func gauss(n int, s, a, l, u float64) []float64 {
 	points := make([]float64, n)
 	for i := 0; i < len(points); i++ {
@@ -483,6 +500,26 @@ func gauss(n int, s, a, l, u float64) []float64 {
 			x = l
 		} else if x > u {
 			x = u
+		}
+		points[i] = x
+	}
+	return points
+}
+
+// bigaussian distribution with n samples, stddev of s, offset of a, clipped to [l,u]
+func bigauss(n1, n2 int, s1, a1, s2, a2, l, u float64) []float64 {
+	points := make([]float64, n1+n2)
+	for i := 0; i < n1; i++ {
+		x := rand.NormFloat64()*s1 + a1
+		for x < l || x > u {
+			x = rand.NormFloat64()*s1 + a1
+		}
+		points[i] = x
+	}
+	for i := n1; i < n1+n2; i++ {
+		x := rand.NormFloat64()*s2 + a2
+		for x < l || x > u {
+			x = rand.NormFloat64()*s2 + a2
 		}
 		points[i] = x
 	}
@@ -698,6 +735,71 @@ func catBarChart() {
 
 
 //
+// Categorical Bar Charts
+//
+func categoricalBarChart() {
+	file, _ := os.Create("xbar2.svg")
+	thesvg := svg.New(file)
+	thesvg.Start(800, 600)
+	thesvg.Title("Bar Chart")
+	thesvg.Rect(0, 0, 800, 600, "fill: #ffffff")
+	svggraphics := svgchart.NewSvgGraphics(thesvg, 400, 300, "Arial", 12)
+	txtgraphics := txtchart.NewTextGraphics(120, 30)
+
+	// Categorized Bar Chart
+	c := chart.BarChart{Title: "Income"}
+	c.XRange.Category = []string{"none", "low", "average", "high"}
+	x := []float64{0, 1, 2, 3}
+	europe := []float64{10, 15, 25, 20}
+	asia := []float64{15, 30, 10, 20}
+	c.AddDataPair("Europe", x, europe,
+		chart.Style{Symbol: '#', LineColor: "#0000ff", LineWidth: 4, FillColor: "#4040ff"})
+	c.Plot(svggraphics)
+	c.Plot(txtgraphics)
+	fmt.Printf("%s\n", txtgraphics.String())
+
+	c.AddDataPair("Asia", x, asia,
+		chart.Style{Symbol: '0', LineColor: "#aa00aa", LineWidth: 4, FillColor: "#aa40aa"})
+	c.YRange.MinMode.Fixed = true
+	c.YRange.MinMode.Value = 0
+	c.ShowVal = true // 1
+	thesvg.Gtransform("translate(400 0)")
+	c.Plot(svggraphics)
+	c.Plot(txtgraphics)
+	fmt.Printf("%s\n", txtgraphics.String())
+	thesvg.Gend()
+
+	c.Stacked = true
+	c.YRange.MinMode.Fixed = false
+	c.ShowVal = true // 2
+	thesvg.Gtransform("translate(0 300)")
+	c.Plot(svggraphics)
+	c.Plot(txtgraphics)
+	fmt.Printf("%s\n", txtgraphics.String())
+	thesvg.Gend()
+
+	c = chart.BarChart{Title: "Income"}
+	c.XRange.Category = []string{"none", "low", "average", "high"}
+
+	c.YRange.ShowZero = true
+	c.AddDataPair("Europe", x, europe,
+		chart.Style{Symbol: '%', LineColor: "#0000ff", LineWidth: 4, FillColor: "#0000ff"})
+	c.AddDataPair("Asia", x, asia,
+		chart.Style{Symbol: '&', LineColor: "#aa00aa", LineWidth: 4, FillColor: "#aa00aa"})
+	c.Key.Pos = "ibl"
+	c.ShowVal = true // 3
+	thesvg.Gtransform("translate(400 300)")
+	c.Plot(svggraphics)
+	c.Plot(txtgraphics)
+	fmt.Printf("%s\n", txtgraphics.String())
+	thesvg.Gend()
+
+	thesvg.End()
+	file.Close()
+}
+
+
+//
 // Logarithmic axes
 //
 func logAxis() {
@@ -855,7 +957,7 @@ func main() {
 
 	barChart()
 
-	catBarChart()
+	categoricalBarChart()
 
 	boxChart()
 

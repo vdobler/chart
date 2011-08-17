@@ -200,6 +200,9 @@ func (key Key) Layout(bg BasicGraphics, m [][]*KeyEntry) (w, h int, colwidth, ro
 
 func GenericKey(bg BasicGraphics, x, y int, key Key) {
 	m := key.Place()
+	if len(m) == 0 {
+		return
+	}
 	keyfont := bg.Font("key")
 	fw, fh, _ := bg.FontMetrics(keyfont)
 	tw, th, cw, rh := key.Layout(bg, m)

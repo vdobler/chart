@@ -75,7 +75,7 @@ var PieChartBorder = 0.05             // Fraction of white border outside next d
 
 // Plot outputs the scatter chart sc to g.
 func (c *PieChart) Plot(g Graphics) {
-	layout := Layout(g, c.Title, "", "", true, true, &c.Key)
+	layout := layout(g, c.Title, "", "", true, true, &c.Key)
 
 	width, height := layout.Width, layout.Height
 	topm, leftm := layout.Top, layout.Left

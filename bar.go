@@ -21,14 +21,15 @@ import (
 // at the same x position.
 type BarChart struct {
 	XRange, YRange Range
-	Title          string  // Title of the chart
-	Key            Key     // Key/Legend
-	Horizontal     bool    // Display as horizontal bars (unimplemented)
-	Stacked        bool    // Display different data sets ontop of each other (default is side by side)
-	ShowVal        bool    // Display values 
-	SameBarWidth   bool    // all data sets use the same (smalest of all data sets) bar width
-	BarWidthFac    float64 // if nonzero: scale determined bar width with this factor
-	Data           []BarChartData
+	Title          string // Title of the chart
+	Key            Key    // Key/Legend
+	Horizontal     bool   // Display as horizontal bars (unimplemented)
+	Stacked        bool   // Display different data sets ontop of each other (default is side by side)
+	ShowVal        bool   // Display values 
+	// 0: don't show; 1: above bar, 2: centerd in bar; 3: at top of bar
+	SameBarWidth bool    // all data sets use the same (smalest of all data sets) bar width
+	BarWidthFac  float64 // if nonzero: scale determined bar width with this factor
+	Data         []BarChartData
 }
 
 // BarChartData encapsulates data sets in a bar chart.
@@ -100,7 +101,7 @@ func (c *BarChart) extremBarWidth() (smallest, widest float64) {
 // Plot renders the chart to the graphics output g.
 func (c *BarChart) Plot(g Graphics) {
 	// layout
-	layout := Layout(g, c.Title, c.XRange.Label, c.YRange.Label,
+	layout := layout(g, c.Title, c.XRange.Label, c.YRange.Label,
 		c.XRange.TicSetting.Hide, c.YRange.TicSetting.Hide, &c.Key)
 	width, height := layout.Width, layout.Height
 	topm, leftm := layout.Top, layout.Left

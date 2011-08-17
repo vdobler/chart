@@ -8,75 +8,103 @@ import (
 	//	"os"
 )
 
+type Expansion int
 
 // Suitable values for Expand in RangeMode.
 const (
-	ExpandNextTic = iota // Set min/max to next tic really below/above min/max of data
-	ExpandToTic          // Set to next tic below/above or equal to min/max of data
-	ExpandTight          // Use data min/max as limit 
-	ExpandABit           // Like ExpandToTic and add/subtract ExpandABitFraction of tic distance.
+	ExpandNextTic Expansion = 0 // Set min/max to next tic really below/above min/max of data
+	ExpandToTic   Expansion = 1 // Set to next tic below/above or equal to min/max of data
+	ExpandTight   Expansion = 2 // Use data min/max as limit 
+	ExpandABit    Expansion = 3 // Like ExpandToTic and add/subtract ExpandABitFraction of tic distance.
 )
 
 var ExpandABitFraction = 0.5 // Fraction of tic spacing added in ExpandABit Range.Expand mode.
 
 // RangeMode describes how one end of an axis is set up. There are basically three different main modes:
-//   o Fixed: Fixed==true. 
-//     Use Value/TValue as fixed value ignoring data 
-//   o Unconstrained autoscaling: Fixed==false && Constrained==false
-//     Set range to whatever data requires
-//   o Constrained autoscaling: Fixed==false && Constrained==true
+//   o Fixed: Fixed==true.
+//     Use Value/TValue as fixed value ignoring data. 
+//   o Unconstrained autoscaling: Fixed==false && Constrained==false.
+//     Set range to whatever data requires.
+//   o Constrained autoscaling: Fixed==false && Constrained==true.
 //     Scale axis according to data present, but limit scaling to intervall [Lower,Upper]
 // For both autoscaling modes Expand defines how much expansion is done below/above
 // the lowest/highest data point.
 type RangeMode struct {
 	Fixed          bool       // If false: autoscaling. If true: use (T)Value/TValue as fixed setting
 	Constrained    bool       // If false: full autoscaling. If true: use (T)Lower (T)Upper as limits
-	Expand         int        // One of ExpandNextTic, ExpandTight, ExpandABit
+	Expand         Expansion  // One of ExpandNextTic, ExpandTight, ExpandABit
 	Value          float64    // Value of end point of axis in Fixed=true mode, ignorder otherwise
 	TValue         *time.Time // Same as Value, but used for Date/Time axis
 	Lower, Upper   float64    // Lower and upper limit for constrained autoscaling
 	TLower, TUpper *time.Time // Same s Lower/Upper, but used for Date/Time axis
 }
 
+type GridMode int
+
+const (
+	GridOff    GridMode = 0 // No grid lines
+	GridLines  GridMode = 1 // Grid lines
+	GridBlocks GridMode = 2 // Zebra style background
+)
+
+type MirrorAxis int
+
+const (
+	MirrorAxisAndTics MirrorAxis = 0
+	MirrorNothing     MirrorAxis = -1
+	MirrorAxisOnly    MirrorAxis = 1
+)
 
 // TicSettings describes how (if at all) tics are shown on an axis.
 type TicSetting struct {
-	Hide   bool      // Dont show tics if true
-	Minor  int       // 0: off, 1: auto, >1: number of intervalls (not number of tics!)
-	Delta  float64   // Wanted step. 0 means auto 
-	TDelta TimeDelta // Same as Delta, used for Date/Time axis
-	Fmt    string    // special format string
-	Grid   int       // 0: none, 1: lines, 2: blocks
-	Mirror int       // 0: mirror axis and tics, -1: don't mirror anything, 1: mirror axis only (no tics)
+	Hide   bool       // Dont show tics if true
+	Minor  int        // 0: off, 1: auto, >1: number of intervalls (not number of tics!)
+	Delta  float64    // Wanted step between major tics. 0 means auto 
+	TDelta TimeDelta  // Same as Delta, used for Date/Time axis
+	Fmt    string     // special format string (unused)
+	Grid   int        // 0: none, 1: lines, 2: blocks
+	Mirror MirrorAxis // 0: mirror axis and tics, -1: don't mirror anything, 1: mirror axis only (no tics)
 }
 
 // Tic describs a single tic on an axis.
 type Tic struct {
-	Pos, LabelPos float64 // Position if the tic and its label
-	Label         string  // The Label
+	Pos, LabelPos float64 // Position if the tic and its label on the axis (data coordinates).
+	Label         string  // The Label of the tic
 	Align         int     // Alignment of the label: -1: left/top, 0 center, 1 right/bottom (unused)
 }
 
 // Range encapsulates all information about an axis.
 type Range struct {
-	Log              bool       // logarithmic axis?
-	Time             bool       // Date/Time axis
+	Label            string     // Label of axis
+	Log              bool       // Logarithmic axis?
+	Time             bool       // Date/Time axis?
 	MinMode, MaxMode RangeMode  // How to handel min and max of this axis/range
 	TicSetting       TicSetting // How to handle tics.
 	DataMin, DataMax float64    // Actual min/max values from data. If both zero: not calculated
-	ShowLimits       bool       // Display axis Min and Max on plot
+	ShowLimits       bool       // Display axis Min and Max values on plot
 	ShowZero         bool       // Add line to show 0 of this axis
-	Tics             []Tic      // List of tics to display
-	Label            string     // Label of axis
+	Category         []string   // If not empty (and neither Log nor Time): Use Category[n] as tic label at pos n+1.
 
-	Min, Max   float64    // Minium and Maximum of this axis/range.
+	// The following values are set up during plotting
+	Min, Max   float64    // Actual minium and maximum of this axis/range.
 	TMin, TMax *time.Time // Same as Min/Max, but used for Date/Time axis
+	Tics       []Tic      // List of tics to display
 
+	// The following functions are set up during plotting
 	Norm        func(float64) float64 // Function to map [Min:Max] to [0:1]
 	InvNorm     func(float64) float64 // Inverse of Norm()
 	Data2Screen func(float64) int     // Function to map data value to screen position
 	Screen2Data func(int) float64     // Inverse of Data2Screen
 }
+
+// Fixed is a helper (just reduces typing) functions which turns of autoscaling 
+// and sets the axis range to [min,max] and the tic distance to delta. 
+func (r *Range) Fixed(min, max, delta float64) {
+	r.MinMode.Fixed, r.MaxMode.Fixed = true, true
+	r.MinMode.Value, r.MaxMode.Value = min, max
+	r.TicSetting.Delta = delta
+}
+
 
 // Prepare the range r for use, especially set up all values needed for autoscale() to work properly
 func (r *Range) init() {
@@ -177,8 +205,10 @@ func FmtTime(sec int64, step TimeDelta) string {
 }
 
 
+// Units are the SI prefixes for 10^3n
 var Units = []string{" y", " z", " a", " f", " p", " n", " µ", "m", " k", " M", " G", " T", " P", " E", " Z", " Y"}
 
+// FmtFloat yields a string representation of f. E.g. 12345.67 --> "12.3 k";  0.09876 --> "99 m"
 func FmtFloat(f float64) string {
 	af := math.Fabs(f)
 	if f == 0 {
@@ -213,11 +243,11 @@ func almostEqual(a, b, d float64) bool {
 }
 
 
-// ApplyRangeMode returns val constrained by mode. val is considered the upper end of an range/axis
+// applyRangeMode returns val constrained by mode. val is considered the upper end of an range/axis
 // if upper is true. To allow proper rounding to tic (depending on desired RangeMode)
 // the ticDelta has to be provided. Logaritmic axis are selected by log = true and ticDelta
 // is ignored: Tics are of the form 1*10^n.
-func ApplyRangeMode(mode RangeMode, val, ticDelta float64, upper, log bool) float64 {
+func applyRangeMode(mode RangeMode, val, ticDelta float64, upper, log bool) float64 {
 	if mode.Fixed {
 		return mode.Value
 	}
@@ -289,8 +319,8 @@ func ApplyRangeMode(mode RangeMode, val, ticDelta float64, upper, log bool) floa
 }
 
 
-// TApplyRangeMode is the same as ApplyRangeMode for date/time axis/ranges.
-func TApplyRangeMode(mode RangeMode, val *time.Time, step TimeDelta, upper bool) (bound *time.Time, tic *time.Time) {
+// tApplyRangeMode is the same as applyRangeMode for date/time axis/ranges.
+func tApplyRangeMode(mode RangeMode, val *time.Time, step TimeDelta, upper bool) (bound *time.Time, tic *time.Time) {
 	if mode.Fixed {
 		bound = mode.TValue
 		if upper {
@@ -371,8 +401,8 @@ func (r *Range) tSetup(desiredNumberOfTics, maxNumberOfTics int, delta, mindelta
 	maxt := time.SecondsToLocalTime(int64(r.DataMax))
 
 	var ftic, ltic *time.Time
-	r.TMin, ftic = TApplyRangeMode(r.MinMode, mint, td, false)
-	r.TMax, ltic = TApplyRangeMode(r.MaxMode, maxt, td, true)
+	r.TMin, ftic = tApplyRangeMode(r.MinMode, mint, td, false)
+	r.TMax, ltic = tApplyRangeMode(r.MaxMode, maxt, td, true)
 	r.TicSetting.Delta, r.TicSetting.TDelta = float64(td.Seconds()), td
 	r.Min, r.Max = float64(r.TMin.Seconds()), float64(r.TMax.Seconds())
 
@@ -380,22 +410,21 @@ func (r *Range) tSetup(desiredNumberOfTics, maxNumberOfTics int, delta, mindelta
 	actNumTics := int((r.Max - r.Min) / ftd)
 	if actNumTics > maxNumberOfTics {
 		// recalculate time tic delta
-		fmt.Printf("Switching to next (%d > %d) delta from %s", actNumTics, maxNumberOfTics, td)
+		debug.Printf("Switching to next (%d > %d) delta from %s", actNumTics, maxNumberOfTics, td)
 		td = NextTimeDelta(td)
 		ftd = float64(td.Seconds())
-		fmt.Printf("  -->  %s\n", td)
-		r.TMin, ftic = TApplyRangeMode(r.MinMode, mint, td, false)
-		r.TMax, ltic = TApplyRangeMode(r.MaxMode, maxt, td, true)
+		debug.Printf("  -->  %s\n", td)
+		r.TMin, ftic = tApplyRangeMode(r.MinMode, mint, td, false)
+		r.TMax, ltic = tApplyRangeMode(r.MaxMode, maxt, td, true)
 		r.TicSetting.Delta, r.TicSetting.TDelta = float64(td.Seconds()), td
 		r.Min, r.Max = float64(r.TMin.Seconds()), float64(r.TMax.Seconds())
 		actNumTics = int((r.Max - r.Min) / ftd)
 	}
 
-	/*
-		fmt.Printf("Range:\n  Data:  %s  to  %s\n  --->   %s  to  %s\n  Tic-Delta: %s\n  Tics:  %s  to  %s\n",
-			f2d(r.DataMin), f2d(r.DataMax), f2d(r.Min), f2d(r.Max), td,
-			ftic.Format("2006-01-02 15:04:05 (Mon)"), ltic.Format("2006-01-02 15:04:05 (Mon)"))
-	*/
+	debug.Printf("TimeRange: %s TO %s --> %s TO %s  Delta: %s  Tics: %s to %s\n",
+		f2d(r.DataMin), f2d(r.DataMax), f2d(r.Min), f2d(r.Max), td,
+		ftic.Format("2006-01-02 15:04:05 (Mon)"), ltic.Format("2006-01-02 15:04:05 (Mon)"))
+
 	// Set up tics
 	r.Tics = make([]Tic, 0)
 	step := int64(td.Seconds())
@@ -418,13 +447,14 @@ func (r *Range) tSetup(desiredNumberOfTics, maxNumberOfTics int, delta, mindelta
 	}
 }
 
+// Determine appropriate tic delta for normal (non dat/time) axis from desired delta and minimal delta.
 func (r *Range) fDelta(delta, mindelta float64) float64 {
-	fmt.Printf("fDelta(%.3f, %.3f)\n", delta, mindelta)
 	if r.Log {
 		return 10
 	}
 
 	// Set up nice tic delta of the form 1,2,5 * 10^n
+	// TODO: deltas of 25 and 250 would be suitable too...
 	de := math.Pow10(int(math.Floor(math.Log10(delta))))
 	f := delta / de
 	switch {
@@ -454,6 +484,7 @@ func (r *Range) fDelta(delta, mindelta float64) float64 {
 	return delta
 }
 
+// Set up normal (=non date/time axis)
 func (r *Range) fSetup(desiredNumberOfTics, maxNumberOfTics int, delta, mindelta float64) {
 	if r.TicSetting.Delta != 0 {
 		delta = r.TicSetting.Delta
@@ -461,8 +492,8 @@ func (r *Range) fSetup(desiredNumberOfTics, maxNumberOfTics int, delta, mindelta
 		delta = r.fDelta(delta, mindelta)
 	}
 
-	r.Min = ApplyRangeMode(r.MinMode, r.DataMin, delta, false, r.Log)
-	r.Max = ApplyRangeMode(r.MaxMode, r.DataMax, delta, true, r.Log)
+	r.Min = applyRangeMode(r.MinMode, r.DataMin, delta, false, r.Log)
+	r.Max = applyRangeMode(r.MaxMode, r.DataMax, delta, true, r.Log)
 	r.TicSetting.Delta = delta
 	if r.Log {
 		x := math.Pow10(int(math.Ceil(math.Log10(r.Min))))
@@ -475,17 +506,35 @@ func (r *Range) fSetup(desiredNumberOfTics, maxNumberOfTics int, delta, mindelta
 		}
 
 	} else {
-		first := delta * math.Ceil(r.Min/delta)
-		num := int(-first/delta + math.Floor(r.Max/delta) + 1.5)
-		fmt.Printf("Range: (%.2f,%.2f) --> (%g,%g), Tic-Delta: %g, %d tics from %g\n", r.DataMin, r.DataMax, r.Min, r.Max, delta, num, first)
+		if len(r.Category) > 0 {
+			r.Tics = make([]Tic, len(r.Category))
+			for i, c := range r.Category {
+				x := float64(i)
+				if x < r.Min {
+					continue
+				}
+				if x > r.Max {
+					break
+				}
+				r.Tics[i].Pos = math.NaN() // no tic
+				r.Tics[i].LabelPos = x
+				r.Tics[i].Label = c
+			}
 
-		// Set up tics
-		r.Tics = make([]Tic, num)
-		for i, x := 0, first; i < num; i, x = i+1, x+delta {
-			r.Tics[i].Pos, r.Tics[i].LabelPos = x, x
-			r.Tics[i].Label = FmtFloat(x)
+		} else {
+			// normal numeric axis
+			first := delta * math.Ceil(r.Min/delta)
+			num := int(-first/delta + math.Floor(r.Max/delta) + 1.5)
+			debug.Printf("Range: (%.3f,%.3f) --> (%g,%g), Tic-Delta: %g, %d tics from %g\n",
+				r.DataMin, r.DataMax, r.Min, r.Max, delta, num, first)
+
+			// Set up tics
+			r.Tics = make([]Tic, num)
+			for i, x := 0, first; i < num; i, x = i+1, x+delta {
+				r.Tics[i].Pos, r.Tics[i].LabelPos = x, x
+				r.Tics[i].Label = FmtFloat(x)
+			}
 		}
-
 		// TODO(vodo) r.ShowLimits = true
 	}
 }
@@ -566,8 +615,8 @@ type LayoutData struct {
 }
 
 
-// TODO: Key.X/Y have to go to explicit data
-func Layout(g Graphics, title, xlabel, ylabel string, hidextics, hideytics bool, key *Key) (ld LayoutData) {
+// Layout graph data area on screen and place key.
+func layout(g Graphics, title, xlabel, ylabel string, hidextics, hideytics bool, key *Key) (ld LayoutData) {
 	fw, fh, _ := g.FontMetrics(g.Font("key"))
 	w, h := g.Dimensions()
 

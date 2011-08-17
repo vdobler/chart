@@ -56,7 +56,7 @@ func (sc *StripChart) Plot(g Graphics) {
 
 	if sc.Jitter {
 		// Set up ranging
-		layout := Layout(g, sc.Title, sc.XRange.Label, sc.YRange.Label,
+		layout := layout(g, sc.Title, sc.XRange.Label, sc.YRange.Label,
 			sc.XRange.TicSetting.Hide, sc.YRange.TicSetting.Hide, &sc.Key)
 
 		_, height := layout.Width, layout.Height

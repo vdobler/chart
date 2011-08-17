@@ -65,7 +65,7 @@ func (c *CategoryBarChart) Plot(g Graphics) {
 	xrange.MaxMode = RangeMode{Fixed: true, Value: float64(n) + 0.5}
 
 	// layout
-	layout := Layout(g, c.Title, xrange.Label, c.YRange.Label,
+	layout := layout(g, c.Title, xrange.Label, c.YRange.Label,
 		xrange.TicSetting.Hide, c.YRange.TicSetting.Hide, &c.Key)
 	width, height := layout.Width, layout.Height
 	topm, leftm := layout.Top, layout.Left

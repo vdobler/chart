@@ -121,7 +121,7 @@ func (c *ScatterChart) AddDataPair(name string, x, y []float64, plotstyle PlotSt
 
 // Plot outputs the scatter chart sc to g.
 func (c *ScatterChart) Plot(g Graphics) {
-	layout := Layout(g, c.Title, c.XRange.Label, c.YRange.Label,
+	layout := layout(g, c.Title, c.XRange.Label, c.YRange.Label,
 		c.XRange.TicSetting.Hide, c.YRange.TicSetting.Hide, &c.Key)
 
 	width, height := layout.Width, layout.Height

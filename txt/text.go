@@ -515,6 +515,9 @@ var (
 
 func (g *TextGraphics) Key(x, y int, key chart.Key) {
 	m := key.Place()
+	if len(m) == 0 {
+		return
+	}
 	tw, th, cw, rh := key.Layout(g, m)
 	style := g.Style("key")
 	if style.LineWidth > 0 || style.FillColor != "" {

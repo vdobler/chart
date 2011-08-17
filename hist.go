@@ -264,7 +264,7 @@ func (c *HistChart) findBinWidth() {
 
 
 func (c *HistChart) Plot(g Graphics) {
-	layout := Layout(g, c.Title, c.XRange.Label, c.YRange.Label,
+	layout := layout(g, c.Title, c.XRange.Label, c.YRange.Label,
 		c.XRange.TicSetting.Hide, c.YRange.TicSetting.Hide, &c.Key)
 	fw, fh, _ := g.FontMetrics(g.Font("label"))
 	fw += 0

@@ -99,7 +99,7 @@ func (c *BoxChart) AddSet(x float64, data []float64, outlier bool) {
 // Plot renders the chart to the graphic output g.
 func (c *BoxChart) Plot(g Graphics) {
 	// layout
-	layout := Layout(g, c.Title, c.XRange.Label, c.YRange.Label,
+	layout := layout(g, c.Title, c.XRange.Label, c.YRange.Label,
 		c.XRange.TicSetting.Hide, c.YRange.TicSetting.Hide, &c.Key)
 	width, height := layout.Width, layout.Height
 	topm, leftm := layout.Top, layout.Left
