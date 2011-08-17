@@ -10,26 +10,17 @@ import (
 // BarChart draws simple bar charts.
 // (Use CategoricalBarChart if your x axis is categorical, that is not numeric.)
 //
-// The x values of ech data set must be sorted from low to high.
-// 
-// In stacked mode all x values of all data sets must be identical. Not even
-// missing values are allowed.
-// 
-// If BarWidth is zero the BarWidth is the smallest distance between two
-// x values multiplied by BarWidthFac (<1). 
-// Data sets are drawn first to last, last overwriting previous, maybe
-// at the same x position.
+// Stacking is on a "both bars have _identical_ x values" basis.
 type BarChart struct {
 	XRange, YRange Range
-	Title          string // Title of the chart
-	Key            Key    // Key/Legend
-	Horizontal     bool   // Display as horizontal bars (unimplemented)
-	Stacked        bool   // Display different data sets ontop of each other (default is side by side)
-	ShowVal        bool   // Display values 
-	// 0: don't show; 1: above bar, 2: centerd in bar; 3: at top of bar
-	SameBarWidth bool    // all data sets use the same (smalest of all data sets) bar width
-	BarWidthFac  float64 // if nonzero: scale determined bar width with this factor
-	Data         []BarChartData
+	Title          string  // Title of the chart
+	Key            Key     // Key/Legend
+	Horizontal     bool    // Display as horizontal bars (unimplemented)
+	Stacked        bool    // Display different data sets ontop of each other (default is side by side)
+	ShowVal        int     // Display values: 0: don't show; 1: above bar, 2: centerd in bar; 3: at top of bar
+	SameBarWidth   bool    // all data sets use the same (smalest of all data sets) bar width
+	BarWidthFac    float64 // if nonzero: scale determined bar width with this factor
+	Data           []BarChartData
 }
 
 // BarChartData encapsulates data sets in a bar chart.
@@ -66,37 +57,60 @@ func (c *BarChart) AddDataPair(name string, x, y []float64, style Style) {
 	c.AddData(name, data, style)
 }
 
+func (c *BarChart) rescaleStackedY() {
+	if !c.Stacked {
+		return
+	}
 
-func (c *BarChart) barWidth(sample int) float64 {
-	// find bar width
-	barWidth := c.XRange.Max - c.XRange.Min // large enough
-	for i := 1; i < len(c.Data[sample].Samples); i++ {
-		diff := math.Fabs(c.Data[sample].Samples[i].X - c.Data[sample].Samples[i-1].X)
-		if diff < barWidth {
-			barWidth = diff
+	// rescale y-axis
+	high := make(map[float64]float64, 2*len(c.Data[0].Samples))
+	low := make(map[float64]float64, 2*len(c.Data[0].Samples))
+	min, max := c.YRange.DataMin, c.YRange.DataMax
+	for _, d := range c.Data {
+		for _, p := range d.Samples {
+			x, y := p.X, p.Y
+			if y == 0 {
+				continue
+			}
+			if y > 0 {
+				if cur, ok := high[x]; ok {
+					high[x] = cur + y
+				} else {
+					high[x] = y
+				}
+				if high[x] > max {
+					max = high[x]
+				}
+			} else {
+				if cur, ok := low[x]; ok {
+					low[x] = cur - y
+				} else {
+					low[x] = y
+				}
+				if low[x] < min {
+					min = low[x]
+				}
+			}
 		}
 	}
-	if c.BarWidthFac != 0 {
-		barWidth *= math.Fabs(c.BarWidthFac)
-	}
-	fmt.Printf("BarWidth for sample %d: %f\n", sample, barWidth)
-	return barWidth
-}
 
-func (c *BarChart) extremBarWidth() (smallest, widest float64) {
-	w0 := c.barWidth(0)
-	widest, smallest = w0, w0
-	for s := 1; s < len(c.Data); s++ {
-		b := c.barWidth(s)
-		if b > widest {
-			widest = b
-		} else if b < smallest {
-			smallest = b
-		}
+	// stacked histograms and y-axis _not_ starting at 0 is
+	// utterly braindamaged and missleading: Fix to 0 if
+	// not spaning negativ to positive
+	if min >= 0 {
+		c.YRange.DataMin, c.YRange.Min = 0, 0
+		c.YRange.MinMode.Fixed, c.YRange.MinMode.Value = true, 0
+	} else {
+		c.YRange.DataMin, c.YRange.Min = min, min
 	}
-	return
-}
 
+	if max <= 0 {
+		c.YRange.DataMax, c.YRange.Max = 0, 0
+		c.YRange.MaxMode.Fixed, c.YRange.MaxMode.Value = true, 0
+	} else {
+		c.YRange.DataMax, c.YRange.Max = max, max
+	}
+}
 
 // Plot renders the chart to the graphics output g.
 func (c *BarChart) Plot(g Graphics) {
@@ -106,6 +120,117 @@ func (c *BarChart) Plot(g Graphics) {
 	width, height := layout.Width, layout.Height
 	topm, leftm := layout.Top, layout.Left
 	numxtics, numytics := layout.NumXtics, layout.NumYtics
+	fw, fh, _ := g.FontMetrics(g.Font("label"))
+	fw += 0
+	fh += 0
+
+	// Outside bound ranges for bar plots are nicer
+	leftm, width = leftm+int(2*fw), width-int(2*fw)
+	topm, height = topm, height-fh
+
+	c.rescaleStackedY()
+	c.XRange.Setup(numxtics, numxtics+3, width, leftm, false)
+	c.YRange.Setup(numytics, numytics+2, height, topm, true)
+
+	// Start of drawing
+	g.Begin()
+	if c.Title != "" {
+		g.Title(c.Title)
+	}
+
+	g.XAxis(c.XRange, topm+height+fh, topm)
+	g.YAxis(c.YRange, leftm-int(2*fw), leftm+width)
+
+	xf := c.XRange.Data2Screen
+	yf := c.YRange.Data2Screen
+	var sy0 int
+	switch {
+	case c.YRange.Min >= 0:
+		sy0 = yf(c.YRange.Min)
+	case c.YRange.Min < 0 && c.YRange.Max > 0:
+		sy0 = yf(0)
+	case c.YRange.Max <= 0:
+		sy0 = yf(c.YRange.Max)
+	default:
+		fmt.Printf("No f.... idea how this can happen. You've been fiddeling?")
+	}
+
+	// TODO: gap between bars.
+	var sbw, fbw int // ScreenBarWidth 
+
+	var low, high map[float64]float64
+	if c.Stacked {
+		high = make(map[float64]float64, 50)
+		low = make(map[float64]float64, 50)
+	}
+	for dn, data := range c.Data {
+		mindeltax := c.minimumSampleSep(dn)
+		debug.Printf("Minimum x-distance for set %d: %.3f\n", dn, mindeltax)
+		if c.Stacked {
+			sbw = (xf(2*mindeltax) - xf(0)) / 4
+			fbw = sbw
+		} else {
+			//        V
+			//   xxx === 000 ... xxx    sbw = 3
+			//   xx == 00 ## .. xx ==   fbw = 11
+			sbw = (xf(mindeltax)-xf(0))/(len(c.Data)+1) - 1
+			fbw = len(c.Data)*sbw + len(c.Data) - 1
+		}
+		debug.Printf("sbw = %d ,  fbw = %d\n", sbw, fbw)
+
+		bars := make([]Barinfo, 0, len(data.Samples))
+		if c.Stacked {
+			for _, p := range data.Samples {
+				if _, ok := high[p.X]; !ok {
+					high[p.X], low[p.X] = 0, 0
+				}
+			}
+		}
+		for _, p := range data.Samples {
+			x, y := p.X, p.Y
+			if y == 0 {
+				continue
+			}
+
+			sx := xf(x) - fbw/2
+			if !c.Stacked {
+				sx += dn * (sbw + 1)
+			}
+
+			var sy, sh int
+			if c.Stacked {
+				if y > 0 {
+					top := y + high[x]
+					sy = yf(top)
+					sh = yf(high[x]) - sy
+					high[x] = top
+
+				} else {
+					bot := low[x] + y
+					sy = yf(low[x])
+					sh = yf(bot) - sy
+					low[x] = bot
+				}
+			} else {
+				sy = yf(y)
+				sh = sy0 - sy
+			}
+			bar := Barinfo{x: sx, y: sy, w: sbw, h: sh}
+			c.addLabel(&bar, y)
+			bars = append(bars, bar)
+
+		}
+		g.Bars(bars, data.Style)
+
+	}
+
+	if !c.Key.Hide {
+		g.Key(layout.KeyX, layout.KeyY, c.Key)
+	}
+
+	g.End()
+
+	/******** old code **************
 
 	// find bar width
 	lbw, ubw := c.extremBarWidth()
@@ -165,4 +290,59 @@ func (c *BarChart) Plot(g Graphics) {
 	}
 
 	g.End()
+
+
+	 **********************************************************/
+}
+
+
+func (c *BarChart) minimumSampleSep(d int) (min float64) {
+	n := len(c.Data[d].Samples) - 1
+	min = math.MaxFloat64
+
+	for i := 0; i < n; i++ {
+		sep := math.Fabs(c.Data[d].Samples[i].X - c.Data[d].Samples[i+1].X)
+		if sep < min {
+			min = sep
+		}
+	}
+	return
+}
+
+
+func (c *BarChart) addLabel(bar *Barinfo, y float64) {
+	if c.ShowVal == 0 {
+		return
+	}
+
+	var sval string
+	if math.Fabs(y) >= 100 {
+		sval = fmt.Sprintf("%i", int(y+0.5))
+	} else if math.Fabs(y) >= 10 {
+		sval = fmt.Sprintf("%.1f", y)
+	} else if math.Fabs(y) >= 1 {
+		sval = fmt.Sprintf("%.2f", y)
+	} else {
+		sval = fmt.Sprintf("%.3f", y)
+	}
+
+	var tp string
+	switch c.ShowVal {
+	case 1:
+		if y >= 0 {
+			tp = "ot"
+		} else {
+			tp = "ob"
+		}
+	case 2:
+		if y >= 0 {
+			tp = "it"
+		} else {
+			tp = "ib"
+		}
+	case 3:
+		tp = "c"
+	}
+	bar.t = sval
+	bar.tp = tp
 }

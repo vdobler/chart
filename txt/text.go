@@ -348,23 +348,32 @@ func (g *TextGraphics) XAxis(xrange chart.Range, y, y1 int) {
 	}
 
 	for _, tic := range xrange.Tics {
-		x := xrange.Data2Screen(tic.Pos)
+		var x int
+		if !math.IsNaN(tic.Pos) {
+			x = xrange.Data2Screen(tic.Pos)
+		} else {
+			x = -1
+		}
 		lx := xrange.Data2Screen(tic.LabelPos)
 		if xrange.Time {
-			g.tb.Put(x, y, '|')
-			if mirror >= 2 {
-				g.tb.Put(x, y1, '|')
+			if x != -1 {
+				g.tb.Put(x, y, '|')
+				if mirror >= 2 {
+					g.tb.Put(x, y1, '|')
+				}
+				g.tb.Put(x, y+1, '|')
 			}
-			g.tb.Put(x, y+1, '|')
 			if tic.Align == -1 {
 				g.tb.Text(lx+1, y+1, tic.Label, -1)
 			} else {
 				g.tb.Text(lx, y+1, tic.Label, 0)
 			}
 		} else {
-			g.tb.Put(x, y, '+')
-			if mirror >= 2 {
-				g.tb.Put(x, y1, '+')
+			if x != -1 {
+				g.tb.Put(x, y, '+')
+				if mirror >= 2 {
+					g.tb.Put(x, y1, '+')
+				}
 			}
 			g.tb.Text(lx, y+1, tic.Label, 0)
 		}

@@ -470,7 +470,7 @@ func (r *Range) fDelta(delta, mindelta float64) float64 {
 	}
 	delta = f * de
 	if delta < mindelta {
-		fmt.Printf("Redoing delta")
+		debug.Printf("Redoing delta: %g < %g", delta, mindelta)
 		// recalculate tic delta
 		switch f {
 		case 1, 5:
@@ -569,7 +569,7 @@ func (r *Range) Setup(desiredNumberOfTics, maxNumberOfTics, sWidth, sOffset int,
 	delta := (r.DataMax - r.DataMin) / float64(desiredNumberOfTics-1)
 	mindelta := (r.DataMax - r.DataMin) / float64(maxNumberOfTics-1)
 
-	fmt.Printf("Data: [%.2f:%.2f] --> delta/mindelta = %.2f/%.2f (desired %d/max %d)\n",
+	debug.Printf("Data: [%.2f:%.2f] --> delta/mindelta = %.2f/%.2f (desired %d/max %d)\n",
 		r.DataMin, r.DataMax, delta, mindelta, desiredNumberOfTics, maxNumberOfTics)
 
 	if r.Time {
