@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-// Symbol is a list of different symbols. 
+// Symbol is the list of different symbols. 
 var Symbol = []int{'o', // empty circle
 	'=', // empty square
 	'%', // empty triangle up
@@ -40,6 +40,7 @@ func NextSymbol(s int) int {
 	return s + 1
 }
 
+// CharacterWidth is a table of the (relative) width of common runes.
 var CharacterWidth = map[int]float32{'a': 16.8, 'b': 17.0, 'c': 15.2, 'd': 16.8, 'e': 16.8, 'f': 8.5, 'g': 17.0,
 	'h': 16.8, 'i': 5.9, 'j': 5.9, 'k': 16.8, 'l': 6.9, 'm': 25.5, 'n': 16.8, 'o': 16.8, 'p': 17.0, 'q': 17.0,
 	'r': 10.2, 's': 15.2, 't': 8.4, 'u': 16.8, 'v': 15.4, 'w': 22.2, 'x': 15.2, 'y': 15.2, 'z': 15.2,
@@ -63,20 +64,22 @@ func init() {
 	averageCharacterWidth = 15
 }
 
+// Unsude?
 var Palette = map[string]string{"title": "#aa9933", "label": "#000000", "axis": "#000000",
 	"ticlabel": "#000000", "grid": "#c0c0c0", "keyborder": "#000000", "errorbar": "*0.3",
 }
 
-// DataStyle contains all information about all graphic elements in a chart.
+// Style contains all information about all graphic elements in a chart. 
+// All colors are in the form "#rrggbb" with rr/gg/bb hexvalues.
 type Style struct {
 	Symbol      int     // 0: no symbol; any codepoint: this symbol
-	SymbolColor string  // 
-	SymbolSize  float64 // 
-	LineStyle   int     // 0: solid, 1 dashed, 2 dotted, 3 dashdotdot, 4 longdash  5 longdot
-	LineColor   string  // 0: auto = same as SymbolColor
+	SymbolColor string  // Color of symbol
+	SymbolSize  float64 // Scaling factor of symbol
+	LineStyle   int     // SolidLine, DashedLine, DottedLine, .... see below
+	LineColor   string  // 
 	LineWidth   int     // 0: no line
 	FillColor   string  // "": no fill
-	Alpha       float64 // 
+	Alpha       float64 // Alpha of whole stuff.
 }
 
 // PlotStyle describes how data and functions are drawn in scatter plots.
@@ -94,7 +97,7 @@ func (ps PlotStyle) undefined() bool {
 	return int(ps) < 1 || int(ps) > 3
 }
 
-
+// The supported line styles
 const (
 	SolidLine = iota
 	DashedLine
@@ -104,10 +107,11 @@ const (
 	LongDotLine
 )
 
-
+// Font describes a font
 type Font struct {
-	Name  string // "": default
-	Size  int    // -2: tiny, -1: small, 0: normal, 1: large, 2: huge
+	Name string // "": default
+	Size int    // Relative size of font to default in output graphics: 
+	// -2: tiny, -1: small, 0: normal, 1: large, 2: huge
 	Color string // "": default, other: use this
 }
 
@@ -117,12 +121,14 @@ func (d *Style) empty() bool {
 
 
 // Standard colors used by AutoStyle
-var StandardColors = []string{"#cc0000", "#00bb00", "#0000dd", "#996600", "#bb00bb", "#00aaaa",
-	"#aaaa00"}
+var StandardColors = []string{"#cc0000", "#00bb00", "#0000dd", "#996600", "#bb00bb", "#00aaaa", "#aaaa00"}
+
 // Standard line styles used by AutoStyle (fill=false)
 var StandardLineStyles = []int{SolidLine, DashedLine, DottedLine, LongDashLine, LongDotLine}
+
 // Standard symbols used by AutoStyle
 var StandardSymbols = []int{'o', '=', '%', '&', '+', 'X', '*', '@', '#', 'A', 'Z'}
+
 // How much brighter/darker filled elements become.
 var StandardFillFactor = 0.5
 
@@ -159,7 +165,7 @@ func AutoStyle(i int, fill bool) (style Style) {
 	return
 }
 
-
+// DefaultStyle maps chart elements to styles.
 var DefaultStyle = map[string]Style{"axis": Style{LineColor: "#000000", LineWidth: 2, LineStyle: SolidLine},
 	"maxis": Style{LineColor: "#000000", LineWidth: 2, LineStyle: SolidLine}, // mirrored axis
 	"tic":   Style{LineColor: "#000000", LineWidth: 1, LineStyle: SolidLine},
@@ -170,6 +176,7 @@ var DefaultStyle = map[string]Style{"axis": Style{LineColor: "#000000", LineWidt
 	"title": Style{LineColor: "#000000", LineWidth: 1, LineStyle: SolidLine, FillColor: "#ecc750", Alpha: 0},
 }
 
+// DefaultFOnt maps chart elements to fonts.
 var DefaultFont = map[string]Font{"title": Font{Size: +1}, "label": Font{}, "key": Font{Size: -1},
 	"tic": Font{}, "rangelimit": Font{Size: -1},
 }

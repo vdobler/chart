@@ -24,7 +24,8 @@ type ScatterChartData struct {
 	Func      func(float64) float64 // The function to draw.
 }
 
-// AddFunc adds a function f to this chart.
+// AddFunc adds a function f to this chart. A key/legend entry is produced 
+// if name is not empty. 
 func (c *ScatterChart) AddFunc(name string, f func(float64) float64, plotstyle PlotStyle, style Style) {
 	if plotstyle.undefined() {
 		plotstyle = PlotStyleLines
@@ -42,7 +43,8 @@ func (c *ScatterChart) AddFunc(name string, f func(float64) float64, plotstyle P
 }
 
 
-// AddData adds points in data to chart.
+// AddData adds points in data to chart. A key/legend entry is produced 
+// if name is not empty. 
 func (c *ScatterChart) AddData(name string, data []EPoint, plotstyle PlotStyle, style Style) {
 
 	// Update styles if non given
@@ -92,7 +94,8 @@ func (c *ScatterChart) AddData(name string, data []EPoint, plotstyle PlotStyle, 
 }
 
 
-// Add points in data to chart.
+// AddDataGeneric is the generiv version of AddData which allows any type
+// to be plotted that implements the XYErrValue interface.
 func (c *ScatterChart) AddDataGeneric(name string, data []XYErrValue, plotstyle PlotStyle, style Style) {
 	edata := make([]EPoint, len(data))
 	for i, d := range data {
@@ -107,7 +110,8 @@ func (c *ScatterChart) AddDataGeneric(name string, data []XYErrValue, plotstyle 
 }
 
 
-// Make points from x and y and add to chart.
+// AddDataPair is a convenience method which wrapps around AddData: It adds the points
+// (x[n],y[n]) to the chart.
 func (c *ScatterChart) AddDataPair(name string, x, y []float64, plotstyle PlotStyle, style Style) {
 	n := imin(len(x), len(y))
 	data := make([]EPoint, n)
@@ -119,7 +123,7 @@ func (c *ScatterChart) AddDataPair(name string, x, y []float64, plotstyle PlotSt
 }
 
 
-// Plot outputs the scatter chart sc to g.
+// Plot outputs the scatter chart to the graphic output g.
 func (c *ScatterChart) Plot(g Graphics) {
 	layout := layout(g, c.Title, c.XRange.Label, c.YRange.Label,
 		c.XRange.TicSetting.Hide, c.YRange.TicSetting.Hide, &c.Key)

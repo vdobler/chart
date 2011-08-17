@@ -8,7 +8,6 @@ The following chart types are available:
                         and/or functions
     HistChart		Produce histograms from data
     BarChart		Show (x,y) data as bars
-    CategoryBarChart	Bar chart of categorical (non-numeric) data
     BoxChart            Box charts to visualize distributions
     PieChart            Pie and Ring charts
 
@@ -20,7 +19,7 @@ charts or the statistical features of charts produced by S or R.
 Creating charts consists of the following steps:
 	1. Create chart object
 	2. Configure chart, axis, autoscaling etc.
-	3. Add data
+	3. Add one ore more data sets
 	4. Render chart to one or more graphic outputs
 You may change the configuration at any step or render to different outputs.
 

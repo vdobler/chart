@@ -37,7 +37,7 @@ type Kernel func(x float64) float64
 
 const sqrt2piinv = 0.39894228 // 1.0 / math.Sqrt(2.0*math.Pi)
 
-// Some common smoothing kernels. All == 0 outside [-1,1[.
+// Some common smoothing kernels. All are identical 0 outside [-1,1[.
 var (
 	// 1/2 
 	RectangularKernel = func(x float64) float64 {
@@ -87,6 +87,7 @@ var (
 	}
 )
 
+// AddData will add data to the plot. Legend will be updated by name.
 func (c *HistChart) AddData(name string, data []float64, style Style) {
 	// Style
 	if style.empty() {
@@ -108,6 +109,8 @@ func (c *HistChart) AddData(name string, data []float64, style Style) {
 	}
 }
 
+// AddDataInt is a convenience method to add integer data (a simple wrapper 
+// around AddData).
 func (c *HistChart) AddDataInt(name string, data []int, style Style) {
 	fdata := make([]float64, len(data))
 	for i, d := range data {
@@ -116,6 +119,8 @@ func (c *HistChart) AddDataInt(name string, data []int, style Style) {
 	c.AddData(name, fdata, style)
 }
 
+// AddDataGeneric is the generic version which allows the addition of any type
+// implementing the Value interface.
 func (c *HistChart) AddDataGeneric(name string, data []Value, style Style) {
 	fdata := make([]float64, len(data))
 	for i, d := range data {
@@ -263,6 +268,7 @@ func (c *HistChart) findBinWidth() {
 }
 
 
+// Plot will output the chart to the graphic device g.
 func (c *HistChart) Plot(g Graphics) {
 	layout := layout(g, c.Title, c.XRange.Label, c.YRange.Label,
 		c.XRange.TicSetting.Hide, c.YRange.TicSetting.Hide, &c.Key)
