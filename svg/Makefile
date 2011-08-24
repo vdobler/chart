@@ -1,7 +1,7 @@
 include $(GOROOT)/src/Make.inc
 
 
-TARG=github.com/vdobler/chart/svg
+TARG=github.com/vdobler/chart/svgg
 GOFILES=\
 	svg.go
 

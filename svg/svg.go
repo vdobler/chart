@@ -1,4 +1,4 @@
-package svg
+package svgg
 
 import (
 	"fmt"
@@ -362,7 +362,7 @@ func (sg *SvgGraphics) Wedge(x, y, r int, phi, psi float64, style chart.Style) {
 	}
 }
 
-func (sg *SvgGraphics) Rings(wedges []chart.Wedgeinfo, x, y, r int) {
+func (sg *SvgGraphics) Rings(wedges []chart.Wedgeinfo, x, y, r int, border bool) {
 	for _, w := range wedges {
 		var s string
 		linecol := w.Style.LineColor
@@ -410,7 +410,7 @@ func (sg *SvgGraphics) Rings(wedges []chart.Wedgeinfo, x, y, r int) {
 			d += fmt.Sprintf("A %d,%d 0 0 1 %d,%d ", ro, ro, int(rf*cpsi+0.5+dx)+x, int(rf*spsi+0.5+dy)+y)
 			d += fmt.Sprintf("z")
 		} else {
-			// ring drawn as inner radius -> outer radius -> outer arc -> inner radius -inner arc
+			// ring drawn as inner radius -> outer radius -> outer arc -> inner radius -> inner arc
 			rof, rif := float64(ro), float64(ri)
 			dx, dy := p*math.Cos(w.Phi+math.Pi/2), p*math.Sin(w.Phi+math.Pi/2)
 			a, b := int(rif*cphi+0.5+dx)+x, int(rif*sphi+0.5+dy)+y

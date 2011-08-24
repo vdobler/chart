@@ -39,7 +39,7 @@ type Graphics interface {
 	Scatter(points []EPoint, plotstyle PlotStyle, style Style) // Points, Lines and Line+Points
 	Boxes(boxes []Box, width int, style Style)                 // Boxplots
 	Bars(bars []Barinfo, style Style)                          // any type of histogram/bars
-	Rings(wedeges []Wedgeinfo, x, y, r int)                    // Pie/ring diagram elements
+	Rings(wedeges []Wedgeinfo, x, y, r int, border bool)       // Pie/ring diagram elements
 
 	Key(x, y int, key Key) // place key at x,y
 }
@@ -355,33 +355,281 @@ func GenericBars(bg BasicGraphics, bars []Barinfo, style Style) {
 }
 
 // GenericWedge draws a pie/wedge just by lines
-func GenericWedge(bg BasicGraphics, x, y, r int, phi, psi float64, style Style) {
+func GenericWedge(bg BasicGraphics, x, y, ro, ri int, phi, psi, ecc float64, style Style) {
+	for phi < 0 {
+		phi += 2 * math.Pi
+	}
+	for psi < 0 {
+		psi += 2 * math.Pi
+	}
+	for phi >= 2*math.Pi {
+		phi -= 2 * math.Pi
+	}
+	for psi >= 2*math.Pi {
+		psi -= 2 * math.Pi
+	}
+	debug.Printf("GenericWedge centered at (%d,%d) from %.1f° to %.1f°, radius %d/%d (e=%.2f)",
+		x, y, 180*phi/math.Pi, 180*psi/math.Pi, ro, ri, ecc)
 
-	xa, ya := int(math.Cos(phi)*float64(r))+x, int(math.Sin(phi)*float64(r))+y
-	xc, yc := int(math.Cos(psi)*float64(r))+x, int(math.Sin(psi)*float64(r))+y
-	rf := float64(r)
+	if ri > ro {
+		panic("ri > ro is not possible")
+	}
+
+	if style.FillColor != "" {
+		fillWedge(bg, x, y, ro, ri, phi, psi, ecc, style)
+	}
+
+	roe, rof := float64(ro)*ecc, float64(ro)
+	rie, rif := float64(ri)*ecc, float64(ri)
+	xa, ya := int(math.Cos(phi)*roe)+x, y-int(math.Sin(phi)*rof)
+	xc, yc := int(math.Cos(psi)*roe)+x, y-int(math.Sin(psi)*rof)
+	xai, yai := int(math.Cos(phi)*rie)+x, y-int(math.Sin(phi)*rif)
+	xci, yci := int(math.Cos(psi)*rie)+x, y-int(math.Sin(psi)*rif)
 
 	if math.Fabs(phi-psi) >= 4*math.Pi {
 		phi, psi = 0, 2*math.Pi
 	} else {
-		bg.Line(x, y, xa, ya, style)
-		bg.Line(x, y, xc, yc, style)
-	}
-
-	if style.FillColor != "" {
-		delta := 1 / (4 * rf)
-		ls := Style{LineColor: style.FillColor, LineWidth: 2, Symbol: style.Symbol}
-		for a := phi; a <= psi; a += delta {
-			xr, yr := int(math.Cos(a)*rf)+x, int(math.Sin(a)*rf)+y
-			bg.Line(x, y, xr, yr, ls)
+		if ri > 0 {
+			bg.Line(xai, yai, xa, ya, style)
+			bg.Line(xci, yci, xc, yc, style)
+		} else {
+			bg.Line(x, y, xa, ya, style)
+			bg.Line(x, y, xc, yc, style)
 		}
 	}
 
 	var xb, yb int
-	for ; phi < psi; phi += 0.1 { // aproximate circle by 62-corner
-		xb, yb = int(math.Cos(phi)*rf)+x, int(math.Sin(phi)*rf)+y
+	exit := phi < psi
+	for rho := phi; !exit || rho < psi; rho += 0.05 { // aproximate circle by more than 120 corners polygon
+		if rho >= 2*math.Pi {
+			exit = true
+			rho -= 2 * math.Pi
+		}
+		xb, yb = int(math.Cos(rho)*roe)+x, y-int(math.Sin(rho)*rof)
 		bg.Line(xa, ya, xb, yb, style)
 		xa, ya = xb, yb
 	}
 	bg.Line(xb, yb, xc, yc, style)
+
+	if ri > 0 {
+		exit := phi < psi
+		for rho := phi; !exit || rho < psi; rho += 0.1 { // aproximate circle by more than 60 corner polygon
+			if rho >= 2*math.Pi {
+				exit = true
+				rho -= 2 * math.Pi
+			}
+			xb, yb = int(math.Cos(rho)*rie)+x, y-int(math.Sin(rho)*rif)
+			bg.Line(xai, yai, xb, yb, style)
+			xai, yai = xb, yb
+		}
+		bg.Line(xb, yb, xci, yci, style)
+
+	}
+}
+
+// Fill wedge with center (xi,yi), radius ri from alpha to beta with style.
+// Precondition:  0 <= beta < alpha < pi/2
+func fillQuarterWedge(bg BasicGraphics, xi, yi, ri int, alpha, beta, e float64, style Style, quadrant int) {
+	if alpha < beta {
+		debug.Printf("Swaping alpha and beta")
+		alpha, beta = beta, alpha
+	}
+	debug.Printf("fillQuaterWedge from %.1f to %.1f radius %d in quadrant %d.",
+		180*alpha/math.Pi, 180*beta/math.Pi, ri, quadrant)
+	r := float64(ri)
+
+	ta, tb := math.Tan(alpha), math.Tan(beta)
+	for y := int(r * math.Sin(alpha)); y >= 0; y-- {
+		yf := float64(y)
+		x0 := yf / ta
+		x1 := yf / tb
+		x2 := math.Sqrt(r*r - yf*yf)
+		// debug.Printf("y=%d  x0=%.2f    x1=%.2f    x2=%.2f  border=%t", y, x0, x1, x2, (x2<x1))  
+		if math.IsNaN(x1) || x2 < x1 {
+			x1 = x2
+		}
+
+		var xx0, xx1, yy int
+		switch quadrant {
+		case 0:
+			xx0 = int(x0*e+0.5) + xi
+			xx1 = int(x1*e-0.5) + xi
+			yy = yi - y
+		case 3:
+			xx0 = int(x0*e+0.5) + xi
+			xx1 = int(x1*e-0.5) + xi
+			yy = yi + y
+		case 2:
+			xx0 = xi - int(x0*e+0.5)
+			xx1 = xi - int(x1*e-0.5)
+			yy = yi + y
+		case 1:
+			xx0 = xi - int(x0*e+0.5)
+			xx1 = xi - int(x1*e-0.5)
+			yy = yi - y
+		default:
+			panic("No such quadrant.")
+		}
+		// debug.Printf("Line %d,%d to %d,%d", xx0,yy, xx1,yy)
+		bg.Line(xx0, yy, xx1, yy, style)
+	}
+}
+
+func quadrant(w float64) int {
+	return int(math.Floor(2 * w / math.Pi))
+}
+
+func mapQ(w float64, q int) float64 {
+	switch q {
+	case 0:
+		return w
+	case 1:
+		return math.Pi - w
+	case 2:
+		return w - math.Pi
+	case 3:
+		return 2*math.Pi - w
+	default:
+		panic("No such quadrant")
+	}
+	return w
+}
+
+// Fill wedge with center (xi,yi), radius ri from alpha to beta with style.
+// Any combination of phi, psi allowed as long 0 <= phi < psi < 2pi.
+func fillWedge(bg BasicGraphics, xi, yi, ro, ri int, phi, psi, epsilon float64, style Style) {
+	// ls := Style{LineColor: style.FillColor, LineWidth: 1, Symbol: style.Symbol}
+
+	qPhi := quadrant(phi)
+	qPsi := quadrant(psi)
+	debug.Printf("fillWedge from %.1f (%d) to %.1f (%d).", 180*phi/math.Pi, qPhi, 180*psi/math.Pi, qPsi)
+
+	// prepare styles for filling
+	style.LineColor = style.FillColor
+	style.LineWidth = 1
+	style.LineStyle = SolidLine
+	blank := Style{Symbol: ' ', LineColor: "#ffffff", Alpha: 1}
+
+	for qPhi != qPsi {
+		debug.Printf("qPhi = %d", qPhi)
+		w := float64(qPhi+1) * math.Pi / 2
+		if math.Fabs(w-phi) > 0.01 {
+			fillQuarterWedge(bg, xi, yi, ro, mapQ(phi, qPhi), mapQ(w, qPhi), epsilon, style, qPhi)
+			if ri > 0 {
+				fillQuarterWedge(bg, xi, yi, ri, mapQ(phi, qPhi), mapQ(w, qPhi), epsilon, blank, qPhi)
+			}
+		}
+		phi = w
+		qPhi++
+		if qPhi == 4 {
+			debug.Printf("Wrapped phi around")
+			phi, qPhi = 0, 0
+		}
+	}
+	if phi != psi {
+		debug.Printf("Last wedge")
+		fillQuarterWedge(bg, xi, yi, ro, mapQ(phi, qPhi), mapQ(psi, qPhi), epsilon, style, qPhi)
+		if ri > 0 {
+			fillQuarterWedge(bg, xi, yi, ri, mapQ(phi, qPhi), mapQ(psi, qPhi), epsilon, blank, qPhi)
+		}
+	}
+}
+
+
+func GenericRings(bg BasicGraphics, wedges []Wedgeinfo, x, y, r int, eccentricity float64, border bool) {
+	debug.Printf("GenericRings with %d wedges (ecc=%.3f) border=%t.", len(wedges), eccentricity, border)
+	if border {
+		st := Style{Symbol: ' ', LineColor: "#ffffff", Alpha: 1, LineWidth: 1}
+		var xa, ya, xb, yb int
+		beg, end := wedges[0].Ro+2, wedges[0].Ro-1
+		for ri := beg; ri >= end; ri-- {
+			rf := float64(ri)
+			xa, ya = int(rf*eccentricity+0.5)+x, y-ri
+			for rho := 0.05; rho < 2*math.Pi; rho += 0.05 { // aproximate circle by more than 120 corners polygon
+				xb, yb = int(math.Cos(rho)*rf*eccentricity)+x, y-int(math.Sin(rho)*rf)
+				bg.Line(xa, ya, xb, yb, st)
+				xa, ya = xb, yb
+			}
+			bg.Line(xb, yb, int(rf*eccentricity+0.5)+x, y-ri, st)
+		}
+	}
+
+	for _, w := range wedges {
+		ro, ri := w.Ro, w.Ri
+
+		// Correct center
+		p := 0.4 * float64(w.Style.LineWidth)
+		debug.Printf("lw=%d p=%.2f", w.Style.LineWidth, p)
+
+		// cphi, sphi := math.Cos(w.Phi), math.Sin(w.Phi)
+		// cpsi, spsi := math.Cos(w.Psi), math.Sin(w.Psi)
+		a := math.Sin((w.Psi - w.Phi) / 2)
+		dx, dy := p*math.Cos((w.Phi+w.Psi)/2)/a, p*math.Sin((w.Phi+w.Psi)/2)/a
+		debug.Printf("Center adjustment for wedge %d°-%d° of (%.1f,%.1f)",
+			int(180*w.Phi/math.Pi), int(180*w.Psi/math.Pi), dx, dy)
+		xi, yi := x+int(dx+0.5), y-int(dy+0.5)
+		GenericWedge(bg, xi, yi, ro, ri, w.Phi, w.Psi, eccentricity, w.Style)
+
+		if w.Text != "" {
+			_, fh, _ := bg.FontMetrics(w.Font)
+			fh += 0
+			alpha := (w.Phi + w.Psi) / 2
+			var rt int
+			if ri > 0 {
+				rt = (ri + ro) / 2
+			} else {
+				rt = (2 * ro) / 3
+				/*
+					rt = ro - 3*fh
+					if rt <= ro/2 {
+						rt = ro - 2*fh
+					}
+				*/
+			}
+			debug.Printf("Text %s at %d° r=%d", w.Text, int(180*alpha/math.Pi), rt)
+			tx := int(float64(rt)*math.Cos(alpha)*eccentricity+0.5) + x
+			ty := y - int(float64(rt)*math.Sin(alpha)+0.5)
+
+			bg.Text(tx, ty, w.Text, "cc", 0, w.Font)
+		}
+
+	}
+
+	/***************
+	var d string
+	p := 0.4 * float64(w.Style.LineWidth)
+	cphi, sphi := math.Cos(w.Phi), math.Sin(w.Phi)
+	cpsi, spsi := math.Cos(w.Psi), math.Sin(w.Psi)
+
+	if ri <= 0 {
+		// real wedge drawn as center -> outer radius -> arc -> closed to center
+		rf := float64(ro)
+		a := math.Sin((w.Psi - w.Phi) / 2)
+		dx, dy := p*math.Cos((w.Phi+w.Psi)/2)/a, p*math.Sin((w.Phi+w.Psi)/2)/a
+		d = fmt.Sprintf("M %d,%d ", x+int(dx+0.5), y+int(dy+0.5))
+
+		dx, dy = p*math.Cos(w.Phi+math.Pi/2), p*math.Sin(w.Phi+math.Pi/2)
+		d += fmt.Sprintf("L %d,%d ", int(rf*cphi+0.5+dx)+x, int(rf*sphi+0.5+dy)+y)
+
+		dx, dy = p*math.Cos(w.Psi-math.Pi/2), p*math.Sin(w.Psi-math.Pi/2)
+		d += fmt.Sprintf("A %d,%d 0 0 1 %d,%d ", ro, ro, int(rf*cpsi+0.5+dx)+x, int(rf*spsi+0.5+dy)+y)
+		d += fmt.Sprintf("z")
+	} else {
+		// ring drawn as inner radius -> outer radius -> outer arc -> inner radius -> inner arc
+		rof, rif := float64(ro), float64(ri)
+		dx, dy := p*math.Cos(w.Phi+math.Pi/2), p*math.Sin(w.Phi+math.Pi/2)
+		a, b := int(rif*cphi+0.5+dx)+x, int(rif*sphi+0.5+dy)+y
+		d = fmt.Sprintf("M %d,%d ", a, b)
+		d += fmt.Sprintf("L %d,%d ", int(rof*cphi+0.5+dx)+x, int(rof*sphi+0.5+dy)+y)
+
+		dx, dy = p*math.Cos(w.Psi-math.Pi/2), p*math.Sin(w.Psi-math.Pi/2)
+		d += fmt.Sprintf("A %d,%d 0 0 1 %d,%d ", ro, ro, int(rof*cpsi+0.5+dx)+x, int(rof*spsi+0.5+dy)+y)
+		d += fmt.Sprintf("L %d,%d ", int(rif*cpsi+0.5+dx)+x, int(rif*spsi+0.5+dy)+y)
+		d += fmt.Sprintf("A %d,%d 0 0 0 %d,%d ", ri, ri, a, b)
+		d += fmt.Sprintf("z")
+
+	}
+
+	sg.svg.Path(d, s+sf)
+	 *************************/
 }

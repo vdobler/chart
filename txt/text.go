@@ -1,4 +1,4 @@
-package chart
+package txtg
 
 import (
 	"fmt"
@@ -513,12 +513,12 @@ func (g *TextGraphics) Boxes(boxes []chart.Box, width int, style chart.Style) {
 }
 
 var (
-	KeyHorSep      float32 = 1.5
-	KeyVertSep     float32 = 0.5
-	KeyColSep      float32 = 2.0
+	KeyHorSep      float32 = 2
+	KeyVertSep     float32 = 0
+	KeyColSep      float32 = 2
 	KeySymbolWidth float32 = 4
 	KeySymbolSep   float32 = 1
-	KeyRowSep      float32 = 0.75
+	KeyRowSep      float32 = 0
 )
 
 
@@ -608,7 +608,11 @@ func (g *TextGraphics) Wedge(x, y, ry int, phi, psi float64, style chart.Style) 
 
 }
 
-func (g *TextGraphics) Rings(wedges []chart.Wedgeinfo, x, y, r int) {
+func (g *TextGraphics) Rings(wedges []chart.Wedgeinfo, x, y, r int, border bool) {
+	for i := range wedges {
+		wedges[i].Style.LineWidth = 1
+	}
+	chart.GenericRings(g, wedges, x+int(float64(r)*1.8), y, r, 1.8, border)
 }
 
 func min(a, b int) int {

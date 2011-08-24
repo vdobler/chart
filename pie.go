@@ -119,16 +119,12 @@ func (c *PieChart) Plot(g Graphics) {
 
 			phi += alpha
 		}
-		g.Rings(wedges, x0, y0, r0)
+		g.Rings(wedges, x0, y0, r0, i > 0)
 
 		r = int(float64(r) * PieChartShrinkage)
-		if i < len(c.Data)-1 {
-			ra := int(float64(r) * (1 + PieChartBorder))
-			if ra == r {
-				ra++
-			}
-			st := Style{LineWidth: 0, FillColor: "#ffffff", Symbol: ' '}
-			g.Wedge(x0, y0, ra, 0, 15, st)
+		ra := int(float64(r) * (1 + PieChartBorder))
+		if ra == r {
+			ra++
 		}
 	}
 

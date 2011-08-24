@@ -2,14 +2,15 @@ package main
 
 import (
 	"github.com/vdobler/chart"
+	"flag"
 	"fmt"
 	"math"
 	"os"
 	"rand"
 	// "sort"
 	"github.com/ajstarks/svgo"
-	svgchart "github.com/vdobler/chart/svg"
-	txtchart "github.com/vdobler/chart/txt"
+	"github.com/vdobler/chart/svgg"
+	"github.com/vdobler/chart/txtg"
 	// "time"
 )
 
@@ -31,8 +32,8 @@ func stripChart() {
 	thesvg.Start(800, 600)
 	thesvg.Title("Srip Chart")
 	thesvg.Rect(0, 0, 800, 600, "fill: #ffffff")
-	svggraphics := svgchart.NewSvgGraphics(thesvg, 400, 300, "Arial", 12)
-	txtgraphics := txtchart.NewTextGraphics(80, 25)
+	svggraphics := svgg.NewSvgGraphics(thesvg, 400, 300, "Arial", 12)
+	txtgraphics := txtg.NewTextGraphics(80, 25)
 
 	c := chart.StripChart{}
 
@@ -87,7 +88,7 @@ func keyStyles() {
 	thesvg.Title("Key Placements")
 	thesvg.Rect(0, 0, nw*w, nh*h, "fill: #ffffff")
 
-	svggraphics := svgchart.NewSvgGraphics(thesvg, w, h, "Arial", 10)
+	svggraphics := svgg.NewSvgGraphics(thesvg, w, h, "Arial", 10)
 	p := chart.ScatterChart{Title: "Key Placement"}
 	p.XRange.TicSetting.Mirror, p.YRange.TicSetting.Mirror = 1, 1
 	p.XRange.MinMode.Fixed, p.XRange.MaxMode.Fixed = true, true
@@ -159,7 +160,7 @@ func scatterTics() {
 	thesvg.Start(800, 600)
 	thesvg.Title("Srip Chart")
 	thesvg.Rect(0, 0, 800, 600, "fill: #ffffff")
-	svggraphics := svgchart.NewSvgGraphics(thesvg, 400, 300, "Arial", 12)
+	svggraphics := svgg.NewSvgGraphics(thesvg, 400, 300, "Arial", 12)
 
 	p := chart.ScatterChart{Title: "Sample Scatter Chart"}
 	p.AddDataPair("Sample A", data10, data1, chart.PlotStylePoints, chart.Style{})
@@ -241,12 +242,12 @@ func scatterChart() {
 	mysvg.Start(1000, 600)
 	mysvg.Title("My Plot")
 	mysvg.Rect(0, 0, 1000, 600, "fill: #ffffff")
-	svggraphics := svgchart.NewSvgGraphics(mysvg, 1000, 600, "Arial", 18)
+	svggraphics := svgg.NewSvgGraphics(mysvg, 1000, 600, "Arial", 18)
 	pl.Plot(svggraphics)
 	mysvg.End()
 	s2f.Close()
 
-	txtgraphics := txtchart.NewTextGraphics(100, 30)
+	txtgraphics := txtg.NewTextGraphics(100, 30)
 	pl.Plot(txtgraphics)
 	fmt.Printf("%s\n", txtgraphics.String())
 }
@@ -290,8 +291,8 @@ func functionPlots() {
 	mysvg.Start(1000, 600)
 	mysvg.Title("Functions")
 	mysvg.Rect(0, 0, 1000, 600, "fill: #ffffff")
-	txtgraphics := txtchart.NewTextGraphics(125, 35)
-	svggraphics := svgchart.NewSvgGraphics(mysvg, 1000, 600, "Arial", 14)
+	txtgraphics := txtg.NewTextGraphics(125, 35)
+	svggraphics := svgg.NewSvgGraphics(mysvg, 1000, 600, "Arial", 14)
 	p.Plot(svggraphics)
 	p.Plot(txtgraphics)
 	fmt.Printf("%s\n", txtgraphics.String())
@@ -312,7 +313,7 @@ func functionPlots() {
 		p.NSamples = 5
 		p.AddFunc("10x", func(x float64) float64 { return 10 * x }, chart.PlotStyleLines,
 			chart.Style{Symbol: 'o', LineWidth: 2, LineColor: "#00a000", LineStyle: 1})
-		txtgraphics := txtchart.NewTextGraphics(125, 35)
+		txtgraphics := txtg.NewTextGraphics(125, 35)
 		p.Plot(txtgraphics)
 		fmt.Printf("%s\n", txtgraphics.String())
 	}
@@ -352,10 +353,10 @@ func autoscale() {
 
 		s.AddData("Data", points, chart.PlotStylePoints, chart.Style{Symbol: 'o', SymbolColor: "#00ee00"})
 
-		svggraphics := svgchart.NewSvgGraphics(mysvg, 500, 300, "Arial", 11)
+		svggraphics := svgg.NewSvgGraphics(mysvg, 500, 300, "Arial", 11)
 		s.Plot(svggraphics)
 
-		txtgraphics := txtchart.NewTextGraphics(100, 30)
+		txtgraphics := txtg.NewTextGraphics(100, 30)
 		s.Plot(txtgraphics)
 		fmt.Printf("%s\n", txtgraphics.String())
 	}
@@ -371,9 +372,9 @@ func autoscale() {
 
 		s.AddData("Data", points, chart.PlotStylePoints, chart.Style{Symbol: '0', SymbolColor: "#ee0000"})
 		mysvg.Gtransform("translate(500 0)")
-		svggraphics := svgchart.NewSvgGraphics(mysvg, 500, 300, "Arial", 11)
+		svggraphics := svgg.NewSvgGraphics(mysvg, 500, 300, "Arial", 11)
 		s.Plot(svggraphics)
-		txtgraphics := txtchart.NewTextGraphics(100, 30)
+		txtgraphics := txtg.NewTextGraphics(100, 30)
 		s.Plot(txtgraphics)
 		fmt.Printf("%s\n", txtgraphics.String())
 		mysvg.Gend()
@@ -390,9 +391,9 @@ func autoscale() {
 
 		s.AddData("Data", points, chart.PlotStylePoints, chart.Style{Symbol: '0', SymbolColor: "#0000ee"})
 		mysvg.Gtransform("translate(0 300)")
-		svggraphics := svgchart.NewSvgGraphics(mysvg, 500, 300, "Arial", 11)
+		svggraphics := svgg.NewSvgGraphics(mysvg, 500, 300, "Arial", 11)
 		s.Plot(svggraphics)
-		txtgraphics := txtchart.NewTextGraphics(100, 30)
+		txtgraphics := txtg.NewTextGraphics(100, 30)
 		s.Plot(txtgraphics)
 		fmt.Printf("%s\n", txtgraphics.String())
 		mysvg.Gend()
@@ -416,9 +417,9 @@ func autoscale() {
 
 		s.AddData("Data", points, chart.PlotStylePoints, chart.Style{Symbol: '0', SymbolColor: "#eecc"})
 		mysvg.Gtransform("translate(500 300)")
-		svggraphics := svgchart.NewSvgGraphics(mysvg, 500, 300, "Arial", 11)
+		svggraphics := svgg.NewSvgGraphics(mysvg, 500, 300, "Arial", 11)
 		s.Plot(svggraphics)
-		txtgraphics := txtchart.NewTextGraphics(100, 30)
+		txtgraphics := txtg.NewTextGraphics(100, 30)
 		s.Plot(txtgraphics)
 		fmt.Printf("%s\n", txtgraphics.String())
 		mysvg.Gend()
@@ -438,8 +439,8 @@ func boxChart() {
 	thesvg.Start(800, 600)
 	thesvg.Title("Srip Chart")
 	thesvg.Rect(0, 0, 800, 600, "fill: #ffffff")
-	svggraphics := svgchart.NewSvgGraphics(thesvg, 400, 300, "Arial", 12)
-	txtgraphics := txtchart.NewTextGraphics(120, 40)
+	svggraphics := svgg.NewSvgGraphics(thesvg, 400, 300, "Arial", 12)
+	txtgraphics := txtg.NewTextGraphics(120, 40)
 
 	p := chart.BoxChart{Title: "Box Chart"}
 	p.XRange.Label, p.YRange.Label = "Value", "Count"
@@ -532,7 +533,7 @@ func kernels() {
 	thesvg.Start(800, 600)
 	thesvg.Title("Kernels")
 	thesvg.Rect(0, 0, 800, 600, "fill: #ffffff")
-	svggraphics := svgchart.NewSvgGraphics(thesvg, 800, 600, "Arial", 14)
+	svggraphics := svgg.NewSvgGraphics(thesvg, 800, 600, "Arial", 14)
 
 	p := chart.ScatterChart{Title: "Kernels"}
 	p.XRange.Label, p.YRange.Label = "u", "K(u)"
@@ -571,8 +572,8 @@ func histChart(name, title string, stacked, counts bool) {
 	thesvg.Start(800, 600)
 	thesvg.Title(title)
 	thesvg.Rect(0, 0, 800, 600, "fill: #ffffff")
-	svggraphics := svgchart.NewSvgGraphics(thesvg, 400, 300, "Arial", 12)
-	txtgraphics := txtchart.NewTextGraphics(120, 30)
+	svggraphics := svgg.NewSvgGraphics(thesvg, 400, 300, "Arial", 12)
+	txtgraphics := txtg.NewTextGraphics(120, 30)
 
 	hc := chart.HistChart{Title: title, ShowVal: true, Stacked: stacked, Counts: counts}
 	hc.XRange.Label = "Sample Value"
@@ -638,8 +639,8 @@ func barChart() {
 	thesvg.Rect(0, 0, 1200, 600, "fill: #ffffff")
 	red := chart.Style{Symbol: 'o', LineColor: "#cc0000", FillColor: "#ff8080", Alpha: 0, LineStyle: chart.SolidLine, LineWidth: 2}
 	green := chart.Style{Symbol: '#', LineColor: "#00cc00", FillColor: "#80ff80", Alpha: 0, LineStyle: chart.SolidLine, LineWidth: 2}
-	svggraphics := svgchart.NewSvgGraphics(thesvg, 400, 300, "Arial", 12)
-	// txtgraphics := txtchart.NewTextGraphics(120, 30)
+	svggraphics := svgg.NewSvgGraphics(thesvg, 400, 300, "Arial", 12)
+	// txtgraphics := txtg.NewTextGraphics(120, 30)
 
 	barc := chart.BarChart{Title: "Simple Bar Chart"}
 	barc.Key.Hide = true
@@ -710,8 +711,8 @@ func categoricalBarChart() {
 	thesvg.Start(1200, 600)
 	thesvg.Title("Bar Chart")
 	thesvg.Rect(0, 0, 1200, 600, "fill: #ffffff")
-	svggraphics := svgchart.NewSvgGraphics(thesvg, 400, 300, "Arial", 12)
-	txtgraphics := txtchart.NewTextGraphics(120, 30)
+	svggraphics := svgg.NewSvgGraphics(thesvg, 400, 300, "Arial", 12)
+	txtgraphics := txtg.NewTextGraphics(120, 30)
 
 	x := []float64{0, 1, 2, 3}
 	europe := []float64{10, 15, 25, 20}
@@ -782,8 +783,8 @@ func categoricalBarChart() {
 	thesvg.Start(1200, 900)
 	thesvg.Title("Bar Chart")
 	thesvg.Rect(0, 0, 1200, 900, "fill: #ffffff")
-	svggraphics = svgchart.NewSvgGraphics(thesvg, 400, 300, "Arial", 12)
-	txtgraphics = txtchart.NewTextGraphics(120, 30)
+	svggraphics = svgg.NewSvgGraphics(thesvg, 400, 300, "Arial", 12)
+	txtgraphics = txtg.NewTextGraphics(120, 30)
 
 	c = chart.BarChart{Title: "Income"}
 	c.XRange.Category = []string{"none", "low", "average", "high"}
@@ -883,8 +884,8 @@ func logAxis() {
 	thesvg.Start(800, 600)
 	thesvg.Title("Logarithmic axis")
 	thesvg.Rect(0, 0, 800, 600, "fill: #ffffff")
-	svggraphics := svgchart.NewSvgGraphics(thesvg, 400, 300, "Arial", 12)
-	txtgraphics := txtchart.NewTextGraphics(120, 30)
+	svggraphics := svgg.NewSvgGraphics(thesvg, 400, 300, "Arial", 12)
+	txtgraphics := txtg.NewTextGraphics(120, 30)
 
 	lc := chart.ScatterChart{}
 	lc.XRange.Label, lc.YRange.Label = "X-Value", "Y-Value"
@@ -942,8 +943,8 @@ func pieChart() {
 	thesvg.Start(800, 600)
 	thesvg.Title("Pie Charts")
 	thesvg.Rect(0, 0, 800, 600, "fill: #ffffff")
-	svggraphics := svgchart.NewSvgGraphics(thesvg, 400, 300, "Arial", 12)
-	txtgraphics := txtchart.NewTextGraphics(120, 30)
+	svggraphics := svgg.NewSvgGraphics(thesvg, 400, 300, "Arial", 12)
+	txtgraphics := txtg.NewTextGraphics(120, 30)
 
 	pc := chart.PieChart{Title: "Some Pies"}
 	pc.AddDataPair("Data1", []string{"2009", "2010", "2011"}, []float64{10, 20, 30})
@@ -991,7 +992,7 @@ func textlen() {
 	mysvg.Start(1600, 800)
 	mysvg.Title("My Plot")
 	mysvg.Rect(0, 0, 2000, 800, "fill: #ffffff")
-	sgr := svgchart.NewSvgGraphics(mysvg, 2000, 800, "Arial", 18)
+	sgr := svgg.NewSvgGraphics(mysvg, 2000, 800, "Arial", 18)
 	sgr.Begin()
 
 	texts := []string{"ill", "WWW", "Some normal text.", "Illi, is. illigalli: ill!", "OO WORKSHOOPS OMWWW BMWWMB"}
@@ -1027,36 +1028,73 @@ func textlen() {
 
 
 func main() {
+	var all *bool = flag.Bool("all", false, "show all chart types")
+	var catBar *bool = flag.Bool("cat", false, "show categorical bar charts")
+	var bar *bool = flag.Bool("bar", false, "show bar charts")
+	var box *bool = flag.Bool("box", false, "show box charts")
+	var strip *bool = flag.Bool("strip", false, "show strip charts")
+	var pie *bool = flag.Bool("pie", false, "show pie charts")
+	var scatter *bool = flag.Bool("scatter", false, "show scatter charts")
+	var hist *bool = flag.Bool("hist", false, "show hist charts")
+	var shist *bool = flag.Bool("shist", false, "show stacked hist charts")
+
+	var special *bool = flag.Bool("special", false, "show all special stuff")
+	var log *bool = flag.Bool("log", false, "show logarithmic axis")
+	var tics *bool = flag.Bool("tics", false, "show tics")
+	var auto *bool = flag.Bool("auto", false, "show autoscaling")
+	var key *bool = flag.Bool("key", false, "show key placement")
+	var funcs *bool = flag.Bool("func", false, "show function plots")
+
+	flag.Parse()
 
 	// Basic chart types
 
-	categoricalBarChart()
+	if *all || *catBar {
+		categoricalBarChart()
+	}
+	if *all || *bar {
+		barChart()
+	}
+	if *all || *box {
+		boxChart()
+	}
 
-	barChart()
+	if *all || *strip {
+		stripChart()
+	}
 
-	boxChart()
+	if *all || *pie {
+		pieChart()
+	}
 
-	stripChart()
-
-	pieChart()
-
-	scatterChart()
-	histChart("xhist1.svg", "Histogram", false, false)
-	histChart("xhist2.svg", "Histogram", true, false)
-	histChart("xhist3.svg", "Histogram", false, true)
-	histChart("xhist4.svg", "Histogram", true, true)
+	if *all || *scatter {
+		scatterChart()
+	}
+	if *all || *hist {
+		histChart("xhist1.svg", "Histogram", false, false)
+		histChart("xhist2.svg", "Histogram", false, true)
+	}
+	if *all || *shist {
+		histChart("xshist1.svg", "Histogram", true, false)
+		histChart("xshist2.svg", "Histogram", true, true)
+	}
 
 	// Some specialities
-
-	logAxis()
-
-	scatterTics()
-
-	autoscale()
-
-	keyStyles()
-
-	functionPlots()
+	if *special || *log {
+		logAxis()
+	}
+	if *special || *tics {
+		scatterTics()
+	}
+	if *special || *auto {
+		autoscale()
+	}
+	if *special || *key {
+		keyStyles()
+	}
+	if *special || *funcs {
+		functionPlots()
+	}
 
 	/*
 			// Helper to determine parameters of fonts
@@ -1103,7 +1141,7 @@ func main() {
 
 	/*
 
-		txtgraphics := txtchart.NewTextGraphics(140, 40)
+		txtgraphics := txtg.NewTextGraphics(140, 40)
 
 		hc := chart.HistChart{Title: "Nettomieten", ShowVal: true, Stacked: false, Counts: false}
 		hc.XRange.Label, hc.YRange.Label = "Nettomiete in Euro", "Count"
