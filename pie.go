@@ -69,7 +69,7 @@ func (c *PieChart) formatVal(v, sum float64) (s string) {
 }
 
 var PieChartShrinkage = 0.66 // Scaling factor of radius of next data set.
-
+var PieChartHighlight = 0.15 // How much are flaged segments offset. 
 
 // Plot outputs the scatter chart sc to g.
 func (c *PieChart) Plot(g Graphics) {
@@ -81,6 +81,19 @@ func (c *PieChart) Plot(g Graphics) {
 
 	r := height / 2
 	x0, y0 := leftm+r, topm+r
+
+	// Make sure pie fits into plotting area
+	rshift := int(float64(r) * PieChartHighlight)
+	if rshift < 6 {
+		rshift = 6
+	}
+	for _, d := range c.Data[0].Samples {
+		if d.Flag {
+			debug.Printf("Reduced %d by %d", r, rshift)
+			r -= rshift / 3
+			break
+		}
+	}
 
 	g.Begin()
 
@@ -105,12 +118,18 @@ func (c *PieChart) Plot(g Graphics) {
 		for j, d := range data.Samples {
 			style := data.Style[j]
 			alpha := 2 * math.Pi * d.Val / sum
+			shift := 0
 
 			var t string
 			if c.ShowVal > 0 {
 				t = c.formatVal(d.Val, sum)
 			}
-			wedges[j] = Wedgeinfo{Phi: phi, Psi: phi + alpha, Text: t, Tp: "c", Style: style, Font: Font{}}
+			if d.Flag {
+				shift = rshift
+			}
+
+			wedges[j] = Wedgeinfo{Phi: phi, Psi: phi + alpha, Text: t, Tp: "c",
+				Style: style, Font: Font{}, Shift: shift}
 
 			phi += alpha
 		}

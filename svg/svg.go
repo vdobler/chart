@@ -360,7 +360,7 @@ func (sg *SvgGraphics) Rings(wedges []chart.Wedgeinfo, x, y, ro, ri int) {
 		}
 
 		var d string
-		p := 0.4 * float64(w.Style.LineWidth)
+		p := 0.4 * float64(w.Style.LineWidth+w.Shift)
 		cphi, sphi := math.Cos(w.Phi), math.Sin(w.Phi)
 		cpsi, spsi := math.Cos(w.Psi), math.Sin(w.Psi)
 

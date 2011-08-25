@@ -430,11 +430,10 @@ func GenericWedge(bg BasicGraphics, x, y, ro, ri int, phi, psi, ecc float64, sty
 // Precondition:  0 <= beta < alpha < pi/2
 func fillQuarterWedge(bg BasicGraphics, xi, yi, ri int, alpha, beta, e float64, style Style, quadrant int) {
 	if alpha < beta {
-		debug.Printf("Swaping alpha and beta")
+		// debug.Printf("Swaping alpha and beta")
 		alpha, beta = beta, alpha
 	}
-	debug.Printf("fillQuaterWedge from %.1f to %.1f radius %d in quadrant %d.",
-		180*alpha/math.Pi, 180*beta/math.Pi, ri, quadrant)
+	// debug.Printf("fillQuaterWedge from %.1f to %.1f radius %d in quadrant %d.",	180*alpha/math.Pi, 180*beta/math.Pi, ri, quadrant)
 	r := float64(ri)
 
 	ta, tb := math.Tan(alpha), math.Tan(beta)
@@ -501,7 +500,7 @@ func fillWedge(bg BasicGraphics, xi, yi, ro, ri int, phi, psi, epsilon float64, 
 
 	qPhi := quadrant(phi)
 	qPsi := quadrant(psi)
-	debug.Printf("fillWedge from %.1f (%d) to %.1f (%d).", 180*phi/math.Pi, qPhi, 180*psi/math.Pi, qPsi)
+	// debug.Printf("fillWedge from %.1f (%d) to %.1f (%d).", 180*phi/math.Pi, qPhi, 180*psi/math.Pi, qPsi)
 
 	// prepare styles for filling
 	style.LineColor = style.FillColor
@@ -510,7 +509,7 @@ func fillWedge(bg BasicGraphics, xi, yi, ro, ri int, phi, psi, epsilon float64, 
 	blank := Style{Symbol: ' ', LineColor: "#ffffff", Alpha: 1}
 
 	for qPhi != qPsi {
-		debug.Printf("qPhi = %d", qPhi)
+		// debug.Printf("qPhi = %d", qPhi)
 		w := float64(qPhi+1) * math.Pi / 2
 		if math.Fabs(w-phi) > 0.01 {
 			fillQuarterWedge(bg, xi, yi, ro, mapQ(phi, qPhi), mapQ(w, qPhi), epsilon, style, qPhi)
@@ -521,12 +520,12 @@ func fillWedge(bg BasicGraphics, xi, yi, ro, ri int, phi, psi, epsilon float64, 
 		phi = w
 		qPhi++
 		if qPhi == 4 {
-			debug.Printf("Wrapped phi around")
+			// debug.Printf("Wrapped phi around")
 			phi, qPhi = 0, 0
 		}
 	}
 	if phi != psi {
-		debug.Printf("Last wedge")
+		// debug.Printf("Last wedge")
 		fillQuarterWedge(bg, xi, yi, ro, mapQ(phi, qPhi), mapQ(psi, qPhi), epsilon, style, qPhi)
 		if ri > 0 {
 			fillQuarterWedge(bg, xi, yi, ri, mapQ(phi, qPhi), mapQ(psi, qPhi), epsilon, blank, qPhi)
@@ -542,7 +541,7 @@ func GenericRings(bg BasicGraphics, wedges []Wedgeinfo, x, y, ro, ri int, eccent
 	for _, w := range wedges {
 
 		// Correct center
-		p := 0.4 * float64(w.Style.LineWidth)
+		p := 0.4 * float64(w.Style.LineWidth+w.Shift)
 
 		// cphi, sphi := math.Cos(w.Phi), math.Sin(w.Phi)
 		// cpsi, spsi := math.Cos(w.Psi), math.Sin(w.Psi)
@@ -566,7 +565,7 @@ func GenericRings(bg BasicGraphics, wedges []Wedgeinfo, x, y, ro, ri int, eccent
 					rt = ro - 2*fh
 				}
 			}
-			debug.Printf("Text %s at %d° r=%d", w.Text, int(180*alpha/math.Pi), rt)
+			// debug.Printf("Text %s at %d° r=%d", w.Text, int(180*alpha/math.Pi), rt)
 			tx := int(float64(rt)*math.Cos(alpha)*eccentricity+0.5) + x
 			ty := y - int(float64(rt)*math.Sin(alpha)+0.5)
 

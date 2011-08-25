@@ -957,6 +957,7 @@ func pieChart() {
 	pc.Inner = 0
 	piec := chart.PieChart{Title: "Some Pies"}
 	piec.AddDataPair("Europe", []string{"D", "AT", "CH", "F", "E", "I"}, []float64{10, 20, 30, 35, 15, 25})
+	piec.Data[0].Samples[3].Flag = true
 	piec.Plot(svggraphics)
 	piec.Plot(txtgraphics)
 	fmt.Printf("%s\n", txtgraphics.String())

@@ -206,9 +206,8 @@ func (g *TextGraphics) XAxis(xrange chart.Range, y, y1 int) {
 			}
 		}
 	}
-
-	// GenericXAxis(g, xr, ys, yms)
 }
+
 func (g *TextGraphics) YAxis(yrange chart.Range, x, x1 int) {
 	label := yrange.Label
 	mirror := yrange.TicSetting.Mirror
@@ -331,15 +330,6 @@ func (g *TextGraphics) Boxes(boxes []chart.Box, width int, style chart.Style) {
 	}
 }
 
-var (
-	KeyHorSep      float32 = 2
-	KeyVertSep     float32 = 0
-	KeyColSep      float32 = 2
-	KeySymbolWidth float32 = 4
-	KeySymbolSep   float32 = 1
-	KeyRowSep      float32 = 0
-)
-
 
 func (g *TextGraphics) Key(x, y int, key chart.Key) {
 	m := key.Place()
@@ -351,8 +341,8 @@ func (g *TextGraphics) Key(x, y int, key chart.Key) {
 	if style.LineWidth > 0 || style.FillColor != "" {
 		g.tb.Rect(x, y, tw, th, 1, ' ')
 	}
-	x += int(KeyHorSep)
-	vsep := KeyVertSep
+	x += int(chart.KeyHorSep)
+	vsep := chart.KeyVertSep
 	if vsep < 1 {
 		vsep = 1
 	}
@@ -372,20 +362,20 @@ func (g *TextGraphics) Key(x, y int, key chart.Key) {
 			} else {
 				// normal entry
 				if (plotStyle & chart.PlotStyleLines) != 0 {
-					g.Line(x, yy, x+int(KeySymbolWidth), yy, e.Style)
+					g.Line(x, yy, x+int(chart.KeySymbolWidth), yy, e.Style)
 				}
 				if (plotStyle & chart.PlotStylePoints) != 0 {
-					g.Symbol(x+int(KeySymbolWidth/2), yy, e.Style.Symbol, e.Style)
+					g.Symbol(x+int(chart.KeySymbolWidth/2), yy, e.Style.Symbol, e.Style)
 				}
 				if (plotStyle & chart.PlotStyleBox) != 0 {
-					g.tb.Put(x+int(KeySymbolWidth/2), yy, e.Style.Symbol)
+					g.tb.Put(x+int(chart.KeySymbolWidth/2), yy, e.Style.Symbol)
 				}
-				g.tb.Text(x+int((KeySymbolWidth+KeySymbolSep)), yy, e.Text, -1)
+				g.tb.Text(x+int((chart.KeySymbolWidth+chart.KeySymbolSep)), yy, e.Text, -1)
 			}
-			yy += rh[ri] + int(KeyRowSep)
+			yy += rh[ri] + int(chart.KeyRowSep)
 		}
 
-		x += int((KeySymbolWidth + KeySymbolSep + KeyColSep + float32(cw[ci])))
+		x += int((chart.KeySymbolWidth + chart.KeySymbolSep + chart.KeyColSep + float32(cw[ci])))
 	}
 
 }

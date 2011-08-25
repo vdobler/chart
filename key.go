@@ -36,7 +36,7 @@ type KeyEntry struct {
 }
 
 
-// Place layouts the entries in k in the requested matrix format
+// Place layouts the Entries in key in the requested (by key.Cols) matrix format
 func (key Key) Place() (matrix [][]*KeyEntry) {
 	// count real entries in num, see if multilines are present in haveml
 	num := 0
@@ -125,13 +125,15 @@ func textDim(t string) (w float32, h int) {
 	return
 }
 
+// The following variables control the layout of the key/legend box.
+// All values are in font-units (fontheight for vertical, fontwidth for horizontal values)
 var (
-	KeyHorSep      float32 = 1.5
-	KeyVertSep     float32 = 0.5
-	KeyColSep      float32 = 2.0
-	KeySymbolWidth float32 = 4
-	KeySymbolSep   float32 = 1
-	KeyRowSep      float32 = 0.75
+	KeyHorSep      float32 = 1.5  // Horizontal spacing between key box and content
+	KeyVertSep     float32 = 0.5  // Vertical spacing between key box and content
+	KeyColSep      float32 = 2.0  // Horizontal spacing between two columns in key 
+	KeySymbolWidth float32 = 5    // Horizontal length/space reserved for symbol
+	KeySymbolSep   float32 = 1    // Horizontal spacing bewteen symbol and text
+	KeyRowSep      float32 = 0.75 // Vertical spacing between individual rows.
 )
 
 func (key Key) Layout(bg BasicGraphics, m [][]*KeyEntry) (w, h int, colwidth, rowheight []int) {
@@ -181,20 +183,33 @@ func (key Key) Layout(bg BasicGraphics, m [][]*KeyEntry) (w, h int, colwidth, ro
 		// fmt.Printf("Width of col %d: %d.  Total now: %d\n", c, irw, totalw)
 	}
 
-	// totalw/h are characters only and still in character-units
-	totalw = int(float32(totalw) * fontwidth)                     // scale to pixels
-	totalw += int(KeyColSep * (float32(cols-1) * fontwidth))      // add space between columns
-	totalw += int(2 * KeyHorSep * fontwidth)                      // add space for left/right border
-	totalw += int((KeySymbolWidth+KeySymbolSep)*fontwidth) * cols // place for symbol and symbol-text sep
+	if fontwidth == 1 && fontheight == 1 {
+		// totalw/h are characters only and still in character-units
+		totalw += int(KeyColSep) * (cols - 1)                 // add space between columns
+		totalw += int(2*KeyHorSep + 0.5)                      // add space for left/right border
+		totalw += int(KeySymbolWidth+KeySymbolSep+0.5) * cols // place for symbol and symbol-text sep
 
-	totalh *= fontheight
-	totalh += int(KeyRowSep * float32((rows-1)*fontheight)) // add space between rows
-	vsep := KeyVertSep * float32(fontheight)
-	if vsep < 1 {
-		vsep = 1
-	} // make sure there _is_ room (as KeyVertSep < 1)
-	totalh += int(2 * vsep) // add border at top/bottom
+		totalh += int(KeyRowSep) * (rows - 1) // add space between rows
+		vsep := KeyVertSep
+		if vsep < 1 {
+			vsep = 1
+		} // make sure there _is_ room (as KeyVertSep < 1)
+		totalh += int(2 * vsep) // add border at top/bottom
+	} else {
+		// totalw/h are characters only and still in character-units
+		totalw = int(float32(totalw) * fontwidth)                     // scale to pixels
+		totalw += int(KeyColSep * (float32(cols-1) * fontwidth))      // add space between columns
+		totalw += int(2 * KeyHorSep * fontwidth)                      // add space for left/right border
+		totalw += int((KeySymbolWidth+KeySymbolSep)*fontwidth) * cols // place for symbol and symbol-text sep
 
+		totalh *= fontheight
+		totalh += int(KeyRowSep * float32((rows-1)*fontheight)) // add space between rows
+		vsep := KeyVertSep * float32(fontheight)
+		if vsep < 1 {
+			vsep = 1
+		} // make sure there _is_ room (as KeyVertSep < 1)
+		totalh += int(2 * vsep) // add border at top/bottom
+	}
 	return totalw, totalh, colwidth, rowheight
 }
 
