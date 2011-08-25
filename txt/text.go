@@ -2,205 +2,24 @@ package txtg
 
 import (
 	"fmt"
-	"log"
 	"math"
 	"github.com/vdobler/chart"
 )
 
-// Different edge styles for boxes
-var Edge = [][4]int{{'+', '+', '+', '+'}, {'.', '.', '\'', '\''}, {'/', '\\', '\\', '/'}}
-
-
-// A Text Buffer
-type TextBuf struct {
-	Buf  []int // the internal buffer.  Point (x,y) is mapped to x + y*(W+1)
-	W, H int   // Width and Height
-}
-
-// Set up a new TextBuf with width w and height h.
-func NewTextBuf(w, h int) (tb *TextBuf) {
-	tb = new(TextBuf)
-	tb.W, tb.H = w, h
-	tb.Buf = make([]int, (w+1)*h)
-	for i, _ := range tb.Buf {
-		tb.Buf[i] = ' '
-	}
-	for i := 0; i < h; i++ {
-		tb.Buf[i*(w+1)+w] = '\n'
-	}
-	// tb.Buf[0], tb.Buf[(w+1)*h-1] = 'X', 'X'
-	return
-}
-
-
-// Put character c at (x,y)
-func (tb *TextBuf) Put(x, y, c int) {
-	if x < 0 || y < 0 || x >= tb.W || y >= tb.H || c < ' ' {
-		debug.Printf("Ooooops Put(): %d, %d, %d='%c' \n", x, y, c, c)
-		return
-	}
-	i := (tb.W+1)*y + x
-	tb.Buf[i] = c
-}
-
-// Draw rectangle of width w and height h from corner at (x,y).
-// Use one of the corner style defined in Edge. 
-// Interior is filled with charater fill iff != 0.
-func (tb *TextBuf) Rect(x, y, w, h int, style int, fill int) {
-	style = style % len(Edge)
-
-	if h < 0 {
-		h = -h
-		y -= h
-	}
-	if w < 0 {
-		w = -w
-		x -= w
-	}
-
-	tb.Put(x, y, Edge[style][0])
-	tb.Put(x+w, y, Edge[style][1])
-	tb.Put(x, y+h, Edge[style][2])
-	tb.Put(x+w, y+h, Edge[style][3])
-	for i := 1; i < w; i++ {
-		tb.Put(x+i, y, '-')
-		tb.Put(x+i, y+h, '-')
-	}
-	for i := 1; i < h; i++ {
-		tb.Put(x+w, y+i, '|')
-		tb.Put(x, y+i, '|')
-		if fill > 0 {
-			for j := x + 1; j < x+w; j++ {
-				tb.Put(j, y+i, fill)
-			}
-		}
-	}
-}
-
-func (tb *TextBuf) Block(x, y, w, h int, fill int) {
-	if h < 0 {
-		h = -h
-		y -= h
-	}
-	if w < 0 {
-		w = -w
-		x -= w
-	}
-	for i := 0; i < w; i++ {
-		for j := 0; j <= h; j++ {
-			tb.Put(x+i, y+j, fill)
-		}
-	}
-}
-
-// Return real character len of s (rune count).
-func StrLen(s string) (n int) {
-	for _, _ = range s {
-		n++
-	}
-	return
-}
-
-// Print text txt at (x,y). Horizontal display for align in [-1,1],
-// vasrtical alignment for align in [2,4]
-// align: -1: left; 0: centered; 1: right; 2: top, 3: center, 4: bottom
-func (tb *TextBuf) Text(x, y int, txt string, align int) {
-	if align <= 1 {
-		switch align {
-		case 0:
-			x -= StrLen(txt) / 2
-		case 1:
-			x -= StrLen(txt)
-		}
-		i := 0
-		for _, rune := range txt {
-			tb.Put(x+i, y, rune)
-			i++
-		}
-	} else {
-		switch align {
-		case 3:
-			y -= StrLen(txt) / 2
-		case 2:
-			x -= StrLen(txt)
-		}
-		i := 0
-		for _, rune := range txt {
-			tb.Put(x, y+i, rune)
-			i++
-		}
-	}
-}
-
-
-// Paste buf at (x,y)
-func (tb *TextBuf) Paste(x, y int, buf *TextBuf) {
-	s := buf.W + 1
-	for i := 0; i < buf.W; i++ {
-		for j := 0; j < buf.H; j++ {
-			tb.Put(x+i, y+j, buf.Buf[i+s*j])
-		}
-	}
-}
-
-func (tb *TextBuf) Line(x0, y0, x1, y1 int, symbol int) {
-	// handle trivial cases first
-	if x0 == x1 {
-		if y0 > y1 {
-			y0, y1 = y1, y0
-		}
-		for ; y0 <= y1; y0++ {
-			tb.Put(x0, y0, symbol)
-		}
-		return
-	}
-	if y0 == y1 {
-		if x0 > x1 {
-			x0, x1 = x1, x0
-		}
-		for ; x0 <= x1; x0++ {
-			tb.Put(x0, y0, symbol)
-		}
-		return
-	}
-	dx, dy := abs(x1-x0), -abs(y1-y0)
-	sx, sy := sign(x1-x0), sign(y1-y0)
-	err, e2 := dx+dy, 0
-	for {
-		tb.Put(x0, y0, symbol)
-		if x0 == x1 && y0 == y1 {
-			return
-		}
-		e2 = 2 * err
-		if e2 >= dy {
-			err += dy
-			x0 += sx
-		}
-		if e2 <= dx {
-			err += dx
-			y0 += sy
-		}
-
-	}
-}
-
-
-// Convert to plain (utf8) string.
-func (tb *TextBuf) String() string {
-	return string(tb.Buf)
-}
-
 
 // TextGraphics
 type TextGraphics struct {
-	tb   *TextBuf
-	w, h int
+	tb   *TextBuf // the underlying text buffer
+	w, h int      // width and height
+	xoff int      // the initial radius for pie charts
 }
 
-func NewTextGraphics(w, h int) *TextGraphics {
+// New creates a TextGraphic of dimensions w x h.
+func New(w, h int) *TextGraphics {
 	tg := TextGraphics{}
 	tg.tb = NewTextBuf(w, h)
 	tg.w, tg.h = w, h
+	tg.xoff = -1
 	return &tg
 }
 
@@ -575,85 +394,15 @@ func (g *TextGraphics) Bars(bars []chart.Barinfo, style chart.Style) {
 	chart.GenericBars(g, bars, style)
 }
 
-func (g *TextGraphics) Wedge(x, y, ry int, phi, psi float64, style chart.Style) {
-	rx := int(1.9 * float64(ry))
-	x += 10 // TODO: find a proper way here....
-	ryf, rxf := float64(ry), float64(rx)
-	xa, ya := int(math.Cos(phi)*rxf)+x, int(math.Sin(phi)*ryf)+y
-	xc, yc := int(math.Cos(psi)*rxf)+x, int(math.Sin(psi)*ryf)+y
+var CircleStretchFactor float64 = 1.85
 
-	if math.Fabs(phi-psi) >= 4*math.Pi {
-		phi, psi = 0, 2*math.Pi
-	} else {
-		g.Line(x, y, xa, ya, style)
-		g.Line(x, y, xc, yc, style)
+func (g *TextGraphics) Rings(wedges []chart.Wedgeinfo, x, y, ro, ri int) {
+	if g.xoff == -1 {
+		g.xoff = int(float64(ro) * (CircleStretchFactor - 1))
+		debug.Printf("Shifting center about %d (ro=%d, f=%.2f)", g.xoff, ro, CircleStretchFactor)
 	}
-
-	if style.FillColor != "" {
-		delta := 1 / (4 * rxf)
-		ls := chart.Style{LineColor: style.FillColor, LineWidth: 1, Symbol: style.Symbol}
-		for a := phi; a <= psi; a += delta {
-			xr, yr := int(math.Cos(a)*rxf)+x, int(math.Sin(a)*ryf)+y
-			g.Line(x, y, xr, yr, ls)
-		}
-	}
-
-	var xb, yb int
-	for ; phi < psi; phi += 0.1 { // aproximate circle by 62-corner
-		xb, yb = int(math.Cos(phi)*rxf)+x, int(math.Sin(phi)*ryf)+y
-		g.Line(xa, ya, xb, yb, style)
-		xa, ya = xb, yb
-	}
-	g.Line(xb, yb, xc, yc, style)
-
-}
-
-func (g *TextGraphics) Rings(wedges []chart.Wedgeinfo, x, y, r int, border bool) {
 	for i := range wedges {
 		wedges[i].Style.LineWidth = 1
 	}
-	chart.GenericRings(g, wedges, x+int(float64(r)*1.8), y, r, 1.8, border)
-}
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
-}
-
-func abs(a int) int {
-	if a < 0 {
-		return -a
-	}
-	return a
-}
-
-func sign(a int) int {
-	if a < 0 {
-		return -1
-	}
-	if a == 0 {
-		return 0
-	}
-	return 1
-}
-
-
-// Debugging and tracing
-type debugging bool
-
-const debug debugging = true
-
-func (d debugging) Printf(fmt string, args ...interface{}) {
-	if d {
-		log.Printf(fmt, args...)
-	}
+	chart.GenericRings(g, wedges, x+g.xoff, y, ro, ri, 1.8)
 }

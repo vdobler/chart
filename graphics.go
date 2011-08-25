@@ -17,7 +17,6 @@ type BasicGraphics interface {
 	Symbol(x, y, s int, style Style)                        // Put symbol s at (x,y)
 	Text(x, y int, t string, align string, rot int, f Font) // Put t at (x,y) rotated by rot aligned [[tcb]][lcr]
 	Rect(x, y, w, h int, style Style)                       // Draw (w x h) rectangle at (x,y)
-	Wedge(x, y, r int, phi, psi float64, style Style)       // Draw pie from phi to psi centered at (x,y) with radius r
 }
 
 
@@ -39,7 +38,7 @@ type Graphics interface {
 	Scatter(points []EPoint, plotstyle PlotStyle, style Style) // Points, Lines and Line+Points
 	Boxes(boxes []Box, width int, style Style)                 // Boxplots
 	Bars(bars []Barinfo, style Style)                          // any type of histogram/bars
-	Rings(wedeges []Wedgeinfo, x, y, r int, border bool)       // Pie/ring diagram elements
+	Rings(wedeges []Wedgeinfo, x, y, ro, ri int)               // Pie/ring diagram elements
 
 	Key(x, y int, key Key) // place key at x,y
 }
@@ -52,11 +51,11 @@ type Barinfo struct {
 }
 
 type Wedgeinfo struct {
-	Ro, Ri   int     // Outer and inner radius of wedge ring, std. wedge if ri<=0
 	Phi, Psi float64 // Start and ende of wedge. Fuill circle if |phi-psi| > 4pi
 	Text, Tp string  // label text and text position: [ico]
 	Style    Style   // style of this wedge
 	Font     Font    // font of text
+	Shift    int     // Highlighting of wedge 
 }
 
 
@@ -536,37 +535,21 @@ func fillWedge(bg BasicGraphics, xi, yi, ro, ri int, phi, psi, epsilon float64, 
 }
 
 
-func GenericRings(bg BasicGraphics, wedges []Wedgeinfo, x, y, r int, eccentricity float64, border bool) {
-	debug.Printf("GenericRings with %d wedges (ecc=%.3f) border=%t.", len(wedges), eccentricity, border)
-	if border {
-		st := Style{Symbol: ' ', LineColor: "#ffffff", Alpha: 1, LineWidth: 1}
-		var xa, ya, xb, yb int
-		beg, end := wedges[0].Ro+2, wedges[0].Ro-1
-		for ri := beg; ri >= end; ri-- {
-			rf := float64(ri)
-			xa, ya = int(rf*eccentricity+0.5)+x, y-ri
-			for rho := 0.05; rho < 2*math.Pi; rho += 0.05 { // aproximate circle by more than 120 corners polygon
-				xb, yb = int(math.Cos(rho)*rf*eccentricity)+x, y-int(math.Sin(rho)*rf)
-				bg.Line(xa, ya, xb, yb, st)
-				xa, ya = xb, yb
-			}
-			bg.Line(xb, yb, int(rf*eccentricity+0.5)+x, y-ri, st)
-		}
-	}
+func GenericRings(bg BasicGraphics, wedges []Wedgeinfo, x, y, ro, ri int, eccentricity float64) {
+	debug.Printf("GenericRings with %d wedges center %d,%d, radii %d/%d,  ecc=%.3f)",
+		len(wedges), x, y, ro, ri, eccentricity)
 
 	for _, w := range wedges {
-		ro, ri := w.Ro, w.Ri
 
 		// Correct center
 		p := 0.4 * float64(w.Style.LineWidth)
-		debug.Printf("lw=%d p=%.2f", w.Style.LineWidth, p)
 
 		// cphi, sphi := math.Cos(w.Phi), math.Sin(w.Phi)
 		// cpsi, spsi := math.Cos(w.Psi), math.Sin(w.Psi)
 		a := math.Sin((w.Psi - w.Phi) / 2)
 		dx, dy := p*math.Cos((w.Phi+w.Psi)/2)/a, p*math.Sin((w.Phi+w.Psi)/2)/a
-		debug.Printf("Center adjustment for wedge %d°-%d° of (%.1f,%.1f)",
-			int(180*w.Phi/math.Pi), int(180*w.Psi/math.Pi), dx, dy)
+		debug.Printf("Center adjustment (lw=%d, p=%.2f), for wedge %d°-%d° of (%.1f,%.1f)",
+			w.Style.LineWidth, p, int(180*w.Phi/math.Pi), int(180*w.Psi/math.Pi), dx, dy)
 		xi, yi := x+int(dx+0.5), y-int(dy+0.5)
 		GenericWedge(bg, xi, yi, ro, ri, w.Phi, w.Psi, eccentricity, w.Style)
 
@@ -578,13 +561,10 @@ func GenericRings(bg BasicGraphics, wedges []Wedgeinfo, x, y, r int, eccentricit
 			if ri > 0 {
 				rt = (ri + ro) / 2
 			} else {
-				rt = (2 * ro) / 3
-				/*
-					rt = ro - 3*fh
-					if rt <= ro/2 {
-						rt = ro - 2*fh
-					}
-				*/
+				rt = ro - 3*fh
+				if rt <= ro/2 {
+					rt = ro - 2*fh
+				}
 			}
 			debug.Printf("Text %s at %d° r=%d", w.Text, int(180*alpha/math.Pi), rt)
 			tx := int(float64(rt)*math.Cos(alpha)*eccentricity+0.5) + x

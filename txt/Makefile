@@ -3,7 +3,8 @@ include $(GOROOT)/src/Make.inc
 
 TARG=github.com/vdobler/chart/txtg
 GOFILES=\
-	text.go
+	text.go\
+	buf.go
 
 include $(GOROOT)/src/Make.pkg
 

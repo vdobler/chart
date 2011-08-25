@@ -68,9 +68,7 @@ func (c *PieChart) formatVal(v, sum float64) (s string) {
 	return
 }
 
-var PieChartTextAscpect float64 = 1.9 // how much wider is the x-radius
-var PieChartShrinkage = 0.65          // Scaling factor of radius of next data set.
-var PieChartBorder = 0.05             // Fraction of white border outside next data sets.
+var PieChartShrinkage = 0.66 // Scaling factor of radius of next data set.
 
 
 // Plot outputs the scatter chart sc to g.
@@ -82,7 +80,6 @@ func (c *PieChart) Plot(g Graphics) {
 	width += 0
 
 	r := height / 2
-	r0 := r
 	x0, y0 := leftm+r, topm+r
 
 	g.Begin()
@@ -91,9 +88,7 @@ func (c *PieChart) Plot(g Graphics) {
 		g.Title(c.Title)
 	}
 
-	for i, data := range c.Data {
-		// _ := c.Key.Entries[keidx].Text // data set name
-		// style = DataStyle{LineColor: "#404040", LineWidth: 3, LineStyle: SolidLine}
+	for _, data := range c.Data {
 
 		var sum float64
 		for _, d := range data.Samples {
@@ -115,17 +110,13 @@ func (c *PieChart) Plot(g Graphics) {
 			if c.ShowVal > 0 {
 				t = c.formatVal(d.Val, sum)
 			}
-			wedges[j] = Wedgeinfo{Ro: r, Ri: ri, Phi: phi, Psi: phi + alpha, Text: t, Tp: "c", Style: style, Font: Font{}}
+			wedges[j] = Wedgeinfo{Phi: phi, Psi: phi + alpha, Text: t, Tp: "c", Style: style, Font: Font{}}
 
 			phi += alpha
 		}
-		g.Rings(wedges, x0, y0, r0, i > 0)
+		g.Rings(wedges, x0, y0, r, ri)
 
 		r = int(float64(r) * PieChartShrinkage)
-		ra := int(float64(r) * (1 + PieChartBorder))
-		if ra == r {
-			ra++
-		}
 	}
 
 	if !c.Key.Hide {

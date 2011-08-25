@@ -16,7 +16,8 @@ type SvgGraphics struct {
 	fs   int
 }
 
-func NewSvgGraphics(sp *svg.SVG, width, height int, font string, fontsize int) *SvgGraphics {
+// New creates a new SvgGraphics of dimension w x h, with a default font font of size fontsize.
+func New(sp *svg.SVG, width, height int, font string, fontsize int) *SvgGraphics {
 	if font == "" {
 		font = "Helvetica"
 	}
@@ -330,39 +331,8 @@ func (sg *SvgGraphics) Bars(bars []chart.Barinfo, style chart.Style) {
 	chart.GenericBars(sg, bars, style)
 }
 
-func (sg *SvgGraphics) Wedge(x, y, r int, phi, psi float64, style chart.Style) {
-	// GenericWedge(sg, x, y, r, phi, psi, style); return
 
-	var s string
-	linecol := style.LineColor
-	if linecol != "" {
-		s = fmt.Sprintf("stroke:%s; ", linecol)
-	} else {
-		linecol = "#808080"
-	}
-	s += fmt.Sprintf("stroke-width: %d; ", style.LineWidth)
-	s += fmt.Sprintf("opacity: %.2f; ", 1-style.Alpha)
-	if style.FillColor != "" {
-		s += fmt.Sprintf("fill: %s; fill-opacity: %.2f", style.FillColor, 1-style.Alpha)
-	} else {
-		s += "fill-opacity: 0"
-	}
-
-	if math.Fabs(phi-psi) >= 4*math.Pi {
-		sg.svg.Circle(x, y, r, s)
-	} else {
-
-		d := fmt.Sprintf("M%d,%d ", x, y)
-		rf := float64(r)
-		d += fmt.Sprintf("L %d,%d", int(rf*math.Cos(phi)+0.5)+x, int(rf*math.Sin(phi)+0.5)+y)
-		d += fmt.Sprintf("A %d,%d 0 0 1 %d,%d", r, r, int(rf*math.Cos(psi)+0.5)+x, int(rf*math.Sin(psi)+0.5)+y)
-		d += fmt.Sprintf("z")
-
-		sg.svg.Path(d, s)
-	}
-}
-
-func (sg *SvgGraphics) Rings(wedges []chart.Wedgeinfo, x, y, r int, border bool) {
+func (sg *SvgGraphics) Rings(wedges []chart.Wedgeinfo, x, y, ro, ri int) {
 	for _, w := range wedges {
 		var s string
 		linecol := w.Style.LineColor
@@ -379,8 +349,6 @@ func (sg *SvgGraphics) Rings(wedges []chart.Wedgeinfo, x, y, r int, border bool)
 		} else {
 			sf = "fill-opacity: 0"
 		}
-
-		ro, ri := w.Ro, w.Ri
 
 		if math.Fabs(w.Phi-w.Psi) >= 4*math.Pi {
 			sg.svg.Circle(x, y, ro, s+sf)
