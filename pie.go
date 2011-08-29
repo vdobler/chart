@@ -10,12 +10,42 @@ import (
 
 // PieChart represents pie and ring charts.
 type PieChart struct {
-	Title   string
-	Key     Key
-	ShowVal int     // Display values. 0: don't show, 1: relative in %, 2: absolute 
-	Inner   float64 // relative radius of inner white are (set to 0.7 to produce ring chart)
-	Data    []CategoryChartData
+	Title string              // The title
+	Key   Key                 // The Key/Legend
+	Inner float64             // relative radius of inner white are (set to 0.7 to produce ring chart)
+	Data  []CategoryChartData // The data
+
+	FmtVal func(value, sume float64) string // Produce labels
 }
+
+
+// AbsoluteValue will format value (ignoring sum).  It is a convenience function which
+// can be assigned to PieChart.FmtVal.
+func AbsoluteValue(value, sum float64) (s string) {
+	fv := math.Fabs(value)
+	switch {
+	case fv < 0.01:
+		s = fmt.Sprintf(" %g ", value)
+	case fv < 0.1:
+		s = fmt.Sprintf(" %.2f ", value)
+	case fv < 1:
+		s = fmt.Sprintf(" %.1f ", value)
+	case fv < 100000:
+		s = fmt.Sprintf(" %.0f ", value)
+	default:
+		s = fmt.Sprintf(" %g ", value)
+	}
+	return
+}
+
+// PercentValue formats value as percentage of sum.   It is a convenience function which
+// can be assigned to PieChart.FmtVal.
+func PercentValue(value, sum float64) (s string) {
+	value *= 100 / sum
+	s = AbsoluteValue(value, sum) + "% "
+	return
+}
+
 
 type CategoryChartData struct {
 	Name    string
@@ -50,24 +80,6 @@ func (c *PieChart) AddDataPair(name string, cat []string, val []float64) {
 }
 
 
-func (c *PieChart) formatVal(v, sum float64) (s string) {
-	if c.ShowVal == 1 {
-		v *= 100 / sum // percentage
-	}
-	switch {
-	case v < 0.1:
-		s = fmt.Sprintf(" %.2f ", v)
-	case v < 1:
-		s = fmt.Sprintf(" %.1f ", v)
-	default:
-		s = fmt.Sprintf(" %.0f ", v)
-	}
-	if c.ShowVal == 1 {
-		s += "% "
-	}
-	return
-}
-
 var PieChartShrinkage = 0.66 // Scaling factor of radius of next data set.
 var PieChartHighlight = 0.15 // How much are flaged segments offset. 
 
@@ -79,7 +91,7 @@ func (c *PieChart) Plot(g Graphics) {
 	topm, leftm := layout.Top, layout.Left
 	width += 0
 
-	r := height / 2
+	r := imin(height, width) / 2
 	x0, y0 := leftm+r, topm+r
 
 	// Make sure pie fits into plotting area
@@ -89,7 +101,7 @@ func (c *PieChart) Plot(g Graphics) {
 	}
 	for _, d := range c.Data[0].Samples {
 		if d.Flag {
-			debug.Printf("Reduced %d by %d", r, rshift)
+			// debug.Printf("Reduced %d by %d", r, rshift)
 			r -= rshift / 3
 			break
 		}
@@ -121,8 +133,8 @@ func (c *PieChart) Plot(g Graphics) {
 			shift := 0
 
 			var t string
-			if c.ShowVal > 0 {
-				t = c.formatVal(d.Val, sum)
+			if c.FmtVal != nil {
+				t = c.FmtVal(d.Val, sum)
 			}
 			if d.Flag {
 				shift = rshift

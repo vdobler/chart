@@ -367,8 +367,7 @@ func GenericWedge(bg BasicGraphics, x, y, ro, ri int, phi, psi, ecc float64, sty
 	for psi >= 2*math.Pi {
 		psi -= 2 * math.Pi
 	}
-	debug.Printf("GenericWedge centered at (%d,%d) from %.1f° to %.1f°, radius %d/%d (e=%.2f)",
-		x, y, 180*phi/math.Pi, 180*psi/math.Pi, ro, ri, ecc)
+	// debug.Printf("GenericWedge centered at (%d,%d) from %.1f° to %.1f°, radius %d/%d (e=%.2f)", 	x, y, 180*phi/math.Pi, 180*psi/math.Pi, ro, ri, ecc)
 
 	if ri > ro {
 		panic("ri > ro is not possible")
@@ -535,8 +534,7 @@ func fillWedge(bg BasicGraphics, xi, yi, ro, ri int, phi, psi, epsilon float64, 
 
 
 func GenericRings(bg BasicGraphics, wedges []Wedgeinfo, x, y, ro, ri int, eccentricity float64) {
-	debug.Printf("GenericRings with %d wedges center %d,%d, radii %d/%d,  ecc=%.3f)",
-		len(wedges), x, y, ro, ri, eccentricity)
+	// debug.Printf("GenericRings with %d wedges center %d,%d, radii %d/%d,  ecc=%.3f)", len(wedges), x, y, ro, ri, eccentricity)
 
 	for _, w := range wedges {
 
@@ -547,8 +545,7 @@ func GenericRings(bg BasicGraphics, wedges []Wedgeinfo, x, y, ro, ri int, eccent
 		// cpsi, spsi := math.Cos(w.Psi), math.Sin(w.Psi)
 		a := math.Sin((w.Psi - w.Phi) / 2)
 		dx, dy := p*math.Cos((w.Phi+w.Psi)/2)/a, p*math.Sin((w.Phi+w.Psi)/2)/a
-		debug.Printf("Center adjustment (lw=%d, p=%.2f), for wedge %d°-%d° of (%.1f,%.1f)",
-			w.Style.LineWidth, p, int(180*w.Phi/math.Pi), int(180*w.Psi/math.Pi), dx, dy)
+		// debug.Printf("Center adjustment (lw=%d, p=%.2f), for wedge %d°-%d° of (%.1f,%.1f)", w.Style.LineWidth, p, int(180*w.Phi/math.Pi), int(180*w.Psi/math.Pi), dx, dy)
 		xi, yi := x+int(dx+0.5), y-int(dy+0.5)
 		GenericWedge(bg, xi, yi, ro, ri, w.Phi, w.Psi, eccentricity, w.Style)
 

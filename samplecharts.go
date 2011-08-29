@@ -575,7 +575,7 @@ func histChart(name, title string, stacked, counts bool) {
 	svggraphics := svgg.New(thesvg, 400, 300, "Arial", 12)
 	txtgraphics := txtg.New(120, 30)
 
-	hc := chart.HistChart{Title: title, ShowVal: true, Stacked: stacked, Counts: counts}
+	hc := chart.HistChart{Title: title, Stacked: stacked, Counts: counts}
 	hc.XRange.Label = "Sample Value"
 	if counts {
 		hc.YRange.Label = "Total Count"
@@ -965,7 +965,7 @@ func pieChart() {
 
 	thesvg.Gtransform("translate(0 300)")
 	piec.Inner = 0.5
-	piec.ShowVal = 1
+	piec.FmtVal = chart.AbsoluteValue
 	piec.Plot(svggraphics)
 	piec.Plot(txtgraphics)
 	fmt.Printf("%s\n", txtgraphics.String())
@@ -975,7 +975,7 @@ func pieChart() {
 	thesvg.Gtransform("translate(400 300)")
 	piec.Inner = 0.65
 	piec.Key.Cols = 2
-	piec.ShowVal = 2
+	piec.FmtVal = chart.PercentValue
 	chart.PieChartShrinkage = 0.45
 	piec.Plot(svggraphics)
 	piec.Plot(txtgraphics)

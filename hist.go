@@ -22,7 +22,6 @@ type HistChart struct {
 	Key            Key    // Key/Legend
 	Counts         bool   // Display counts instead of frequencies
 	Stacked        bool   // Display different data sets ontop of each other
-	ShowVal        bool   // Display values on bars
 	Data           []HistChartData
 	FirstBin       float64   // center of the first (lowest bin)
 	BinWidth       float64   // Width of bins (0: auto)
