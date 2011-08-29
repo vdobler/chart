@@ -2,7 +2,7 @@ package imgg
 
 // Bitstream Vera Sans Mono Bold 13 as 4bit grayscale.
 var font map[int][15]uint64 = map[int][15]uint64{
-	32: [15]uint64{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+	32: [15]uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 	33: [15]uint64{
 		0x0000000000000000,
 		0x0000000000000000,

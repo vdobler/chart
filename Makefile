@@ -22,7 +22,8 @@ include $(GOROOT)/src/Make.pkg
 
 DRIVERS=\
 	svg\
-	txt
+	txt\
+	image
 
 
 samplechart: samplecharts.go install drivers

@@ -614,22 +614,20 @@ func GenericCircle(bg BasicGraphics, x, y, r int, style Style) {
 	// TODO: fill
 	x0, y0 := x+r, y
 	rf := float64(r)
-	for a:=0.2; a<2*math.Pi; a+=0.2 {
+	for a := 0.2; a < 2*math.Pi; a += 0.2 {
 		x1, y1 := int(rf*math.Cos(a))+x, int(rf*math.Sin(a))+y
-		bg.Line(x0,y0, x1,y1, style)
-		x0,y0 = x1,y1
+		bg.Line(x0, y0, x1, y1, style)
+		x0, y0 = x1, y1
 	}
 }
 
 func polygon(bg BasicGraphics, x, y []int, style Style) {
-	n := len(x)-1
-	for i := 0; i<n; i++ {
-		bg.Line(x[i],y[i], x[i+1],y[i+1], style)
+	n := len(x) - 1
+	for i := 0; i < n; i++ {
+		bg.Line(x[i], y[i], x[i+1], y[i+1], style)
 	}
-	bg.Line(x[n],y[n], x[0],y[0], style)
+	bg.Line(x[n], y[n], x[0], y[0], style)
 }
-
-
 
 
 func GenericSymbol(bg BasicGraphics, x, y int, style Style) {
@@ -670,18 +668,18 @@ func GenericSymbol(bg BasicGraphics, x, y int, style Style) {
 		GenericCircle(bg, x, y, b, style)
 	case '@':
 		GenericCircle(bg, x, y, a, style)
-		aa := (4*a)/5
+		aa := (4 * a) / 5
 		GenericCircle(bg, x, y, aa, style)
-		aa = (3*a)/5
+		aa = (3 * a) / 5
 		GenericCircle(bg, x, y, aa, style)
-		aa = (2*a)/5
+		aa = (2 * a) / 5
 		GenericCircle(bg, x, y, aa, style)
-		aa = a/5
+		aa = a / 5
 		GenericCircle(bg, x, y, aa, style)
-		bg.Line(x,y,x,y, style)
+		bg.Line(x, y, x, y, style)
 	case '=': // TODO check
 		bg.Rect(x-e, y-e, 2*e, 2*e, style)
-	case '#':// TODO check
+	case '#': // TODO check
 		bg.Rect(x-e, y-e, 2*e, 2*e, style)
 	case 'A':
 		polygon(bg, []int{x - a, x + a, x}, []int{y + d, y + d, y - c}, style)
@@ -705,18 +703,16 @@ func GenericSymbol(bg BasicGraphics, x, y int, style Style) {
 		polygon(bg, []int{x - a, x + a, x}, []int{y - c, y - c, y + d}, style)
 	case 'Z':
 		polygon(bg, []int{x - e, x, x + e, x}, []int{y, y + e, y, y - e}, style)
-		ee := (3*e)/4
+		ee := (3 * e) / 4
 		polygon(bg, []int{x - ee, x, x + ee, x}, []int{y, y + ee, y, y - ee}, style)
-		ee = e/2
+		ee = e / 2
 		polygon(bg, []int{x - ee, x, x + ee, x}, []int{y, y + ee, y, y - ee}, style)
-		ee = e/4
+		ee = e / 4
 		polygon(bg, []int{x - ee, x, x + ee, x}, []int{y, y + ee, y, y - ee}, style)
 	case '&':
 		polygon(bg, []int{x - e, x, x + e, x}, []int{y, y + e, y, y - e}, style)
 	default:
 		bg.Text(x, y, "?", "cc", 0, Font{})
 	}
-
-
 
 }

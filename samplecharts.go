@@ -78,7 +78,7 @@ func stripChart() {
 	file.Close()
 
 	jpgf, _ := os.Create("jpeg.jpg")
-	ig := imgg.New(600,400, image.RGBAColor{220,220,220,255})
+	ig := imgg.New(600, 400, image.RGBAColor{220, 220, 220, 255})
 	c.Plot(ig)
 	jpeg.Encode(jpgf, ig.Image, &jpeg.Options{98})
 	jpgf.Close()
