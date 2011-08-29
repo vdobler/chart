@@ -261,7 +261,7 @@ func rgb2hsv(r, g, b int) (h, s, v int) {
 	return
 }
 
-func color2rgb(color string) (r, g, b int) {
+func Color2rgb(color string) (r, g, b int) {
 	if color[0] == '#' {
 		color = color[1:]
 	}
@@ -275,7 +275,7 @@ func color2rgb(color string) (r, g, b int) {
 
 
 func lighter(color string, f float64) string {
-	r, g, b := color2rgb(color)
+	r, g, b := Color2rgb(color)
 	h, s, v := rgb2hsv(r, g, b)
 	f = 1 - f
 	s = int(float64(s) * f)
@@ -289,7 +289,7 @@ func lighter(color string, f float64) string {
 }
 
 func darker(color string, f float64) string {
-	r, g, b := color2rgb(color)
+	r, g, b := Color2rgb(color)
 	h, s, v := rgb2hsv(r, g, b)
 	f = 1 - f
 	v = int(float64(v) * f)

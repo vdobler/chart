@@ -5,12 +5,15 @@ import (
 	"flag"
 	"fmt"
 	"math"
+	"image"
+	"image/jpeg"
 	"os"
 	"rand"
 	// "sort"
 	"github.com/ajstarks/svgo"
 	"github.com/vdobler/chart/svgg"
 	"github.com/vdobler/chart/txtg"
+	"github.com/vdobler/chart/imgg"
 	// "time"
 )
 
@@ -73,6 +76,12 @@ func stripChart() {
 
 	thesvg.End()
 	file.Close()
+
+	jpgf, _ := os.Create("jpeg.jpg")
+	ig := imgg.New(600,400, image.RGBAColor{220,220,220,255})
+	c.Plot(ig)
+	jpeg.Encode(jpgf, ig.Image, &jpeg.Options{98})
+	jpgf.Close()
 }
 
 

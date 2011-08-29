@@ -57,11 +57,12 @@ func main() {
 	}
 
 
-	fmt.Fprintf(fg, "package chart\n\n")
+	fmt.Fprintf(fg, "package imgg\n\n")
 	fmt.Fprintf(fg, "// Bitstream Vera Sans Mono Bold 13 as 4bit grayscale.\n")
-	fmt.Fprintf(fg, "var font map[int][15]string = map[int][15]string{\n")
+	fmt.Fprintf(fg, "var font map[int][15]uint64 = map[int][15]uint64{\n")
+	fmt.Fprintf(fg, "\t%d: [15]uint64{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},\n", ' ')
 	for c:='!'; c<='~'; c++ {
-		fmt.Fprintf(fg, "\t%d: [15]string{\n", c)
+		fmt.Fprintf(fg, "\t%d: [15]uint64{\n", c)
 		for y:=0; y<15; y++ {
 			s := "0x"
 			for x:=0; x<8; x++ {
@@ -69,21 +70,20 @@ func main() {
 				var col image.Color
 				col = img.At(xx,y)
 				_,_,_,a := col.RGBA()
-				k := a >> 12
-				s += fmt.Sprintf("%x", k)
+				k := a >> 8
+				s += fmt.Sprintf("%02x", k)
 			}
 			if y<14 {
-				fmt.Fprintf(fg, "\t\t\"%s\",\n", s)
+				fmt.Fprintf(fg, "\t\t%s,\n", s)
 			} else {
-				fmt.Fprintf(fg, "\t\t\"%s\"},\n", s)
+				fmt.Fprintf(fg, "\t\t%s},\n", s)
 			}
 		}
-		fmt.Fprintf(fg, "\t}\n")
 	}
 
 
 	for c:='¡'; c<='ÿ'; c++ {
-		fmt.Fprintf(fg, "\t%d: [15]string{\n", c)
+		fmt.Fprintf(fg, "\t%d: [15]uint64{\n", c)
 		for y:=33-15; y<33; y++ {
 			s := "0x"
 			for x:=0; x<8; x++ {
@@ -91,17 +91,17 @@ func main() {
 				var col image.Color
 				col = img.At(xx,y)
 				_,_,_,a := col.RGBA()
-				k := a >> 12
-				s += fmt.Sprintf("%x", k)
+				k := a >> 8
+				s += fmt.Sprintf("%02x", k)
 			}
-			if y<14 {
-				fmt.Fprintf(fg, "\t\t\"%s\",\n", s)
+			if y<32 {
+				fmt.Fprintf(fg, "\t\t%s,\n", s)
 			} else {
-				fmt.Fprintf(fg, "\t\t\"%s\"},\n", s)
+				fmt.Fprintf(fg, "\t\t%s},\n", s)
 			}
 		}
-		fmt.Fprintf(fg, "\t}\n")
 	}
-	fmt.Fprintf(fg,"}\n"}
+	fmt.Fprintf(fg,"}\n")
 	fg.Close()
 }
+
