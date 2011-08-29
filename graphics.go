@@ -14,7 +14,7 @@ type BasicGraphics interface {
 	FontMetrics(font Font) (fw float32, fh int, mono bool)  // Return fontwidth and -height in pixel
 	TextLen(t string, font Font) int                        // Length=width of t in screen units if set on font 
 	Line(x0, y0, x1, y1 int, style Style)                   // Draw line from (x0,y0) to (x1,y1)
-	Symbol(x, y, s int, style Style)                        // Put symbol s at (x,y)
+	Symbol(x, y int, style Style)                           // Put symbol s at (x,y)
 	Text(x, y int, t string, align string, rot int, f Font) // Put t at (x,y) rotated by rot aligned [[tcb]][lcr]
 	Rect(x, y, w, h int, style Style)                       // Draw (w x h) rectangle at (x,y)
 }
@@ -274,7 +274,7 @@ func GenericScatter(bg BasicGraphics, points []EPoint, plotstyle PlotStyle, styl
 	// Third pass: symbols
 	if (plotstyle&PlotStylePoints) != 0 && len(points) != 0 {
 		for _, p := range points {
-			bg.Symbol(int(p.X), int(p.Y), style.Symbol, style)
+			bg.Symbol(int(p.X), int(p.Y), style)
 		}
 	}
 }
@@ -296,7 +296,7 @@ func GenericBoxes(bg BasicGraphics, boxes []Box, width int, style Style) {
 		}
 
 		if !math.IsNaN(d.Avg) {
-			bg.Symbol(x, int(d.Avg), style.Symbol, style)
+			bg.Symbol(x, int(d.Avg), style)
 		}
 
 		if !math.IsNaN(d.High) {
@@ -308,7 +308,7 @@ func GenericBoxes(bg BasicGraphics, boxes []Box, width int, style Style) {
 		}
 
 		for _, y := range d.Outliers {
-			bg.Symbol(x, int(y), style.Symbol, style)
+			bg.Symbol(x, int(y), style)
 		}
 
 	}
@@ -608,4 +608,115 @@ func GenericRings(bg BasicGraphics, wedges []Wedgeinfo, x, y, ro, ri int, eccent
 
 	sg.svg.Path(d, s+sf)
 	 *************************/
+}
+
+func GenericCircle(bg BasicGraphics, x, y, r int, style Style) {
+	// TODO: fill
+	x0, y0 := x+r, y
+	rf := float64(r)
+	for a:=0.2; a<2*math.Pi; a+=0.2 {
+		x1, y1 := int(rf*math.Cos(a))+x, int(rf*math.Sin(a))+y
+		bg.Line(x0,y0, x1,y1, style)
+		x0,y0 = x1,y1
+	}
+}
+
+func polygon(bg BasicGraphics, x, y []int, style Style) {
+	n := len(x)-1
+	for i := 0; i<n; i++ {
+		bg.Line(x[i],y[i], x[i+1],y[i+1], style)
+	}
+	bg.Line(x[n],y[n], x[0],y[0], style)
+}
+
+
+
+
+func GenericSymbol(bg BasicGraphics, x, y int, style Style) {
+	f := style.SymbolSize
+	if f == 0 {
+		f = 1
+	}
+	lw := 1
+	if style.LineWidth > 1 {
+		lw = style.LineWidth
+	}
+	lw += 0
+
+	const n = 5               // default size
+	a := int(n*f + 0.5)       // standard
+	b := int(n/2*f + 0.5)     // smaller
+	c := int(1.155*n*f + 0.5) // triangel long sist
+	d := int(0.577*n*f + 0.5) // triangle short dist
+	e := int(0.866*n*f + 0.5) // diagonal
+
+	switch style.Symbol {
+	case '*':
+		bg.Line(x-e, y-e, x+e, y+e, style)
+		bg.Line(x-e, y+e, x+e, y-e, style)
+		fallthrough
+	case '+':
+		bg.Line(x-a, y, x+a, y, style)
+		bg.Line(x, y-a, x, y+a, style)
+	case 'X':
+		bg.Line(x-e, y-e, x+e, y+e, style)
+		bg.Line(x-e, y+e, x+e, y-e, style)
+	case 'o':
+		GenericCircle(bg, x, y, a, style)
+	case '0':
+		GenericCircle(bg, x, y, a, style)
+		GenericCircle(bg, x, y, b, style)
+	case '.':
+		GenericCircle(bg, x, y, b, style)
+	case '@':
+		GenericCircle(bg, x, y, a, style)
+		aa := (4*a)/5
+		GenericCircle(bg, x, y, aa, style)
+		aa = (3*a)/5
+		GenericCircle(bg, x, y, aa, style)
+		aa = (2*a)/5
+		GenericCircle(bg, x, y, aa, style)
+		aa = a/5
+		GenericCircle(bg, x, y, aa, style)
+		bg.Line(x,y,x,y, style)
+	case '=': // TODO check
+		bg.Rect(x-e, y-e, 2*e, 2*e, style)
+	case '#':// TODO check
+		bg.Rect(x-e, y-e, 2*e, 2*e, style)
+	case 'A':
+		polygon(bg, []int{x - a, x + a, x}, []int{y + d, y + d, y - c}, style)
+		aa, dd, cc := (3*a)/4, (3*d)/4, (3*c)/4
+		polygon(bg, []int{x - aa, x + aa, x}, []int{y + dd, y + dd, y - cc}, style)
+		aa, dd, cc = a/2, d/2, c/2
+		polygon(bg, []int{x - aa, x + aa, x}, []int{y + dd, y + dd, y - cc}, style)
+		aa, dd, cc = a/4, d/4, c/4
+		polygon(bg, []int{x - aa, x + aa, x}, []int{y + dd, y + dd, y - cc}, style)
+	case '%':
+		polygon(bg, []int{x - a, x + a, x}, []int{y + d, y + d, y - c}, style)
+	case 'W':
+		polygon(bg, []int{x - a, x + a, x}, []int{y - c, y - c, y + d}, style)
+		aa, dd, cc := (3*a)/4, (3*d)/4, (3*c)/4
+		polygon(bg, []int{x - aa, x + aa, x}, []int{y - cc, y - cc, y + dd}, style)
+		aa, dd, cc = a/2, d/2, c/2
+		polygon(bg, []int{x - aa, x + aa, x}, []int{y - cc, y - cc, y + dd}, style)
+		aa, dd, cc = a/4, d/4, c/4
+		polygon(bg, []int{x - aa, x + aa, x}, []int{y - cc, y - cc, y + dd}, style)
+	case 'V':
+		polygon(bg, []int{x - a, x + a, x}, []int{y - c, y - c, y + d}, style)
+	case 'Z':
+		polygon(bg, []int{x - e, x, x + e, x}, []int{y, y + e, y, y - e}, style)
+		ee := (3*e)/4
+		polygon(bg, []int{x - ee, x, x + ee, x}, []int{y, y + ee, y, y - ee}, style)
+		ee = e/2
+		polygon(bg, []int{x - ee, x, x + ee, x}, []int{y, y + ee, y, y - ee}, style)
+		ee = e/4
+		polygon(bg, []int{x - ee, x, x + ee, x}, []int{y, y + ee, y, y - ee}, style)
+	case '&':
+		polygon(bg, []int{x - e, x, x + e, x}, []int{y, y + e, y, y - e}, style)
+	default:
+		bg.Text(x, y, "?", "cc", 0, Font{})
+	}
+
+
+
 }

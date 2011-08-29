@@ -134,8 +134,8 @@ func (g *TextGraphics) String() string {
 	return g.tb.String()
 }
 
-func (g *TextGraphics) Symbol(x, y, s int, style chart.Style) {
-	g.tb.Put(x, y, s)
+func (g *TextGraphics) Symbol(x, y int, style chart.Style) {
+	g.tb.Put(x, y, style.Symbol)
 }
 func (g *TextGraphics) Title(text string) {
 	x, y := g.w/2, 1
@@ -365,7 +365,7 @@ func (g *TextGraphics) Key(x, y int, key chart.Key) {
 					g.Line(x, yy, x+int(chart.KeySymbolWidth), yy, e.Style)
 				}
 				if (plotStyle & chart.PlotStylePoints) != 0 {
-					g.Symbol(x+int(chart.KeySymbolWidth/2), yy, e.Style.Symbol, e.Style)
+					g.Symbol(x+int(chart.KeySymbolWidth/2), yy, e.Style)
 				}
 				if (plotStyle & chart.PlotStyleBox) != 0 {
 					g.tb.Put(x+int(chart.KeySymbolWidth/2), yy, e.Style.Symbol)

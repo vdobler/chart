@@ -140,7 +140,7 @@ func (sg *SvgGraphics) Text(x, y int, t string, align string, rot int, f chart.F
 	sg.svg.Text(x, y, t, trans, s)
 }
 
-func (sg *SvgGraphics) Symbol(x, y, s int, style chart.Style) {
+func (sg *SvgGraphics) Symbol(x, y int, style chart.Style) {
 	st := ""
 	filled := "fill:solid"
 	empty := "fill:none"
@@ -312,7 +312,7 @@ func (sg *SvgGraphics) Scatter(points []chart.EPoint, plotstyle chart.PlotStyle,
 	// Third pass: symbols
 	if (plotstyle&chart.PlotStylePoints) != 0 && len(points) != 0 {
 		for _, p := range points {
-			sg.Symbol(int(p.X), int(p.Y), style.Symbol, style)
+			sg.Symbol(int(p.X), int(p.Y), style)
 		}
 	}
 

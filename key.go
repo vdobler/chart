@@ -248,7 +248,7 @@ func GenericKey(bg BasicGraphics, x, y int, key Key) {
 					bg.Line(x, yy, x+int(KeySymbolWidth*fw), yy, e.Style)
 				}
 				if (plotStyle & PlotStylePoints) != 0 {
-					bg.Symbol(x+int(KeySymbolWidth*fw)/2, yy, e.Style.Symbol, e.Style)
+					bg.Symbol(x+int(KeySymbolWidth*fw)/2, yy, e.Style)
 				}
 				if (plotStyle & PlotStyleBox) != 0 {
 					sh := fh / 2
