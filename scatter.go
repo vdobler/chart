@@ -300,6 +300,44 @@ func (c *ScatterChart) clip2Point(a, b EPoint, min, max float64) []EPoint {
 func screenPointFunc(xf, yf func(float64) int, xmin, xmax, ymin, ymax float64) (spf func(EPoint) EPoint) {
 	spf = func(d EPoint) (p EPoint) {
 		xl, yl, xh, yh := d.BoundingBox()
+		// fmt.Printf("OrigBB: %.1f %.1f %.1f %.1f  (%.1f,%.1f)\n", xl,yl,xh,yh,d.X,d.Y)
+		if xl < xmin {
+			xl = xmin
+		}
+		if xh > xmax {
+			xh = xmax
+		}
+		if yl < ymin {
+			yl = ymin
+		}
+		if yh > ymax {
+			yh = ymax
+		}
+		// fmt.Printf("ClippedBB: %.1f %.1f %.1f %.1f\n", xl,yl,xh,yh)
+
+		x := float64(xf(d.X))
+		y := float64(yf(d.Y))
+		xsl, xsh := float64(xf(xl)), float64(xf(xh))
+		ysl, ysh := float64(yf(yl)), float64(yf(yh))
+		// fmt.Printf("ScreenBB: %.0f %.0f %.0f %.0f   (%.0f,%.0f)\n", xsl,ysl,xsh,ysh,x,y)
+
+		dx, dy := math.NaN(), math.NaN()
+		var xo, yo float64
+
+		if xsl != xsh {
+			dx = math.Fabs(xsh - xsl)
+			xo = xsl - x + dx/2
+		}
+		if ysl != ysh {
+			dy = math.Fabs(ysh - ysl)
+			yo = ysh - y + dy/2
+		}
+		// fmt.Printf("  >> dx=%.0f  dy=%.0f   xo=%.0f  yo=%.0f\n", dx,dy,xo,yo)
+
+		p = EPoint{X: x, Y: y, DeltaX: dx, DeltaY: dy, OffX: xo, OffY: yo}
+		return
+
+		/**************************
 		if xl < xmin { // happens only if d.Delta!=0,NaN
 			a := xmin - xl
 			d.DeltaX -= a
@@ -336,6 +374,7 @@ func screenPointFunc(xf, yf func(float64) int, xmin, xmax, ymin, ymax float64) (
 		// fmt.Printf("Point %d: %f\n", i, dx)
 		p = EPoint{X: float64(x), Y: float64(y), DeltaX: dx, DeltaY: dy, OffX: xo, OffY: yo}
 		return
+		 *********************/
 	}
 	return
 }

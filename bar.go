@@ -120,7 +120,7 @@ func (c *BarChart) Plot(g Graphics) {
 	width, height := layout.Width, layout.Height
 	topm, leftm := layout.Top, layout.Left
 	numxtics, numytics := layout.NumXtics, layout.NumYtics
-	fw, fh, _ := g.FontMetrics(g.Font("label"))
+	fw, fh, _ := g.FontMetrics(DefaultFont["label"])
 	fw += 0
 	fh += 0
 

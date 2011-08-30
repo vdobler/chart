@@ -121,15 +121,6 @@ func (g *TextGraphics) Rect(x, y, w, h int, style chart.Style) {
 	}
 }
 
-func (g *TextGraphics) Style(element string) chart.Style {
-	b := "#000000"
-	return chart.Style{Symbol: 'o', SymbolColor: b, LineColor: b, LineWidth: 1, LineStyle: chart.SolidLine}
-}
-
-func (g *TextGraphics) Font(element string) chart.Font {
-	return chart.Font{}
-}
-
 func (g *TextGraphics) String() string {
 	return g.tb.String()
 }
@@ -337,7 +328,7 @@ func (g *TextGraphics) Key(x, y int, key chart.Key) {
 		return
 	}
 	tw, th, cw, rh := key.Layout(g, m)
-	style := g.Style("key")
+	style := chart.DefaultStyle["key"]
 	if style.LineWidth > 0 || style.FillColor != "" {
 		g.tb.Rect(x, y, tw, th, 1, ' ')
 	}

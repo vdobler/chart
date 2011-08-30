@@ -132,12 +132,12 @@ var (
 	KeyVertSep     float32 = 0.5  // Vertical spacing between key box and content
 	KeyColSep      float32 = 2.0  // Horizontal spacing between two columns in key 
 	KeySymbolWidth float32 = 5    // Horizontal length/space reserved for symbol
-	KeySymbolSep   float32 = 1    // Horizontal spacing bewteen symbol and text
+	KeySymbolSep   float32 = 2    // Horizontal spacing bewteen symbol and text
 	KeyRowSep      float32 = 0.75 // Vertical spacing between individual rows.
 )
 
 func (key Key) Layout(bg BasicGraphics, m [][]*KeyEntry) (w, h int, colwidth, rowheight []int) {
-	fontwidth, fontheight, _ := bg.FontMetrics(bg.Font("key"))
+	fontwidth, fontheight, _ := bg.FontMetrics(DefaultFont["key"])
 	cols, rows := len(m), len(m[0])
 
 	// Find total width and height
@@ -218,10 +218,10 @@ func GenericKey(bg BasicGraphics, x, y int, key Key) {
 	if len(m) == 0 {
 		return
 	}
-	keyfont := bg.Font("key")
+	keyfont := DefaultFont["key"]
 	fw, fh, _ := bg.FontMetrics(keyfont)
 	tw, th, cw, rh := key.Layout(bg, m)
-	style := bg.Style("key")
+	style := DefaultStyle["key"]
 	bg.Rect(x, y, tw, th, style)
 	x += int(KeyHorSep * fw)
 	vsep := KeyVertSep * float32(fh)

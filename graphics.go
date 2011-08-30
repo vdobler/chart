@@ -9,8 +9,6 @@ import (
 // Any type which implements BasicGraphics can use generic implementations
 // of the Graphics methods.
 type BasicGraphics interface {
-	Style(element string) Style                             // Retrieve style for element
-	Font(element string) Font                               // Retrieve font for element
 	FontMetrics(font Font) (fw float32, fh int, mono bool)  // Return fontwidth and -height in pixel
 	TextLen(t string, font Font) int                        // Length=width of t in screen units if set on font 
 	Line(x0, y0, x1, y1 int, style Style)                   // Draw line from (x0,y0) to (x1,y1)
@@ -88,7 +86,7 @@ func GenericTextLen(bg BasicGraphics, t string, font Font) (width int) {
 func GenericRect(bg BasicGraphics, x, y, w, h int, style Style) {
 	if style.FillColor != "" {
 		fs := Style{LineWidth: 1, LineColor: style.FillColor, LineStyle: SolidLine, Alpha: 0}
-		for i := 1; i < h-1; i++ {
+		for i := 1; i < h; i++ {
 			bg.Line(x+1, y+i, x+w-1, y+i, fs)
 		}
 	}
@@ -100,23 +98,13 @@ func GenericRect(bg BasicGraphics, x, y, w, h int, style Style) {
 
 // GenericAxis draws the axis r solely by graphic primitives of bg.
 func GenericXAxis(bg BasicGraphics, rng Range, y, ym int) {
-	_, fontheight, _ := bg.FontMetrics(bg.Font("label"))
-	ticfont := bg.Font("tic")
+	_, fontheight, _ := bg.FontMetrics(DefaultFont["label"])
+	ticfont := DefaultFont["tic"]
 	var ticLen int = 0
 	if !rng.TicSetting.Hide {
 		ticLen = imin(10, imax(4, fontheight/2))
 	}
-
-	// Axis itself, mirrord axis and zero
 	xa, xe := rng.Data2Screen(rng.Min), rng.Data2Screen(rng.Max)
-	bg.Line(xa, y, xe, y, bg.Style("axis"))
-	if rng.TicSetting.Mirror >= 1 {
-		bg.Line(xa, ym, xe, ym, bg.Style("maxis"))
-	}
-	if rng.ShowZero && rng.Min < 0 && rng.Max > 0 {
-		z := rng.Data2Screen(0)
-		bg.Line(z, y, z, ym, bg.Style("zero"))
-	}
 
 	// Axis label and range limits
 	aly := y + 2*ticLen
@@ -124,7 +112,7 @@ func GenericXAxis(bg BasicGraphics, rng Range, y, ym int) {
 		aly += (3 * fontheight) / 2
 	}
 	if rng.ShowLimits {
-		f := bg.Font("rangelimit")
+		f := DefaultFont["rangelimit"]
 		if rng.Time {
 			bg.Text(xa, aly, rng.TMin.Format("2006-01-02 15:04:05"), "tl", 0, f)
 			bg.Text(xe, aly, rng.TMax.Format("2006-01-02 15:04:05"), "tr", 0, f)
@@ -134,25 +122,46 @@ func GenericXAxis(bg BasicGraphics, rng Range, y, ym int) {
 		}
 	}
 	if rng.Label != "" { // draw label _after_ (=over) range limits
-		bg.Text((xa+xe)/2, aly, "  "+rng.Label+"  ", "tc", 0, bg.Font("label"))
+		bg.Text((xa+xe)/2, aly, "  "+rng.Label+"  ", "tc", 0, DefaultFont["label"])
 	}
 
 	if !rng.TicSetting.Hide {
-		// Tics, tic labels an grid lines
-		ticstyle := bg.Style("tic")
-		for ticcnt, tic := range rng.Tics {
+		ticstyle := DefaultStyle["tic"]
+
+		// Grid
+		if rng.TicSetting.Grid > 0 {
+			for ticcnt, tic := range rng.Tics {
+				x := rng.Data2Screen(tic.Pos)
+				if ticcnt > 0 && ticcnt < len(rng.Tics)-1 && rng.TicSetting.Grid == 1 {
+					// fmt.Printf("Gridline at x=%d\n", x)
+					bg.Line(x, y-1, x, ym+1, DefaultStyle["gridl"])
+				} else if rng.TicSetting.Grid == 2 {
+					if ticcnt%2 == 1 {
+						x0 := rng.Data2Screen(rng.Tics[ticcnt-1].Pos)
+						bg.Rect(x0, ym, x-x0, y-ym, DefaultStyle["gridb"])
+					} else if ticcnt == len(rng.Tics)-1 && x < xe-1 {
+						bg.Rect(x, ym, xe-x, y-ym, DefaultStyle["gridb"])
+					}
+				}
+			}
+		}
+
+		// Tics and labels
+		for _, tic := range rng.Tics {
 			x := rng.Data2Screen(tic.Pos)
 			lx := rng.Data2Screen(tic.LabelPos)
 
-			// Grid
-			if ticcnt > 0 && ticcnt < len(rng.Tics)-1 && rng.TicSetting.Grid == 1 {
-				// fmt.Printf("Gridline at x=%d\n", x)
-				bg.Line(x, y-1, x, ym+1, bg.Style("grid"))
-			}
-
 			// Tics
 			// fmt.Printf("y=%d  y-tl=%d  y+tl=%d\n", y, y-ticLen, y+ticLen)
-			bg.Line(x, y-ticLen, x, y+ticLen, ticstyle)
+			switch rng.TicSetting.Tics {
+			case 0:
+				bg.Line(x, y-ticLen, x, y+ticLen, ticstyle)
+			case 1:
+				bg.Line(x, y-ticLen, x, y, ticstyle)
+			case 2:
+				bg.Line(x, y, x, y+ticLen, ticstyle)
+			default:
+			}
 			if rng.TicSetting.Mirror >= 2 {
 				bg.Line(x, ym-ticLen, x, ym+ticLen, ticstyle)
 			}
@@ -164,26 +173,27 @@ func GenericXAxis(bg BasicGraphics, rng Range, y, ym int) {
 			}
 		}
 	}
+
+	// Axis itself, mirrord axis and zero
+	bg.Line(xa, y, xe, y, DefaultStyle["axis"])
+	if rng.TicSetting.Mirror >= 1 {
+		bg.Line(xa, ym, xe, ym, DefaultStyle["maxis"])
+	}
+	if rng.ShowZero && rng.Min < 0 && rng.Max > 0 {
+		z := rng.Data2Screen(0)
+		bg.Line(z, y, z, ym, DefaultStyle["zero"])
+	}
+
 }
 
 // GenericAxis draws the axis r solely by graphic primitives of bg.
 func GenericYAxis(bg BasicGraphics, rng Range, x, xm int) {
-	_, fontheight, _ := bg.FontMetrics(bg.Font("label"))
+	_, fontheight, _ := bg.FontMetrics(DefaultFont["label"])
 	var ticLen int = 0
 	if !rng.TicSetting.Hide {
 		ticLen = imin(10, imax(4, fontheight/2))
 	}
-
-	// Axis itself, mirrord axis and zero
 	ya, ye := rng.Data2Screen(rng.Min), rng.Data2Screen(rng.Max)
-	bg.Line(x, ya, x, ye, bg.Style("axis"))
-	if rng.TicSetting.Mirror >= 1 {
-		bg.Line(xm, ya, xm, ye, bg.Style("maxis"))
-	}
-	if rng.ShowZero && rng.Min < 0 && rng.Max > 0 {
-		z := rng.Data2Screen(0)
-		bg.Line(x, z, xm, z, bg.Style("zero"))
-	}
 
 	// Label and axis ranges
 	alx := 2 * fontheight
@@ -201,25 +211,42 @@ func GenericYAxis(bg BasicGraphics, rng Range, x, xm int) {
 	}
 	if rng.Label != "" {
 		y := (ya + ye) / 2
-		bg.Text(alx, y, rng.Label, "bc", 90, bg.Font("label"))
+		bg.Text(alx, y, rng.Label, "bc", 90, DefaultFont["label"])
 	}
 
 	if !rng.TicSetting.Hide {
 		// Tics, tic labels and grid lines
-		ticstyle := bg.Style("tic")
-		ticfont := bg.Font("tic")
+		ticstyle := DefaultStyle["tic"]
+		ticfont := DefaultFont["tic"]
 		for ticcnt, tic := range rng.Tics {
 			y := rng.Data2Screen(tic.Pos)
 			ly := rng.Data2Screen(tic.LabelPos)
 
 			// Grid
-			if ticcnt > 0 && ticcnt < len(rng.Tics)-1 && rng.TicSetting.Grid == 1 {
-				// fmt.Printf("Gridline at x=%d\n", x)
-				bg.Line(x+1, y, xm-1, y, bg.Style("grid"))
+			if rng.TicSetting.Grid == 1 {
+				if ticcnt > 0 && ticcnt < len(rng.Tics)-1 {
+					// fmt.Printf("Gridline at x=%d\n", x)
+					bg.Line(x+1, y, xm-1, y, DefaultStyle["gridl"])
+				}
+			} else if rng.TicSetting.Grid == 2 {
+				if ticcnt%2 == 1 {
+					y0 := rng.Data2Screen(rng.Tics[ticcnt-1].Pos)
+					bg.Rect(x, y0, xm-x, y-y0, DefaultStyle["gridb"])
+				} else if ticcnt == len(rng.Tics)-1 && y > ye+1 {
+					bg.Rect(x, ye, xm-x, y-ye, DefaultStyle["gridb"])
+				}
 			}
 
 			// Tics
-			bg.Line(x-ticLen, y, x+ticLen, y, ticstyle)
+			switch rng.TicSetting.Tics {
+			case 0:
+				bg.Line(x-ticLen, y, x+ticLen, y, ticstyle)
+			case 1:
+				bg.Line(x, y, x+ticLen, y, ticstyle)
+			case 2:
+				bg.Line(x-ticLen, y, x, y, ticstyle)
+			default:
+			}
 			if rng.TicSetting.Mirror >= 2 {
 				bg.Line(xm-ticLen, y, xm+ticLen, y, ticstyle)
 			}
@@ -231,6 +258,17 @@ func GenericYAxis(bg BasicGraphics, rng Range, x, xm int) {
 			}
 		}
 	}
+
+	// Axis itself, mirrord axis and zero
+	bg.Line(x, ya, x, ye, DefaultStyle["axis"])
+	if rng.TicSetting.Mirror >= 1 {
+		bg.Line(xm, ya, xm, ye, DefaultStyle["maxis"])
+	}
+	if rng.ShowZero && rng.Min < 0 && rng.Max > 0 {
+		z := rng.Data2Screen(0)
+		bg.Line(x, z, xm, z, DefaultStyle["zero"])
+	}
+
 }
 
 
@@ -251,12 +289,14 @@ func GenericScatter(bg BasicGraphics, points []EPoint, plotstyle PlotStyle, styl
 		ebs.LineWidth = 1
 	}
 	for _, p := range points {
+
 		xl, yl, xh, yh := p.BoundingBox()
-		// fmt.Printf("Draw %d: %f %f-%f\n", i, p.DeltaX, xl,xh)
+		// fmt.Printf("Draw %d: %f %f-%f; %f %f-%f\n", i, p.DeltaX, xl,xh, p.DeltaY, yl,yh)
 		if !math.IsNaN(p.DeltaX) {
 			bg.Line(int(xl), int(p.Y), int(xh), int(p.Y), ebs)
 		}
 		if !math.IsNaN(p.DeltaY) {
+			// fmt.Printf("  Draw %d,%d to %d,%d\n",int(p.X), int(yl), int(p.X), int(yh))
 			bg.Line(int(p.X), int(yl), int(p.X), int(yh), ebs)
 		}
 	}
@@ -274,6 +314,7 @@ func GenericScatter(bg BasicGraphics, points []EPoint, plotstyle PlotStyle, styl
 	// Third pass: symbols
 	if (plotstyle&PlotStylePoints) != 0 && len(points) != 0 {
 		for _, p := range points {
+			// fmt.Printf("Point %d at %d,%d\n", i, int(p.X), int(p.Y))
 			bg.Symbol(int(p.X), int(p.Y), style)
 		}
 	}
@@ -640,6 +681,8 @@ func GenericSymbol(bg BasicGraphics, x, y int, style Style) {
 		lw = style.LineWidth
 	}
 	lw += 0
+
+	style.LineColor = style.SymbolColor
 
 	const n = 5               // default size
 	a := int(n*f + 0.5)       // standard

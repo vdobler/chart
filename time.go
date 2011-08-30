@@ -7,11 +7,11 @@ import (
 
 // Represents a tic-distance in a timed axis
 type TimeDelta interface {
-	Seconds() int64 // amount of delta in seconds
-	RoundDown(t *time.Time)
-	String() string
-	Format(t *time.Time) string
-	Period() bool
+	Seconds() int64             // amount of delta in seconds
+	RoundDown(t *time.Time)     // Round dow t to "whole" delta
+	String() string             // retrieve string representation
+	Format(t *time.Time) string // format t properly
+	Period() bool               // true if this delta is a time period (like a month)
 }
 
 
@@ -135,16 +135,19 @@ func (y Year) Format(t *time.Time) string { return fmt.Sprintf("%d", t.Year) }
 func (y Year) Period() bool               { return true }
 
 
-// The time deltas to use in 
-// must be sorted min to max according to Seconds() of each member
-var Delta []TimeDelta = []TimeDelta{Second{1}, Second{5}, Second{15},
+// Delta is a list of increasing time deltas used to construct tic spacings
+// for date/time axis.
+// Must be sorted min to max according to Seconds() of each member.
+var Delta []TimeDelta = []TimeDelta{
+	Second{1}, Second{5}, Second{15},
 	Minute{1}, Minute{5}, Minute{15},
-	Hour{1}, Hour{6}, Day{1}, Week{1},
+	Hour{1}, Hour{6},
+	Day{1}, Week{1},
 	Month{1}, Month{3}, Month{6},
 	Year{1}, Year{10},
 }
 
-
+// RoundUp will round tp up to next "full" d.
 func RoundUp(tp *time.Time, d TimeDelta) *time.Time {
 	// works only because all TimeDeltas are more than 3 times as large as the next lower
 	tc := *tp
@@ -156,6 +159,7 @@ func RoundUp(tp *time.Time, d TimeDelta) *time.Time {
 	return t
 }
 
+// RoundNext will round t to nearest full d.
 func RoundNext(t *time.Time, d TimeDelta) *time.Time {
 	os := t.Seconds()
 	lt := *t
@@ -171,6 +175,7 @@ func RoundNext(t *time.Time, d TimeDelta) *time.Time {
 	return ut
 }
 
+// RoundDown will round tp down to next "full" d.
 func RoundDown(tp *time.Time, d TimeDelta) *time.Time {
 	tc := *tp
 	d.RoundDown(&tc)
@@ -202,4 +207,39 @@ func MatchingTimeDelta(delta float64, fac float64) TimeDelta {
 		return Delta[i+1]
 	}
 	return Delta[len(Delta)-1]
+}
+
+
+func dayOfWeek(y int64, m, d int) int {
+	t := &time.Time{Year: y, Month: m, Day: d}
+	t = time.SecondsToLocalTime(t.Seconds())
+	return t.Weekday
+}
+
+// week in the year according to iso 8601
+func calendarWeek(t *time.Time) int {
+	dow := t.Weekday
+	y, m, d := t.Year, t.Month, t.Day
+
+	dow0101 := dayOfWeek(y, 1, 1)
+	z := 0
+	if dow0101 < 4 {
+		z = 1
+	}
+
+	if m == 1 && 3 < dow0101 && dow0101 < 7-(d-1) {
+		dow = dow0101 - 1
+		dow0101 = dayOfWeek(y-1, 1, 1)
+		m, d = 12, 31
+	} else if m == 12 && 30-(d-1) < dayOfWeek(y+1, 1, 1) && dayOfWeek(y+1, 1, 1) < 4 {
+		return 1
+	}
+
+	m--
+	return z + 4*m + (2*m+(d-1)+dow0101-dow+6)*36/256
+}
+
+func FmtTime(sec int64, step TimeDelta) string {
+	t := time.SecondsToLocalTime(sec)
+	return step.Format(t)
 }

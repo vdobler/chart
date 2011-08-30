@@ -8,6 +8,12 @@ import (
 	//	"os"
 )
 
+// Chart ist the very simple interface for all charts: They can be plotted to a graphics output.
+type Chart interface {
+	Plot(g Graphics)
+}
+
+
 type Expansion int
 
 // Suitable values for Expand in RangeMode.
@@ -58,12 +64,15 @@ const (
 // TicSettings describes how (if at all) tics are shown on an axis.
 type TicSetting struct {
 	Hide   bool       // Dont show tics if true
+	Tics   int        // 0: across axis, 1: inside, 2: outside, other: off
 	Minor  int        // 0: off, 1: auto, >1: number of intervalls (not number of tics!)
 	Delta  float64    // Wanted step between major tics. 0 means auto 
 	TDelta TimeDelta  // Same as Delta, used for Date/Time axis
-	Fmt    string     // special format string (unused)
 	Grid   int        // 0: none, 1: lines, 2: blocks
 	Mirror MirrorAxis // 0: mirror axis and tics, -1: don't mirror anything, 1: mirror axis only (no tics)
+
+	Format  func(float64) string               // User function to format tics.
+	TFormat func(*time.Time, TimeDelta) string // User function to format tics for date/time axis
 }
 
 // Tic describs a single tic on an axis.
@@ -182,26 +191,6 @@ func (r *Range) autoscale(x float64) {
 			r.DataMax = fmax(fmin(x, r.MaxMode.Upper), r.DataMax)
 		}
 	}
-}
-
-
-var wochentage = []string{"So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"}
-
-func calendarWeek(t *time.Time) int {
-	// TODO(vodo): check if suitable
-	jan01 := *t
-	jan01.Month, jan01.Day, jan01.Hour, jan01.Minute, jan01.Second = 1, 1, 0, 0, 0
-	diff := t.Seconds() - jan01.Seconds()
-	week := int(float64(diff)/float64(60*60*24*7) + 0.5)
-	if week == 0 {
-		week++
-	}
-	return week
-}
-
-func FmtTime(sec int64, step TimeDelta) string {
-	t := time.SecondsToLocalTime(sec)
-	return step.Format(t)
 }
 
 
@@ -429,9 +418,17 @@ func (r *Range) tSetup(desiredNumberOfTics, maxNumberOfTics int, delta, mindelta
 	r.Tics = make([]Tic, 0)
 	step := int64(td.Seconds())
 	align := 0
+
+	var formater func(t *time.Time, td TimeDelta) string
+	if r.TicSetting.TFormat != nil {
+		formater = r.TicSetting.TFormat
+	} else {
+		formater = func(t *time.Time, td TimeDelta) string { return td.Format(t) }
+	}
+
 	for i := 0; ftic.Seconds() <= ltic.Seconds(); i++ {
 		x := float64(ftic.Seconds())
-		label := td.Format(ftic)
+		label := formater(ftic, td)
 		var labelPos float64
 		if td.Period() {
 			labelPos = x + float64(step)/2
@@ -495,12 +492,17 @@ func (r *Range) fSetup(desiredNumberOfTics, maxNumberOfTics int, delta, mindelta
 	r.Min = applyRangeMode(r.MinMode, r.DataMin, delta, false, r.Log)
 	r.Max = applyRangeMode(r.MaxMode, r.DataMax, delta, true, r.Log)
 	r.TicSetting.Delta = delta
+	formater := FmtFloat
+	if r.TicSetting.Format != nil {
+		formater = r.TicSetting.Format
+	}
+
 	if r.Log {
 		x := math.Pow10(int(math.Ceil(math.Log10(r.Min))))
 		last := math.Pow10(int(math.Floor(math.Log10(r.Max))))
 		r.Tics = make([]Tic, 0, maxNumberOfTics)
 		for ; x <= last; x = x * delta {
-			t := Tic{Pos: x, LabelPos: x, Label: FmtFloat(x)}
+			t := Tic{Pos: x, LabelPos: x, Label: formater(x)}
 			r.Tics = append(r.Tics, t)
 			// fmt.Printf("%v\n", t)
 		}
@@ -532,7 +534,7 @@ func (r *Range) fSetup(desiredNumberOfTics, maxNumberOfTics int, delta, mindelta
 			r.Tics = make([]Tic, num)
 			for i, x := 0, first; i < num; i, x = i+1, x+delta {
 				r.Tics[i].Pos, r.Tics[i].LabelPos = x, x
-				r.Tics[i].Label = FmtFloat(x)
+				r.Tics[i].Label = formater(x)
 			}
 		}
 		// TODO(vodo) r.ShowLimits = true
@@ -617,7 +619,7 @@ type LayoutData struct {
 
 // Layout graph data area on screen and place key.
 func layout(g Graphics, title, xlabel, ylabel string, hidextics, hideytics bool, key *Key) (ld LayoutData) {
-	fw, fh, _ := g.FontMetrics(g.Font("key"))
+	fw, fh, _ := g.FontMetrics(Font{})
 	w, h := g.Dimensions()
 
 	if key.Pos == "" {

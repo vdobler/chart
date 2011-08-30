@@ -7,6 +7,7 @@ import (
 	"math"
 	"image"
 	"image/jpeg"
+	"image/png"
 	"os"
 	"rand"
 	// "sort"
@@ -166,9 +167,9 @@ func keyStyles() {
 func scatterTics() {
 	file, _ := os.Create("xscatter1.svg")
 	thesvg := svg.New(file)
-	thesvg.Start(800, 600)
+	thesvg.Start(1200, 900)
 	thesvg.Title("Srip Chart")
-	thesvg.Rect(0, 0, 800, 600, "fill: #ffffff")
+	thesvg.Rect(0, 0, 1200, 900, "fill: #ffffff")
 	svggraphics := svgg.New(thesvg, 400, 300, "Arial", 12)
 
 	p := chart.ScatterChart{Title: "Sample Scatter Chart"}
@@ -184,16 +185,51 @@ func scatterTics() {
 	p.Plot(svggraphics)
 	thesvg.Gend()
 
-	thesvg.Gtransform("translate(0 300)")
+	thesvg.Gtransform("translate(800 0)")
 	p.YRange.TicSetting.Hide = false
 	p.XRange.TicSetting.Grid, p.YRange.TicSetting.Grid = 1, 1
 	p.Plot(svggraphics)
 	thesvg.Gend()
 
-	thesvg.Gtransform("translate(400 300)")
+	thesvg.Gtransform("translate(0 300)")
 	p.XRange.TicSetting.Hide, p.YRange.TicSetting.Hide = false, false
 	p.XRange.TicSetting.Mirror, p.YRange.TicSetting.Mirror = 1, 2
 	p.Plot(svggraphics)
+	thesvg.Gend()
+
+	thesvg.Gtransform("translate(400 300)")
+	c := chart.ScatterChart{Title: "Own tics"}
+	c.XRange.Fixed(0, 4*math.Pi, math.Pi)
+	c.YRange.Fixed(-1.25, 1.25, 0.5)
+	c.XRange.TicSetting.Format = func(f float64) string {
+		w := int(180*f/math.Pi + 0.5)
+		return fmt.Sprintf("%d°", w)
+	}
+	c.AddFunc("Sin(x)", func(x float64) float64 { return math.Sin(x) }, chart.PlotStyleLines,
+		chart.Style{Symbol: '@', LineWidth: 2, LineColor: "#0000cc", LineStyle: 0})
+	c.AddFunc("Cos(x)", func(x float64) float64 { return math.Cos(x) }, chart.PlotStyleLines,
+		chart.Style{Symbol: '%', LineWidth: 2, LineColor: "#00cc00", LineStyle: 0})
+	c.Plot(svggraphics)
+	txtgraphics := txtg.New(78, 22)
+	c.Plot(txtgraphics)
+	fmt.Printf("%s\n", txtgraphics.String())
+	thesvg.Gend()
+
+	thesvg.Gtransform("translate(800 300)")
+	c.Title = "Tic Variants"
+	c.XRange.TicSetting.Tics = 1
+	c.YRange.TicSetting.Tics = 2
+	c.Plot(svggraphics)
+	thesvg.Gend()
+
+	thesvg.Gtransform("translate(0 600)")
+	c.Title = "Blocked Grid"
+	c.XRange.TicSetting.Tics = 1
+	c.YRange.TicSetting.Tics = 1
+	c.XRange.TicSetting.Mirror, c.YRange.TicSetting.Mirror = 1, 1
+	c.XRange.TicSetting.Grid = 2
+	c.YRange.TicSetting.Grid = 2
+	c.Plot(svggraphics)
 	thesvg.Gend()
 
 	thesvg.End()
@@ -1035,6 +1071,114 @@ func textlen() {
 
 }
 
+func bestOf() {
+	const (
+		width  = 600
+		height = 400
+		N      = 3
+		M      = 3
+	)
+
+	charts := make([]chart.Chart, 0, N*M)
+
+	// Strip Chart
+	strip := chart.StripChart{Jitter: true}
+	strip.Title = "Filament Length in NaCl"
+	strip.AddData("Sample A", data1, chart.Style{})
+	strip.AddData("Sample B", data2, chart.Style{})
+	strip.AddData("Sample C", data3, chart.Style{})
+	strip.XRange.Label = "Filament Length"
+	strip.Key.Pos = "icr"
+	charts = append(charts, &strip)
+
+	// Pie Chart
+	piec := chart.PieChart{Title: "Distribution of Foo Bars"}
+	piec.AddDataPair("Europe", []string{"D", "AT", "CH", "F", "E", "I"}, []float64{10, 20, 30, 35, 15, 25})
+	piec.Data[0].Samples[3].Flag = true
+	piec.Inner = 0.5
+	piec.FmtVal = chart.AbsoluteValue
+	charts = append(charts, &piec)
+
+	// Fancy tics
+	trigc := chart.ScatterChart{Title: ""}
+	trigc.XRange.Fixed(0, 4*math.Pi, math.Pi)
+	trigc.YRange.Fixed(-1.25, 1.25, 0.5)
+	trigc.XRange.TicSetting.Format = func(f float64) string {
+		w := int(180*f/math.Pi + 0.5)
+		return fmt.Sprintf("%d°", w)
+	}
+	trigc.AddFunc("Sin(x)", func(x float64) float64 { return math.Sin(x) }, chart.PlotStyleLines,
+		chart.Style{Symbol: '@', LineWidth: 2, LineColor: "#0000cc", LineStyle: 0})
+	trigc.AddFunc("Cos(x)", func(x float64) float64 { return math.Cos(x) }, chart.PlotStyleLines,
+		chart.Style{Symbol: '%', LineWidth: 2, LineColor: "#00cc00", LineStyle: 0})
+	trigc.XRange.TicSetting.Tics, trigc.YRange.TicSetting.Tics = 1, 1
+	trigc.XRange.TicSetting.Mirror, trigc.YRange.TicSetting.Mirror = 2, 2
+	trigc.XRange.TicSetting.Grid, trigc.YRange.TicSetting.Grid = 2, 1
+	trigc.XRange.ShowZero = true
+	charts = append(charts, &trigc)
+
+	// Log axis
+	log := chart.ScatterChart{Title: "A Log / Log - Plot"}
+	log.XRange.Label, log.YRange.Label = "Energy [mJ]", "Depth [cm]"
+	lx := []float64{4e-2, 3e-1, 2e0, 1e1, 8e1, 7e2, 5e3}
+	ly := []float64{10, 30, 90, 270, 3 * 270, 9 * 270, 27 * 270}
+	log.AddDataPair("Electrons", lx, ly, chart.PlotStylePoints,
+		chart.Style{Symbol: '#', SymbolColor: "#9966ff", SymbolSize: 1.5})
+	log.Data[0].Samples[1].DeltaX = 0.3
+	log.Data[0].Samples[1].DeltaY = 25
+	log.Data[0].Samples[3].DeltaX = 9
+	log.Data[0].Samples[3].DeltaY = 210
+	log.Data[0].Samples[5].DeltaX = 500
+	log.Data[0].Samples[5].DeltaY = 1900
+
+	log.Key.Hide = true
+	log.XRange.MinMode.Expand, log.XRange.MaxMode.Expand = chart.ExpandToTic, chart.ExpandToTic
+	log.YRange.MinMode.Expand, log.YRange.MaxMode.Expand = chart.ExpandToTic, chart.ExpandToTic
+	log.XRange.Log, log.YRange.Log = true, true
+	charts = append(charts, &log)
+
+	canvas := image.NewRGBA(N*width, M*height)
+	white := image.RGBAColor{0xff, 0xff, 0xff, 0xff}
+	for y := 0; y < M*height; y++ {
+		for x := 0; x < N*width; x++ {
+			canvas.Set(x, y, white)
+		}
+	}
+	for i, c := range charts {
+		fmt.Printf("Chart No. %d...\n", i)
+		row, col := i/N, i%N
+		gr := imgg.AddTo(canvas, col*width, row*height, width, height)
+		c.Plot(gr)
+	}
+
+	canvas2 := image.NewNRGBA(N*width, M*height)
+	for y := 0; y < M*height; y++ {
+		for x := 0; x < N*width; x++ {
+			r, g, b, _ := canvas.At(x, y).RGBA()
+			r >>= 8
+			g >>= 8
+			b >>= 8
+			canvas2.Set(x, y, image.NRGBAColor{uint8(r), uint8(g), uint8(b), uint8(255)})
+		}
+	}
+
+	cf, err := os.Create("xbestof.png")
+	if err != nil {
+		fmt.Printf("Cannot create xbestof.png: %s", err.String())
+		os.Exit(1)
+	}
+	png.Encode(cf, canvas2)
+	cf.Close()
+
+	cf, err = os.Create("xbestof.jpg")
+	if err != nil {
+		fmt.Printf("Cannot create xbestof.jpg: %s", err.String())
+		os.Exit(1)
+	}
+	jpeg.Encode(cf, canvas, &jpeg.Options{98})
+	cf.Close()
+}
+
 
 func main() {
 	var all *bool = flag.Bool("all", false, "show all chart types")
@@ -1053,6 +1197,7 @@ func main() {
 	var auto *bool = flag.Bool("auto", false, "show autoscaling")
 	var key *bool = flag.Bool("key", false, "show key placement")
 	var funcs *bool = flag.Bool("func", false, "show function plots")
+	var best *bool = flag.Bool("best", false, "show best of plots")
 
 	flag.Parse()
 
@@ -1103,6 +1248,10 @@ func main() {
 	}
 	if *special || *funcs {
 		functionPlots()
+	}
+
+	if *best {
+		bestOf()
 	}
 
 	/*

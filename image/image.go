@@ -9,9 +9,10 @@ import (
 
 // ImageGraphics implements BasicGraphics and uses the generic implementations
 type ImageGraphics struct {
-	Image *image.RGBA
-	w, h  int
-	bg    image.RGBAColor
+	Image  *image.RGBA
+	x0, y0 int
+	w, h   int
+	bg     image.RGBAColor
 }
 
 // New creates a new ImageGraphics of dimension w x h.
@@ -23,8 +24,16 @@ func New(width, height int, background image.RGBAColor) *ImageGraphics {
 			img.Set(x, y, background)
 		}
 	}
-	return &ImageGraphics{Image: img, w: width, h: height, bg: background}
+	return &ImageGraphics{Image: img, x0: 0, y0: 0, w: width, h: height, bg: background}
 }
+
+// AddTo returns a new ImageGraphics which will write to (width x height) sized
+// area starting at (x,y) on the provided image img.
+func AddTo(img *image.RGBA, x, y, width, height int) *ImageGraphics {
+	bg := img.At(x, y).(image.RGBAColor)
+	return &ImageGraphics{Image: img, x0: x, y0: y, w: width, h: height, bg: bg}
+}
+
 
 func (ig *ImageGraphics) Begin() {
 }
@@ -59,7 +68,7 @@ func (ig *ImageGraphics) Line(x0, y0, x1, y1 int, style chart.Style) {
 			y0, y1 = y1, y0
 		}
 		for ; y0 <= y1; y0++ {
-			ig.Image.Set(x0, y0, col)
+			ig.Image.Set(ig.x0+x0, ig.y0+y0, col)
 		}
 		return
 	}
@@ -68,7 +77,7 @@ func (ig *ImageGraphics) Line(x0, y0, x1, y1 int, style chart.Style) {
 			x0, x1 = x1, x0
 		}
 		for ; x0 <= x1; x0++ {
-			ig.Image.Set(x0, y0, col)
+			ig.Image.Set(ig.x0+x0, ig.y0+y0, col)
 		}
 		return
 	}
@@ -76,7 +85,8 @@ func (ig *ImageGraphics) Line(x0, y0, x1, y1 int, style chart.Style) {
 	sx, sy := sign(x1-x0), sign(y1-y0)
 	err, e2 := dx+dy, 0
 	for {
-		ig.Image.Set(x0, y0, col)
+		ig.Image.Set(ig.x0+x0, ig.y0+y0, col)
+		// fmt.Printf("%d %d   %d %d\n", x0,y0, x1, y1)
 		if x0 == x1 && y0 == y1 {
 			return
 		}
@@ -125,7 +135,7 @@ func (ig *ImageGraphics) Text(x, y int, t string, align string, rot int, f chart
 	}
 	color += ""
 	var R, G, B uint32
-	R = 0xff
+	R, G, B = 0, 0, 0 // TODO read from font color
 
 	// ig.Text(x, y, t, trans, s)
 	for i, c := range t {
@@ -137,7 +147,7 @@ func (ig *ImageGraphics) Text(x, y int, t string, align string, rot int, f chart
 			for bit := 7; bit >= 0; bit-- {
 				v := uint32(q & 0xff)
 				if v > 0 {
-					xx, yy := x+i*8+bit, y+l
+					xx, yy := ig.x0+x+i*8+bit, ig.y0+y+l
 					r, g, b, _ := ig.Image.At(xx, yy).RGBA()
 					r >>= 8
 					g >>= 8
@@ -168,19 +178,8 @@ func (ig *ImageGraphics) Rect(x, y, w, h int, style chart.Style) {
 	chart.GenericRect(ig, x, y, w, h, style)
 }
 
-func (ig *ImageGraphics) Style(element string) chart.Style {
-	if v, ok := chart.DefaultStyle[element]; ok {
-		return v
-	}
-	return chart.Style{Symbol: 'o', SymbolColor: "#808080", LineColor: "#808080", LineWidth: 1, LineStyle: chart.SolidLine}
-}
-
-func (ig *ImageGraphics) Font(element string) chart.Font {
-	return chart.Font{}
-}
-
 func (ig *ImageGraphics) Title(text string) {
-	font := ig.Font("title")
+	font := chart.DefaultFont["title"]
 	_, fh, _ := ig.FontMetrics(font)
 	x, y := ig.w/2, fh/2
 	ig.Text(x, y, text, "tc", 0, font)

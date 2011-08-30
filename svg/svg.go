@@ -234,22 +234,8 @@ func (sg *SvgGraphics) Rect(x, y, w, h int, style chart.Style) {
 	// GenericRect(sg, x, y, w, h, style) // TODO
 }
 
-func (sg *SvgGraphics) Style(element string) chart.Style {
-	if v, ok := chart.DefaultStyle[element]; ok {
-		return v
-	}
-	return chart.Style{Symbol: 'o', SymbolColor: "#808080", LineColor: "#808080", LineWidth: 1, LineStyle: chart.SolidLine}
-}
-
-func (sg *SvgGraphics) Font(element string) chart.Font {
-	if v, ok := chart.DefaultFont[element]; ok {
-		return v
-	}
-	return chart.Font{}
-}
-
 func (sg *SvgGraphics) Title(text string) {
-	font := sg.Font("title")
+	font := chart.DefaultFont["title"]
 	_, fh, _ := sg.FontMetrics(font)
 	x, y := sg.w/2, fh/2
 	sg.Text(x, y, text, "tc", 0, font)
