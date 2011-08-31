@@ -3,6 +3,8 @@ package imgg
 import (
 	"image"
 	"fmt"
+	"sync"
+
 	"github.com/vdobler/chart"
 )
 
@@ -57,10 +59,65 @@ func (ig *ImageGraphics) TextLen(t string, font chart.Font) int {
 	return chart.GenericTextLen(ig, t, font)
 }
 
+var lastP map[string]int
+var rwmutex sync.RWMutex
+
+func init() {
+	lastP = make(map[string]int, 100)
+}
 
 func (ig *ImageGraphics) Line(x0, y0, x1, y1 int, style chart.Style) {
-	r, g, b := chart.Color2rgb(style.LineColor)
-	col := image.RGBAColor{R: uint8(r), G: uint8(g), B: uint8(b), A: uint8(255 * style.Alpha)}
+	var pat []bool
+	var ok bool
+	if pat, ok = dashPattern[style.LineStyle]; !ok {
+		pat = dashPattern[chart.SolidLine]
+	}
+
+	var P int
+	s := fmt.Sprintf("%v", style)
+	rwmutex.RLock()
+	if lp, ok := lastP[s]; ok {
+		P = lp
+	}
+	rwmutex.RUnlock()
+
+	d := (style.LineWidth - 1) / 2
+	dd := d
+	if style.LineWidth%2 == 0 {
+		dd++
+	}
+	var np int = -1
+
+	for xd := -d; xd <= dd; xd++ {
+		for yd := -d; yd <= dd; yd++ {
+			p := ig.oneLine(x0+xd, y0+yd, x1+xd, y1+yd, style, pat, P)
+			if np == -1 {
+				np = p
+			}
+		}
+	}
+
+	rwmutex.Lock()
+	lastP[s] = np
+	rwmutex.Unlock()
+}
+
+var dashPattern map[int][]bool = map[int][]bool{
+	chart.SolidLine:      []bool{true},
+	chart.DashedLine:     []bool{true, true, true, true, true, true, true, true, false, false, false},
+	chart.DottedLine:     []bool{true, true, true, false, false, false},
+	chart.DashDotDotLine: []bool{true, true, true, true, true, true, false, false, true, true, false, false},
+	chart.LongDashLine: []bool{true, true, true, true, true, true, true, true,
+		false, false, false, false, false, false, false, false},
+	chart.LongDotLine: []bool{true, true, true, false, false, false, false, false, false},
+}
+
+
+func (ig *ImageGraphics) oneLine(x0, y0, x1, y1 int, style chart.Style, pat []bool, P int) int {
+	R, G, B := chart.Color2rgb(style.LineColor)
+	r, g, b := uint32(R), uint32(G), uint32(B)
+	alpha := uint32(0xff * style.Alpha)
+	N := len(pat)
 
 	// handle trivial cases first
 	if x0 == x1 {
@@ -68,27 +125,39 @@ func (ig *ImageGraphics) Line(x0, y0, x1, y1 int, style chart.Style) {
 			y0, y1 = y1, y0
 		}
 		for ; y0 <= y1; y0++ {
-			ig.Image.Set(ig.x0+x0, ig.y0+y0, col)
+			if pat[P%N] {
+				ig.paint(ig.x0+x0, ig.y0+y0, r, g, b, alpha)
+				// ig.Image.Set(ig.x0+x0, ig.y0+y0, col)
+			}
+			P++
 		}
-		return
+		return P
 	}
 	if y0 == y1 {
 		if x0 > x1 {
 			x0, x1 = x1, x0
 		}
 		for ; x0 <= x1; x0++ {
-			ig.Image.Set(ig.x0+x0, ig.y0+y0, col)
+			if pat[P%N] {
+				ig.paint(ig.x0+x0, ig.y0+y0, r, g, b, alpha)
+				// ig.Image.Set(ig.x0+x0, ig.y0+y0, col)
+			}
+			P++
 		}
-		return
+		return P
 	}
 	dx, dy := abs(x1-x0), -abs(y1-y0)
 	sx, sy := sign(x1-x0), sign(y1-y0)
 	err, e2 := dx+dy, 0
 	for {
-		ig.Image.Set(ig.x0+x0, ig.y0+y0, col)
+		if pat[P%N] {
+			ig.paint(ig.x0+x0, ig.y0+y0, r, g, b, alpha)
+			// ig.Image.Set(ig.x0+x0, ig.y0+y0, col)
+		}
+		P++
 		// fmt.Printf("%d %d   %d %d\n", x0,y0, x1, y1)
 		if x0 == x1 && y0 == y1 {
-			return
+			return P
 		}
 		e2 = 2 * err
 		if e2 >= dy {
@@ -101,6 +170,7 @@ func (ig *ImageGraphics) Line(x0, y0, x1, y1 int, style chart.Style) {
 		}
 
 	}
+	return 0
 }
 
 func (ig *ImageGraphics) Text(x, y int, t string, align string, rot int, f chart.Font) {
@@ -111,33 +181,53 @@ func (ig *ImageGraphics) Text(x, y int, t string, align string, rot int, f chart
 	//fmt.Printf("Text '%s' at (%d,%d) %s\n", t, x,y, align)
 	// TODO: handle rot
 
-	switch align[0] {
-	case 'b':
-		y -= fh
-	case 't':
-		y += 0
-	default:
-		y -= fh / 2
-	}
-	// TODO: rune count
-	switch align[1] {
-	case 'l':
-		x += 0
-	case 'r':
-		x -= int(fw * float32(len(t)))
-	default:
-		x -= int(fw / 2 * float32(len(t)))
+	if rot == 90 {
+		switch align[0] {
+		case 'b':
+			x -= fh
+		case 't':
+			y += 0
+		default:
+			x -= fh / 2
+		}
+		// TODO: rune count
+		switch align[1] {
+		case 'l':
+			y += 0
+		case 'r':
+			y += int(fw * float32(len(t)))
+		default:
+			y += int(fw / 2 * float32(len(t)))
+		}
+	} else {
+		switch align[0] {
+		case 'b':
+			y -= fh
+		case 't':
+			y += 0
+		default:
+			y -= fh / 2
+		}
+		// TODO: rune count
+		switch align[1] {
+		case 'l':
+			x += 0
+		case 'r':
+			x -= int(fw * float32(len(t)))
+		default:
+			x -= int(fw / 2 * float32(len(t)))
+		}
 	}
 
 	color := "#000000"
 	if f.Color != "" {
 		color = f.Color
 	}
-	color += ""
-	var R, G, B uint32
-	R, G, B = 0, 0, 0 // TODO read from font color
+	RR, GG, BB := chart.Color2rgb(color)
+	R, G, B := uint32(RR), uint32(GG), uint32(BB)
 
 	// ig.Text(x, y, t, trans, s)
+	var xx, yy int
 	for i, c := range t {
 		if _, ok := font[c]; !ok {
 			c = '?'
@@ -147,21 +237,12 @@ func (ig *ImageGraphics) Text(x, y int, t string, align string, rot int, f chart
 			for bit := 7; bit >= 0; bit-- {
 				v := uint32(q & 0xff)
 				if v > 0 {
-					xx, yy := ig.x0+x+i*8+bit, ig.y0+y+l
-					r, g, b, _ := ig.Image.At(xx, yy).RGBA()
-					r >>= 8
-					g >>= 8
-					b >>= 8
-					r *= 0xff - v
-					g *= 0xff - v
-					b *= 0xff - v
-					r += R * v
-					g += G * v
-					b += B * v
-					r >>= 8
-					g >>= 8
-					b >>= 8
-					ig.Image.Set(xx, yy, image.RGBAColor{uint8(r), uint8(g), uint8(b), 0})
+					if rot == 90 {
+						xx, yy = ig.x0+x+l, ig.y0+y-i*8-bit
+					} else {
+						xx, yy = ig.x0+x+i*8+bit, ig.y0+y+l
+					}
+					ig.paint(xx, yy, R, G, B, 0xff-v)
 				}
 				q >>= 8
 			}
@@ -169,6 +250,27 @@ func (ig *ImageGraphics) Text(x, y int, t string, align string, rot int, f chart
 	}
 
 }
+
+func (ig *ImageGraphics) paint(x, y int, R, G, B uint32, alpha uint32) {
+	r, g, b, a := ig.Image.At(x, y).RGBA()
+	r >>= 8
+	g >>= 8
+	b >>= 8
+	a >>= 8
+	r *= alpha
+	g *= alpha
+	b *= alpha
+	a *= alpha
+	r += R * (0xff - alpha)
+	g += G * (0xff - alpha)
+	b += B * (0xff - alpha)
+	r >>= 8
+	g >>= 8
+	b >>= 8
+	a >>= 8
+	ig.Image.Set(x, y, image.RGBAColor{uint8(r), uint8(g), uint8(b), uint8(a)})
+}
+
 
 func (ig *ImageGraphics) Symbol(x, y int, style chart.Style) {
 	chart.GenericSymbol(ig, x, y, style)

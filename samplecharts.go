@@ -11,11 +11,11 @@ import (
 	"os"
 	"rand"
 	// "sort"
+	"time"
 	"github.com/ajstarks/svgo"
 	"github.com/vdobler/chart/svgg"
 	"github.com/vdobler/chart/txtg"
 	"github.com/vdobler/chart/imgg"
-	// "time"
 )
 
 var (
@@ -1130,7 +1130,6 @@ func bestOf() {
 	log.Data[0].Samples[3].DeltaY = 210
 	log.Data[0].Samples[5].DeltaX = 500
 	log.Data[0].Samples[5].DeltaY = 1900
-
 	log.Key.Hide = true
 	log.XRange.MinMode.Expand, log.XRange.MaxMode.Expand = chart.ExpandToTic, chart.ExpandToTic
 	log.YRange.MinMode.Expand, log.YRange.MaxMode.Expand = chart.ExpandToTic, chart.ExpandToTic
@@ -1141,21 +1140,21 @@ func bestOf() {
 	hist := chart.HistChart{Title: "Stacked Histograms", Stacked: true, Counts: false}
 	hist.XRange.Label = "Sample Value"
 	hist.YRange.Label = "Rel. Frequency [%]"
-	hist.Key.Hide = true
 	points := gauss(150, 10, 20, 0, 50)
 	hist.AddData("Sample 1", points,
-		chart.Style{LineColor: "#ff0000", LineWidth: 1, LineStyle: 1, FillColor: "#ff8080"})
+		chart.Style{LineColor: "#ff0000", LineWidth: 1, FillColor: "#ff8080"})
 	points2 := gauss(80, 4, 37, 0, 50)
 	hist.AddData("Sample 2", points2,
-		chart.Style{LineColor: "#00ff00", LineWidth: 1, LineStyle: 1, FillColor: "#80ff80"})
+		chart.Style{LineColor: "#00ff00", LineWidth: 1, FillColor: "#80ff80"})
 	points3 := gauss(60, 15, 0, 0, 50)
 	hist.AddData("Sample 3", points3,
-		chart.Style{LineColor: "#0000ff", LineWidth: 1, LineStyle: 1, FillColor: "#8080ff"})
+		chart.Style{LineColor: "#0000ff", LineWidth: 1, FillColor: "#8080ff"})
 	charts = append(charts, &hist)
 
 	// Box Plots
 	box := chart.BoxChart{Title: "Influence of doses on effect"}
 	box.XRange.Label, box.YRange.Label = "Number of unit doses applied", "Effect [a.u.]"
+	box.Key.Pos = "orc"
 	box.NextDataSet("Male",
 		chart.Style{Symbol: '#', LineColor: "#0000cc", LineWidth: 1, LineStyle: chart.SolidLine})
 	for x := 10; x <= 50; x += 5 {
@@ -1168,7 +1167,6 @@ func bestOf() {
 		}
 		box.AddSet(float64(x), points, true)
 	}
-
 	box.NextDataSet("Female",
 		chart.Style{Symbol: '%', LineColor: "#cc0000", LineWidth: 1, LineStyle: chart.SolidLine})
 	for x := 12; x <= 50; x += 10 {
@@ -1182,6 +1180,74 @@ func bestOf() {
 		box.AddSet(float64(x), points, true)
 	}
 	charts = append(charts, &box)
+
+	// Bar Chart
+	x := []float64{0, 1, 2, 3}
+	europe := []float64{10, 15, 25, 20}
+	asia := []float64{15, 30, 10, 20}
+	africa := []float64{20, 5, 5, 5}
+	blue := chart.Style{Symbol: '#', LineColor: "#0000ff", LineWidth: 4, FillColor: "#4040ff"}
+	green := chart.Style{Symbol: 'x', LineColor: "#00aa00", LineWidth: 4, FillColor: "#40ff40"}
+	pink := chart.Style{Symbol: '0', LineColor: "#990099", LineWidth: 4, FillColor: "#aa60aa"}
+
+	bar := chart.BarChart{Title: "Income Distribution"}
+	bar.XRange.Category = []string{"none", "low", "average", "high"}
+	bar.XRange.Label = "Income category"
+	bar.YRange.Label = "Adult population"
+	trigc.YRange.TicSetting.Format = func(f float64) string {
+		return fmt.Sprintf("%d%%", int(f+0.5))
+	}
+	bar.Stacked = true
+	bar.Key.Pos, bar.Key.Cols = "obc", 3
+	bar.AddDataPair("Europe", x, europe, blue)
+	bar.AddDataPair("Asia", x, asia, pink)
+	bar.AddDataPair("Africa", x, africa, green)
+	bar.ShowVal = 3
+	charts = append(charts, &bar)
+
+	// Time axis
+	tdc := chart.ScatterChart{Title: "Crop Growth"}
+	tdc.XRange.Time, tdc.YRange.Time = true, true
+	tdc.XRange.Label, tdc.YRange.Label = "Seeding", "Harvesting"
+	dt := make([]chart.EPoint, 0, 20)
+	for _, q := range [][2]string{
+		[2]string{"12.03.2008", "15.09.2008"},
+		[2]string{"22.03.2008", "17.09.2008"},
+		[2]string{"29.03.2008", "16.09.2008"},
+		[2]string{"04.04.2008", "20.09.2008"},
+		[2]string{"14.04.2008", "22.09.2008"},
+		[2]string{"25.04.2008", "27.09.2008"},
+		[2]string{"10.05.2008", "26.09.2008"},
+		[2]string{"20.05.2008", "29.09.2008"},
+		[2]string{"30.05.2008", "02.10.2008"},
+		[2]string{"05.06.2008", "04.10.2008"},
+		[2]string{"19.06.2008", "05.10.2008"},
+		[2]string{"27.06.2008", "04.10.2008"},
+		[2]string{"07.07.2008", "07.10.2008"},
+		[2]string{"17.07.2008", "08.10.2008"},
+		[2]string{"25.07.2008", "06.10.2008"},
+		[2]string{"05.08.2008", "10.10.2008"},
+		[2]string{"19.08.2008", "12.10.2008"},
+		[2]string{"28.08.2008", "13.10.2008"},
+		[2]string{"10.09.2008", "15.10.2008"},
+		[2]string{"20.09.2008", "17.10.2008"},
+		[2]string{"29.09.2008", "18.10.2008"},
+	} {
+		t0, _ := time.Parse("02.01.2006", q[0])
+		t1, _ := time.Parse("02.01.2006", q[1])
+		ep := chart.EPoint{X: float64(t0.Seconds()), Y: float64(t1.Seconds()),
+			DeltaX: math.NaN(), DeltaY: math.NaN()}
+		dt = append(dt, ep)
+	}
+	tdc.Key.Pos = "ibr"
+	tdc.AddData("Data", dt, chart.PlotStylePoints, chart.Style{Symbol: 'o', SymbolColor: "#cc0000"})
+	tdc.AddFunc("Low", func(x float64) float64 { return 0.15*(x-1.20525e9) + 1.221e9 },
+		chart.PlotStyleLines,
+		chart.Style{Symbol: 'x', LineColor: "#00cc00", LineWidth: 2, LineStyle: chart.DashedLine})
+	tdc.AddFunc("High", func(x float64) float64 { return 0.18*(x-1.20525e9) + 1.2222e9 },
+		chart.PlotStyleLines,
+		chart.Style{Symbol: '+', LineColor: "#0000cc", LineWidth: 2, LineStyle: chart.LongDotLine})
+	charts = append(charts, &tdc)
 
 	canvas := image.NewRGBA(N*width, M*height)
 	white := image.RGBAColor{0xff, 0xff, 0xff, 0xff}

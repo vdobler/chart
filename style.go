@@ -174,7 +174,7 @@ var DefaultStyle = map[string]Style{
 	"zero":  Style{LineColor: "#404040", LineWidth: 1, LineStyle: SolidLine},
 	"gridl": Style{LineColor: "#808080", LineWidth: 1, LineStyle: SolidLine},
 	"gridb": Style{LineColor: "#e6fcfc", LineWidth: 0, FillColor: "#e6fcfc"},
-	"key":   Style{LineColor: "#202020", LineWidth: 1, LineStyle: SolidLine, FillColor: "#f0f0f0", Alpha: 0.2},
+	"key":   Style{LineColor: "#202020", LineWidth: 1, LineStyle: SolidLine, FillColor: "#f0f0f0", Alpha: 0.5},
 	"title": Style{LineColor: "#000000", LineWidth: 1, LineStyle: SolidLine, FillColor: "#ecc750", Alpha: 0},
 }
 

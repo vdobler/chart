@@ -11,7 +11,7 @@ import (
 //         +-------------+ 
 //     olt |itl  itc  itr| ort
 //         |             |
-//     olc |icl  icc  icr| ort
+//     olc |icl  icc  icr| orc
 //         |             |
 //     olb |ibl  ibc  ibr| orb
 //         +-------------+ 

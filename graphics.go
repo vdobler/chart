@@ -84,17 +84,27 @@ func GenericTextLen(bg BasicGraphics, t string, font Font) (width int) {
 // GenericRect draws a rectangle of size w x h at (x,y).  Drawing is done
 // by simple lines only.
 func GenericRect(bg BasicGraphics, x, y, w, h int, style Style) {
+	if w < 0 {
+		x -= w
+		w = -w
+	}
+	if h < 0 {
+		y -= h
+		h = -h
+	}
+
 	if style.FillColor != "" {
-		// TODO: Alpha
-		fs := Style{LineWidth: 1, LineColor: style.FillColor, LineStyle: SolidLine, Alpha: 0}
+		fs := Style{LineWidth: 1, LineColor: style.FillColor, LineStyle: SolidLine, Alpha: style.Alpha}
 		for i := 1; i < h; i++ {
 			bg.Line(x+1, y+i, x+w-1, y+i, fs)
 		}
 	}
-	bg.Line(x, y, x+w, y, style)
-	bg.Line(x+w, y, x+w, y+h, style)
-	bg.Line(x+w, y+h, x, y+h, style)
-	bg.Line(x, y+h, x, y, style)
+
+	d := (style.LineWidth - 1) / 2
+	bg.Line(x+d, y+d, x+w-d, y+d, style)
+	bg.Line(x+w-d, y+d, x+w-d, y+h-d, style)
+	bg.Line(x+w-d, y+h-d, x+d, y+h-d, style)
+	bg.Line(x+d, y+h-d, x+d, y+d, style)
 }
 
 
@@ -263,7 +273,7 @@ func drawYTics(bg BasicGraphics, rng Range, x, xm, ticLen int) {
 		// Label
 		if rng.Time && tic.Align == 0 { // centered tic
 			bg.Line(x-2*ticLen, y, x+ticLen, y, ticstyle)
-			bg.Text(x-ticLen, ly, tic.Label, "cr", 90, ticfont)
+			bg.Text(x-ticLen, ly, tic.Label, "cr", 0, ticfont)
 		} else {
 			bg.Text(x-2*ticLen, ly, tic.Label, "cr", 0, ticfont)
 		}
@@ -590,7 +600,7 @@ func fillWedge(bg BasicGraphics, xi, yi, ro, ri int, phi, psi, epsilon float64, 
 	style.LineColor = style.FillColor
 	style.LineWidth = 1
 	style.LineStyle = SolidLine
-	blank := Style{Symbol: ' ', LineColor: "#ffffff", Alpha: 1}
+	blank := Style{Symbol: ' ', LineColor: "#ffffff", Alpha: 0}
 
 	for qPhi != qPsi {
 		// debug.Printf("qPhi = %d", qPhi)

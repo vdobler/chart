@@ -713,7 +713,7 @@ func layout(g Graphics, title, xlabel, ylabel string, hidextics, hideytics bool,
 	if width/int(fw) <= 20 {
 		ld.NumXtics = 2
 	} else {
-		ld.NumXtics = width / int(8*fw)
+		ld.NumXtics = width / int(10*fw)
 		if ld.NumXtics > 25 {
 			ld.NumXtics = 25
 		}
