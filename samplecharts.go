@@ -1137,6 +1137,52 @@ func bestOf() {
 	log.XRange.Log, log.YRange.Log = true, true
 	charts = append(charts, &log)
 
+	// Stacked Histograms
+	hist := chart.HistChart{Title: "Stacked Histograms", Stacked: true, Counts: false}
+	hist.XRange.Label = "Sample Value"
+	hist.YRange.Label = "Rel. Frequency [%]"
+	hist.Key.Hide = true
+	points := gauss(150, 10, 20, 0, 50)
+	hist.AddData("Sample 1", points,
+		chart.Style{LineColor: "#ff0000", LineWidth: 1, LineStyle: 1, FillColor: "#ff8080"})
+	points2 := gauss(80, 4, 37, 0, 50)
+	hist.AddData("Sample 2", points2,
+		chart.Style{LineColor: "#00ff00", LineWidth: 1, LineStyle: 1, FillColor: "#80ff80"})
+	points3 := gauss(60, 15, 0, 0, 50)
+	hist.AddData("Sample 3", points3,
+		chart.Style{LineColor: "#0000ff", LineWidth: 1, LineStyle: 1, FillColor: "#8080ff"})
+	charts = append(charts, &hist)
+
+	// Box Plots
+	box := chart.BoxChart{Title: "Influence of doses on effect"}
+	box.XRange.Label, box.YRange.Label = "Number of unit doses applied", "Effect [a.u.]"
+	box.NextDataSet("Male",
+		chart.Style{Symbol: '#', LineColor: "#0000cc", LineWidth: 1, LineStyle: chart.SolidLine})
+	for x := 10; x <= 50; x += 5 {
+		points := make([]float64, 70)
+		a := rand.Float64() * 10
+		v := rand.Float64()*5 + 2
+		for i := 0; i < len(points); i++ {
+			x := rand.NormFloat64()*v + a
+			points[i] = x
+		}
+		box.AddSet(float64(x), points, true)
+	}
+
+	box.NextDataSet("Female",
+		chart.Style{Symbol: '%', LineColor: "#cc0000", LineWidth: 1, LineStyle: chart.SolidLine})
+	for x := 12; x <= 50; x += 10 {
+		points := make([]float64, 60)
+		a := rand.Float64()*15 + 30
+		v := rand.Float64()*5 + 2
+		for i := 0; i < len(points); i++ {
+			x := rand.NormFloat64()*v + a
+			points[i] = x
+		}
+		box.AddSet(float64(x), points, true)
+	}
+	charts = append(charts, &box)
+
 	canvas := image.NewRGBA(N*width, M*height)
 	white := image.RGBAColor{0xff, 0xff, 0xff, 0xff}
 	for y := 0; y < M*height; y++ {

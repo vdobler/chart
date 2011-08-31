@@ -85,6 +85,7 @@ func GenericTextLen(bg BasicGraphics, t string, font Font) (width int) {
 // by simple lines only.
 func GenericRect(bg BasicGraphics, x, y, w, h int, style Style) {
 	if style.FillColor != "" {
+		// TODO: Alpha
 		fs := Style{LineWidth: 1, LineColor: style.FillColor, LineStyle: SolidLine, Alpha: 0}
 		for i := 1; i < h; i++ {
 			bg.Line(x+1, y+i, x+w-1, y+i, fs)
@@ -97,7 +98,7 @@ func GenericRect(bg BasicGraphics, x, y, w, h int, style Style) {
 }
 
 
-func drawXTics(bg BasicGraphics, rng Range, y,ym,ticLen int) {
+func drawXTics(bg BasicGraphics, rng Range, y, ym, ticLen int) {
 	xe := rng.Data2Screen(rng.Max)
 
 	// Grid below tics
@@ -190,7 +191,7 @@ func GenericXAxis(bg BasicGraphics, rng Range, y, ym int) {
 
 	// Tics and Grid
 	if !rng.TicSetting.Hide {
-		drawXTics(bg, rng, y,ym, ticLen)
+		drawXTics(bg, rng, y, ym, ticLen)
 	}
 
 	// Axis itself, mirrord axis and zero
@@ -205,11 +206,11 @@ func GenericXAxis(bg BasicGraphics, rng Range, y, ym int) {
 
 }
 
-func drawYTics(bg BasicGraphics, rng Range, x,xm, ticLen int) {
+func drawYTics(bg BasicGraphics, rng Range, x, xm, ticLen int) {
 	ye := rng.Data2Screen(rng.Max)
 
 	// Grid below tics
-	if rng.TicSetting.Grid >0 {
+	if rng.TicSetting.Grid > 0 {
 		for ticcnt, tic := range rng.Tics {
 			y := rng.Data2Screen(tic.Pos)
 			if rng.TicSetting.Grid == 1 {
@@ -267,7 +268,7 @@ func drawYTics(bg BasicGraphics, rng Range, x,xm, ticLen int) {
 			bg.Text(x-2*ticLen, ly, tic.Label, "cr", 0, ticfont)
 		}
 	}
-	
+
 }
 
 // GenericAxis draws the axis r solely by graphic primitives of bg.
@@ -299,12 +300,12 @@ func GenericYAxis(bg BasicGraphics, rng Range, x, xm int) {
 	}
 
 	if !rng.TicSetting.Hide {
-		drawYTics(bg, rng, x,xm,ticLen)
+		drawYTics(bg, rng, x, xm, ticLen)
 	}
 
 	// Axis itself, mirrord axis and zero
 	bg.Line(x, ya, x, ye, DefaultStyle["axis"])
-		if rng.TicSetting.Mirror >= 1 {
+	if rng.TicSetting.Mirror >= 1 {
 		bg.Line(xm, ya, xm, ye, DefaultStyle["maxis"])
 	}
 	if rng.ShowZero && rng.Min < 0 && rng.Max > 0 {
@@ -724,6 +725,15 @@ func GenericSymbol(bg BasicGraphics, x, y int, style Style) {
 		lw = style.LineWidth
 	}
 	lw += 0
+	if style.SymbolColor == "" {
+		style.SymbolColor = style.LineColor
+		if style.SymbolColor == "" {
+			style.SymbolColor = style.FillColor
+			if style.SymbolColor == "" {
+				style.SymbolColor = "#000000"
+			}
+		}
+	}
 
 	style.LineColor = style.SymbolColor
 
