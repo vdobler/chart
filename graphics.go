@@ -96,13 +96,76 @@ func GenericRect(bg BasicGraphics, x, y, w, h int, style Style) {
 	bg.Line(x, y+h, x, y, style)
 }
 
+
+func drawXTics(bg BasicGraphics, rng Range, y,ym,ticLen int) {
+	xe := rng.Data2Screen(rng.Max)
+
+	// Grid below tics
+	if rng.TicSetting.Grid > 0 {
+		for ticcnt, tic := range rng.Tics {
+			x := rng.Data2Screen(tic.Pos)
+			if ticcnt > 0 && ticcnt < len(rng.Tics)-1 && rng.TicSetting.Grid == 1 {
+				// fmt.Printf("Gridline at x=%d\n", x)
+				bg.Line(x, y-1, x, ym+1, DefaultStyle["gridl"])
+			} else if rng.TicSetting.Grid == 2 {
+				if ticcnt%2 == 1 {
+					x0 := rng.Data2Screen(rng.Tics[ticcnt-1].Pos)
+					bg.Rect(x0, ym, x-x0, y-ym, DefaultStyle["gridb"])
+				} else if ticcnt == len(rng.Tics)-1 && x < xe-1 {
+					bg.Rect(x, ym, xe-x, y-ym, DefaultStyle["gridb"])
+				}
+			}
+		}
+	}
+
+	// Tics on top
+	ticstyle := DefaultStyle["tic"]
+	ticfont := DefaultFont["tic"]
+	for _, tic := range rng.Tics {
+		x := rng.Data2Screen(tic.Pos)
+		lx := rng.Data2Screen(tic.LabelPos)
+
+		// Tics
+		switch rng.TicSetting.Tics {
+		case 0:
+			bg.Line(x, y-ticLen, x, y+ticLen, ticstyle)
+		case 1:
+			bg.Line(x, y-ticLen, x, y, ticstyle)
+		case 2:
+			bg.Line(x, y, x, y+ticLen, ticstyle)
+		default:
+		}
+
+		// Mirrored Tics
+		if rng.TicSetting.Mirror >= 2 {
+			switch rng.TicSetting.Tics {
+			case 0:
+				bg.Line(x, ym-ticLen, x, ym+ticLen, ticstyle)
+			case 1:
+				bg.Line(x, ym, x, ym+ticLen, ticstyle)
+			case 2:
+				bg.Line(x, ym-ticLen, x, ym, ticstyle)
+			default:
+			}
+		}
+
+		// Tic-Label
+		if rng.Time && tic.Align == -1 {
+			bg.Line(x, y+ticLen, x, y+2*ticLen, ticstyle)
+			bg.Text(lx, y+2*ticLen, tic.Label, "tl", 0, ticfont)
+		} else {
+			bg.Text(lx, y+2*ticLen, tic.Label, "tc", 0, ticfont)
+		}
+	}
+}
+
+
 // GenericAxis draws the axis r solely by graphic primitives of bg.
 func GenericXAxis(bg BasicGraphics, rng Range, y, ym int) {
 	_, fontheight, _ := bg.FontMetrics(DefaultFont["label"])
-	ticfont := DefaultFont["tic"]
 	var ticLen int = 0
 	if !rng.TicSetting.Hide {
-		ticLen = imin(10, imax(4, fontheight/2))
+		ticLen = imin(12, imax(4, fontheight/2))
 	}
 	xa, xe := rng.Data2Screen(rng.Min), rng.Data2Screen(rng.Max)
 
@@ -125,53 +188,9 @@ func GenericXAxis(bg BasicGraphics, rng Range, y, ym int) {
 		bg.Text((xa+xe)/2, aly, "  "+rng.Label+"  ", "tc", 0, DefaultFont["label"])
 	}
 
+	// Tics and Grid
 	if !rng.TicSetting.Hide {
-		ticstyle := DefaultStyle["tic"]
-
-		// Grid
-		if rng.TicSetting.Grid > 0 {
-			for ticcnt, tic := range rng.Tics {
-				x := rng.Data2Screen(tic.Pos)
-				if ticcnt > 0 && ticcnt < len(rng.Tics)-1 && rng.TicSetting.Grid == 1 {
-					// fmt.Printf("Gridline at x=%d\n", x)
-					bg.Line(x, y-1, x, ym+1, DefaultStyle["gridl"])
-				} else if rng.TicSetting.Grid == 2 {
-					if ticcnt%2 == 1 {
-						x0 := rng.Data2Screen(rng.Tics[ticcnt-1].Pos)
-						bg.Rect(x0, ym, x-x0, y-ym, DefaultStyle["gridb"])
-					} else if ticcnt == len(rng.Tics)-1 && x < xe-1 {
-						bg.Rect(x, ym, xe-x, y-ym, DefaultStyle["gridb"])
-					}
-				}
-			}
-		}
-
-		// Tics and labels
-		for _, tic := range rng.Tics {
-			x := rng.Data2Screen(tic.Pos)
-			lx := rng.Data2Screen(tic.LabelPos)
-
-			// Tics
-			// fmt.Printf("y=%d  y-tl=%d  y+tl=%d\n", y, y-ticLen, y+ticLen)
-			switch rng.TicSetting.Tics {
-			case 0:
-				bg.Line(x, y-ticLen, x, y+ticLen, ticstyle)
-			case 1:
-				bg.Line(x, y-ticLen, x, y, ticstyle)
-			case 2:
-				bg.Line(x, y, x, y+ticLen, ticstyle)
-			default:
-			}
-			if rng.TicSetting.Mirror >= 2 {
-				bg.Line(x, ym-ticLen, x, ym+ticLen, ticstyle)
-			}
-			if rng.Time && tic.Align == -1 {
-				bg.Line(x, y+ticLen, x, y+2*ticLen, ticstyle)
-				bg.Text(lx, y+2*ticLen, tic.Label, "tl", 0, ticfont)
-			} else {
-				bg.Text(lx, y+2*ticLen, tic.Label, "tc", 0, ticfont)
-			}
-		}
+		drawXTics(bg, rng, y,ym, ticLen)
 	}
 
 	// Axis itself, mirrord axis and zero
@@ -184,6 +203,71 @@ func GenericXAxis(bg BasicGraphics, rng Range, y, ym int) {
 		bg.Line(z, y, z, ym, DefaultStyle["zero"])
 	}
 
+}
+
+func drawYTics(bg BasicGraphics, rng Range, x,xm, ticLen int) {
+	ye := rng.Data2Screen(rng.Max)
+
+	// Grid below tics
+	if rng.TicSetting.Grid >0 {
+		for ticcnt, tic := range rng.Tics {
+			y := rng.Data2Screen(tic.Pos)
+			if rng.TicSetting.Grid == 1 {
+				if ticcnt > 0 && ticcnt < len(rng.Tics)-1 {
+					// fmt.Printf("Gridline at x=%d\n", x)
+					bg.Line(x+1, y, xm-1, y, DefaultStyle["gridl"])
+				}
+			} else if rng.TicSetting.Grid == 2 {
+				if ticcnt%2 == 1 {
+					y0 := rng.Data2Screen(rng.Tics[ticcnt-1].Pos)
+					bg.Rect(x, y0, xm-x, y-y0, DefaultStyle["gridb"])
+				} else if ticcnt == len(rng.Tics)-1 && y > ye+1 {
+					bg.Rect(x, ye, xm-x, y-ye, DefaultStyle["gridb"])
+				}
+			}
+		}
+	}
+
+	// Tics on top
+	ticstyle := DefaultStyle["tic"]
+	ticfont := DefaultFont["tic"]
+	for _, tic := range rng.Tics {
+		y := rng.Data2Screen(tic.Pos)
+		ly := rng.Data2Screen(tic.LabelPos)
+
+		// Tics
+		switch rng.TicSetting.Tics {
+		case 0:
+			bg.Line(x-ticLen, y, x+ticLen, y, ticstyle)
+		case 1:
+			bg.Line(x, y, x+ticLen, y, ticstyle)
+		case 2:
+			bg.Line(x-ticLen, y, x, y, ticstyle)
+		default:
+		}
+
+		// Mirrored tics
+		if rng.TicSetting.Mirror >= 2 {
+			switch rng.TicSetting.Tics {
+			case 0:
+				bg.Line(xm-ticLen, y, xm+ticLen, y, ticstyle)
+			case 1:
+				bg.Line(xm-ticLen, y, xm, y, ticstyle)
+			case 2:
+				bg.Line(xm, y, xm+ticLen, y, ticstyle)
+			default:
+			}
+		}
+
+		// Label
+		if rng.Time && tic.Align == 0 { // centered tic
+			bg.Line(x-2*ticLen, y, x+ticLen, y, ticstyle)
+			bg.Text(x-ticLen, ly, tic.Label, "cr", 90, ticfont)
+		} else {
+			bg.Text(x-2*ticLen, ly, tic.Label, "cr", 0, ticfont)
+		}
+	}
+	
 }
 
 // GenericAxis draws the axis r solely by graphic primitives of bg.
@@ -215,53 +299,12 @@ func GenericYAxis(bg BasicGraphics, rng Range, x, xm int) {
 	}
 
 	if !rng.TicSetting.Hide {
-		// Tics, tic labels and grid lines
-		ticstyle := DefaultStyle["tic"]
-		ticfont := DefaultFont["tic"]
-		for ticcnt, tic := range rng.Tics {
-			y := rng.Data2Screen(tic.Pos)
-			ly := rng.Data2Screen(tic.LabelPos)
-
-			// Grid
-			if rng.TicSetting.Grid == 1 {
-				if ticcnt > 0 && ticcnt < len(rng.Tics)-1 {
-					// fmt.Printf("Gridline at x=%d\n", x)
-					bg.Line(x+1, y, xm-1, y, DefaultStyle["gridl"])
-				}
-			} else if rng.TicSetting.Grid == 2 {
-				if ticcnt%2 == 1 {
-					y0 := rng.Data2Screen(rng.Tics[ticcnt-1].Pos)
-					bg.Rect(x, y0, xm-x, y-y0, DefaultStyle["gridb"])
-				} else if ticcnt == len(rng.Tics)-1 && y > ye+1 {
-					bg.Rect(x, ye, xm-x, y-ye, DefaultStyle["gridb"])
-				}
-			}
-
-			// Tics
-			switch rng.TicSetting.Tics {
-			case 0:
-				bg.Line(x-ticLen, y, x+ticLen, y, ticstyle)
-			case 1:
-				bg.Line(x, y, x+ticLen, y, ticstyle)
-			case 2:
-				bg.Line(x-ticLen, y, x, y, ticstyle)
-			default:
-			}
-			if rng.TicSetting.Mirror >= 2 {
-				bg.Line(xm-ticLen, y, xm+ticLen, y, ticstyle)
-			}
-			if rng.Time && tic.Align == 0 { // centered tic
-				bg.Line(x-2*ticLen, y, x+ticLen, y, ticstyle)
-				bg.Text(x-ticLen, ly, tic.Label, "cr", 90, ticfont)
-			} else {
-				bg.Text(x-2*ticLen, ly, tic.Label, "cr", 0, ticfont)
-			}
-		}
+		drawYTics(bg, rng, x,xm,ticLen)
 	}
 
 	// Axis itself, mirrord axis and zero
 	bg.Line(x, ya, x, ye, DefaultStyle["axis"])
-	if rng.TicSetting.Mirror >= 1 {
+		if rng.TicSetting.Mirror >= 1 {
 		bg.Line(xm, ya, xm, ye, DefaultStyle["maxis"])
 	}
 	if rng.ShowZero && rng.Min < 0 && rng.Max > 0 {
