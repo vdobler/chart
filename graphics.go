@@ -81,9 +81,8 @@ func GenericTextLen(bg BasicGraphics, t string, font Font) (width int) {
 	return
 }
 
-// GenericRect draws a rectangle of size w x h at (x,y).  Drawing is done
-// by simple lines only.
-func GenericRect(bg BasicGraphics, x, y, w, h int, style Style) {
+// Normalize (= (x,y) is top-left and w and h>0) and hounour line width r.
+func SanitizeRect(x, y, w, h, r int) (int, int, int, int) {
 	if w < 0 {
 		x -= w
 		w = -w
@@ -93,6 +92,16 @@ func GenericRect(bg BasicGraphics, x, y, w, h int, style Style) {
 		h = -h
 	}
 
+	d := (imax(1, r) - 1) / 2
+	// TODO: what if w-2D <= 0 ?
+	return x + d, y + d, w - 2*d, h - 2*d
+}
+
+// GenericRect draws a rectangle of size w x h at (x,y).  Drawing is done
+// by simple lines only.
+func GenericRect(bg BasicGraphics, x, y, w, h int, style Style) {
+	x, y, w, h = SanitizeRect(x, y, w, h, style.LineWidth)
+
 	if style.FillColor != "" {
 		fs := Style{LineWidth: 1, LineColor: style.FillColor, LineStyle: SolidLine, Alpha: style.Alpha}
 		for i := 1; i < h; i++ {
@@ -100,11 +109,10 @@ func GenericRect(bg BasicGraphics, x, y, w, h int, style Style) {
 		}
 	}
 
-	d := (style.LineWidth - 1) / 2
-	bg.Line(x+d, y+d, x+w-d, y+d, style)
-	bg.Line(x+w-d, y+d, x+w-d, y+h-d, style)
-	bg.Line(x+w-d, y+h-d, x+d, y+h-d, style)
-	bg.Line(x+d, y+h-d, x+d, y+d, style)
+	bg.Line(x, y, x+w, y, style)
+	bg.Line(x+w, y, x+w, y+h, style)
+	bg.Line(x+w, y+h, x, y+h, style)
+	bg.Line(x, y+h, x, y, style)
 }
 
 

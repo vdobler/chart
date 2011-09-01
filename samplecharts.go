@@ -1096,6 +1096,7 @@ func bestOf() {
 	piec.AddDataPair("Europe", []string{"D", "AT", "CH", "F", "E", "I"}, []float64{10, 20, 30, 35, 15, 25})
 	piec.Data[0].Samples[3].Flag = true
 	piec.Inner = 0.5
+	piec.Key.Border = -1
 	piec.FmtVal = chart.AbsoluteValue
 	charts = append(charts, &piec)
 
@@ -1186,15 +1187,15 @@ func bestOf() {
 	europe := []float64{10, 15, 25, 20}
 	asia := []float64{15, 30, 10, 20}
 	africa := []float64{20, 5, 5, 5}
-	blue := chart.Style{Symbol: '#', LineColor: "#0000ff", LineWidth: 4, FillColor: "#4040ff"}
-	green := chart.Style{Symbol: 'x', LineColor: "#00aa00", LineWidth: 4, FillColor: "#40ff40"}
-	pink := chart.Style{Symbol: '0', LineColor: "#990099", LineWidth: 4, FillColor: "#aa60aa"}
+	blue := chart.Style{Symbol: '#', LineColor: "#0000ff", LineWidth: 3, FillColor: "#4040ff"}
+	green := chart.Style{Symbol: 'x', LineColor: "#00aa00", LineWidth: 3, FillColor: "#40ff40"}
+	pink := chart.Style{Symbol: '0', LineColor: "#990099", LineWidth: 3, FillColor: "#aa60aa"}
 
 	bar := chart.BarChart{Title: "Income Distribution"}
 	bar.XRange.Category = []string{"none", "low", "average", "high"}
 	bar.XRange.Label = "Income category"
 	bar.YRange.Label = "Adult population"
-	trigc.YRange.TicSetting.Format = func(f float64) string {
+	bar.YRange.TicSetting.Format = func(f float64) string {
 		return fmt.Sprintf("%d%%", int(f+0.5))
 	}
 	bar.Stacked = true
@@ -1209,6 +1210,8 @@ func bestOf() {
 	tdc := chart.ScatterChart{Title: "Crop Growth"}
 	tdc.XRange.Time, tdc.YRange.Time = true, true
 	tdc.XRange.Label, tdc.YRange.Label = "Seeding", "Harvesting"
+	tdc.XRange.TicSetting.Mirror, tdc.YRange.TicSetting.Mirror = 1, 1
+	tdc.XRange.TicSetting.Grid, tdc.YRange.TicSetting.Grid = 1, 1
 	dt := make([]chart.EPoint, 0, 20)
 	for _, q := range [][2]string{
 		[2]string{"12.03.2008", "15.09.2008"},
@@ -1249,6 +1252,20 @@ func bestOf() {
 		chart.Style{Symbol: '+', LineColor: "#0000cc", LineWidth: 2, LineStyle: chart.LongDotLine})
 	charts = append(charts, &tdc)
 
+	// Bar charts
+	ebit := chart.BarChart{Title: "EBIT"}
+	ebit.XRange.Category = []string{"2007", "2008", "2009", "2010"}
+	ebit.XRange.Label, ebit.YRange.Label = "Fiscal Year", "in 1000 US$"
+	ebit.Key.Pos, ebit.Key.Cols, ebit.Key.Border = "otc", 2, -1
+	ebit.YRange.ShowZero = true
+	ebit.ShowVal = 0
+	ebit.AddDataPair("Transport", []float64{0, 1, 2, 3}, []float64{1450, 1750, -870, 900},
+		chart.Style{Symbol: '#', LineColor: "#3030ff", LineWidth: 2, FillColor: "#cbcbff"})
+	ebit.AddDataPair("Energy", []float64{0, 1, 2, 3}, []float64{960, -490, 450, 1230},
+		chart.Style{Symbol: 'O', LineColor: "#e04444", LineWidth: 2, FillColor: "#f6b5cc"})
+	charts = append(charts, &ebit)
+
+	// Output all charts as image
 	canvas := image.NewRGBA(N*width, M*height)
 	white := image.RGBAColor{0xff, 0xff, 0xff, 0xff}
 	for y := 0; y < M*height; y++ {
@@ -1257,12 +1274,19 @@ func bestOf() {
 		}
 	}
 	for i, c := range charts {
-		fmt.Printf("Chart No. %d...\n", i)
 		row, col := i/N, i%N
 		gr := imgg.AddTo(canvas, col*width, row*height, width, height)
 		c.Plot(gr)
 	}
+	cf, err := os.Create("xbestof.jpg")
+	if err != nil {
+		fmt.Printf("Cannot create xbestof.jpg: %s", err.String())
+		os.Exit(1)
+	}
+	jpeg.Encode(cf, canvas, &jpeg.Options{98})
+	cf.Close()
 
+	// Recode as png
 	canvas2 := image.NewNRGBA(N*width, M*height)
 	for y := 0; y < M*height; y++ {
 		for x := 0; x < N*width; x++ {
@@ -1273,8 +1297,7 @@ func bestOf() {
 			canvas2.Set(x, y, image.NRGBAColor{uint8(r), uint8(g), uint8(b), uint8(255)})
 		}
 	}
-
-	cf, err := os.Create("xbestof.png")
+	cf, err = os.Create("xbestof.png")
 	if err != nil {
 		fmt.Printf("Cannot create xbestof.png: %s", err.String())
 		os.Exit(1)
@@ -1282,13 +1305,40 @@ func bestOf() {
 	png.Encode(cf, canvas2)
 	cf.Close()
 
-	cf, err = os.Create("xbestof.jpg")
+	// Output as svg
+	svgf, err := os.Create("xbestof.svg")
 	if err != nil {
-		fmt.Printf("Cannot create xbestof.jpg: %s", err.String())
+		fmt.Printf("Cannot create xbestof.svg: %s", err.String())
 		os.Exit(1)
 	}
-	jpeg.Encode(cf, canvas, &jpeg.Options{98})
-	cf.Close()
+	thesvg := svg.New(svgf)
+	thesvg.Start(N*width, M*height)
+	thesvg.Title("Best-Of Charts")
+	thesvg.Rect(0, 0, N*width, M*height, "fill: #ffffff")
+	svggraphics := svgg.New(thesvg, N*width, M*height, "Arial", 12)
+	for i, c := range charts {
+		row, col := i/N, i%N
+		thesvg.Gtransform(fmt.Sprintf("translate(%d %d)", col*width, row*height))
+		c.Plot(svggraphics)
+		thesvg.Gend()
+	}
+	svggraphics.End()
+	thesvg.End()
+	svgf.Close()
+
+	// Output as Text
+	txtf, err := os.Create("xbestof.txt")
+	if err != nil {
+		fmt.Printf("Cannot create xbestof.txt: %s", err.String())
+		os.Exit(1)
+	}
+	for _, c := range charts {
+		txtgraphics := txtg.New(100, 30)
+		c.Plot(txtgraphics)
+		fmt.Fprintf(txtf, "%s\n\n", txtgraphics.String())
+	}
+	txtf.Close()
+
 }
 
 

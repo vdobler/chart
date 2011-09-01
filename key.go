@@ -222,7 +222,9 @@ func GenericKey(bg BasicGraphics, x, y int, key Key) {
 	fw, fh, _ := bg.FontMetrics(keyfont)
 	tw, th, cw, rh := key.Layout(bg, m)
 	style := DefaultStyle["key"]
-	bg.Rect(x, y, tw, th, style)
+	if key.Border >= 0 {
+		bg.Rect(x, y, tw, th, style)
+	}
 	x += int(KeyHorSep * fw)
 	vsep := KeyVertSep * float32(fh)
 	if vsep < 1 {

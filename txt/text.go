@@ -80,16 +80,7 @@ func (g *TextGraphics) Text(x, y int, t string, align string, rot int, font char
 }
 
 func (g *TextGraphics) Rect(x, y, w, h int, style chart.Style) {
-	// Normalize coordinates
-	if h < 0 {
-		h = -h
-		y -= h
-	}
-	if w < 0 {
-		w = -w
-		x -= w
-	}
-
+	chart.SanitizeRect(x, y, w, h, 1)
 	// Border
 	if style.LineWidth > 0 {
 		for i := 0; i < w; i++ {
@@ -380,7 +371,7 @@ var CircleStretchFactor float64 = 1.85
 func (g *TextGraphics) Rings(wedges []chart.Wedgeinfo, x, y, ro, ri int) {
 	if g.xoff == -1 {
 		g.xoff = int(float64(ro) * (CircleStretchFactor - 1))
-		debug.Printf("Shifting center about %d (ro=%d, f=%.2f)", g.xoff, ro, CircleStretchFactor)
+		// debug.Printf("Shifting center about %d (ro=%d, f=%.2f)", g.xoff, ro, CircleStretchFactor)
 	}
 	for i := range wedges {
 		wedges[i].Style.LineWidth = 1

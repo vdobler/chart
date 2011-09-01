@@ -399,10 +399,10 @@ func (r *Range) tSetup(desiredNumberOfTics, maxNumberOfTics int, delta, mindelta
 	actNumTics := int((r.Max - r.Min) / ftd)
 	if actNumTics > maxNumberOfTics {
 		// recalculate time tic delta
-		debug.Printf("Switching to next (%d > %d) delta from %s", actNumTics, maxNumberOfTics, td)
+		// debug.Printf("Switching to next (%d > %d) delta from %s", actNumTics, maxNumberOfTics, td)
 		td = NextTimeDelta(td)
 		ftd = float64(td.Seconds())
-		debug.Printf("  -->  %s\n", td)
+		// debug.Printf("  -->  %s\n", td)
 		r.TMin, ftic = tApplyRangeMode(r.MinMode, mint, td, false)
 		r.TMax, ltic = tApplyRangeMode(r.MaxMode, maxt, td, true)
 		r.TicSetting.Delta, r.TicSetting.TDelta = float64(td.Seconds()), td
@@ -410,9 +410,9 @@ func (r *Range) tSetup(desiredNumberOfTics, maxNumberOfTics int, delta, mindelta
 		actNumTics = int((r.Max - r.Min) / ftd)
 	}
 
-	debug.Printf("TimeRange: %s TO %s --> %s TO %s  Delta: %s  Tics: %s to %s\n",
-		f2d(r.DataMin), f2d(r.DataMax), f2d(r.Min), f2d(r.Max), td,
-		ftic.Format("2006-01-02 15:04:05 (Mon)"), ltic.Format("2006-01-02 15:04:05 (Mon)"))
+	// debug.Printf("TimeRange: %s TO %s --> %s TO %s  Delta: %s  Tics: %s to %s\n",
+	//	f2d(r.DataMin), f2d(r.DataMax), f2d(r.Min), f2d(r.Max), td,
+	//	ftic.Format("2006-01-02 15:04:05 (Mon)"), ltic.Format("2006-01-02 15:04:05 (Mon)"))
 
 	// Set up tics
 	r.Tics = make([]Tic, 0)
@@ -527,8 +527,8 @@ func (r *Range) fSetup(desiredNumberOfTics, maxNumberOfTics int, delta, mindelta
 			// normal numeric axis
 			first := delta * math.Ceil(r.Min/delta)
 			num := int(-first/delta + math.Floor(r.Max/delta) + 1.5)
-			debug.Printf("Range: (%.3f,%.3f) --> (%g,%g), Tic-Delta: %g, %d tics from %g\n",
-				r.DataMin, r.DataMax, r.Min, r.Max, delta, num, first)
+			// debug.Printf("Range: (%.3f,%.3f) --> (%g,%g), Tic-Delta: %g, %d tics from %g\n",
+			//	r.DataMin, r.DataMax, r.Min, r.Max, delta, num, first)
 
 			// Set up tics
 			r.Tics = make([]Tic, num)
@@ -571,8 +571,8 @@ func (r *Range) Setup(desiredNumberOfTics, maxNumberOfTics, sWidth, sOffset int,
 	delta := (r.DataMax - r.DataMin) / float64(desiredNumberOfTics-1)
 	mindelta := (r.DataMax - r.DataMin) / float64(maxNumberOfTics-1)
 
-	debug.Printf("Data: [%.2f:%.2f] --> delta/mindelta = %.2f/%.2f (desired %d/max %d)\n",
-		r.DataMin, r.DataMax, delta, mindelta, desiredNumberOfTics, maxNumberOfTics)
+	// debug.Printf("Data: [%.2f:%.2f] --> delta/mindelta = %.2f/%.2f (desired %d/max %d)\n",
+	// 	r.DataMin, r.DataMax, delta, mindelta, desiredNumberOfTics, maxNumberOfTics)
 
 	if r.Time {
 		r.tSetup(desiredNumberOfTics, maxNumberOfTics, delta, mindelta)
@@ -663,6 +663,9 @@ func layout(g Graphics, title, xlabel, ylabel string, hidextics, hideytics bool,
 		case "ot":
 			height, topm = height-kh-sepy, topm+kh
 			ld.KeyY = sepy / 2
+			if title != "" {
+				ld.KeyY += 2 * fh
+			}
 		case "ob":
 			height = height - kh - sepy
 			ld.KeyY = h - kh - sepy/2

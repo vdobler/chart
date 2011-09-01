@@ -33,7 +33,7 @@ func NewTextBuf(w, h int) (tb *TextBuf) {
 // Put character c at (x,y)
 func (tb *TextBuf) Put(x, y, c int) {
 	if x < 0 || y < 0 || x >= tb.W || y >= tb.H || c < ' ' {
-		debug.Printf("Ooooops Put(): %d, %d, %d='%c' \n", x, y, c, c)
+		// debug.Printf("Ooooops Put(): %d, %d, %d='%c' \n", x, y, c, c)
 		return
 	}
 	i := (tb.W+1)*y + x

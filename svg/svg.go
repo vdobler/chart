@@ -210,13 +210,7 @@ func (sg *SvgGraphics) Symbol(x, y int, style chart.Style) {
 
 func (sg *SvgGraphics) Rect(x, y, w, h int, style chart.Style) {
 	var s string
-	if style.LineWidth > 1 {
-		d := style.LineWidth / 2
-		x += d
-		y += d
-		w -= 2 * d
-		h -= 2 * d
-	}
+	x, y, w, h = chart.SanitizeRect(x, y, w, h, style.LineWidth)
 	linecol := style.LineColor
 	if linecol != "" {
 		s = fmt.Sprintf("stroke:%s; ", linecol)
