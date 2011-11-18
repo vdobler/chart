@@ -43,6 +43,10 @@ func (sc *StripChart) AddDataGeneric(name string, data []Value) {
 	sc.ScatterChart.AddData(name, pd, PlotStylePoints, Style{})
 }
 
+// Reset chart to state before plotting.
+func (sc *StripChart) Reset() {
+	sc.ScatterChart.Reset()
+}
 
 // Plot outputs the strip chart sc to g.
 func (sc *StripChart) Plot(g Graphics) {

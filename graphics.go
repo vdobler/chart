@@ -5,18 +5,27 @@ import (
 	"math"
 )
 
+// MinimalGraphics is the interface any graphics driver must implement,
+// so that he can fall back to the generic routines for the higher level
+// outputs.
+type MinimalGraphics interface {
+	Background() (r, g, b, a uint8)                         // Color of background
+	FontMetrics(font Font) (fw float32, fh int, mono bool)  // Return fontwidth and -height in pixel
+	TextLen(t string, font Font) int                        // Length=width of t in screen units if set on font 
+	Line(x0, y0, x1, y1 int, style Style)                   // Draw line from (x0,y0) to (x1,y1)
+	Text(x, y int, t string, align string, rot int, f Font) // Put t at (x,y) rotated by rot aligned [[tcb]][lcr]
+}
+
 // BasicGrapic is an interface of the most basic graphic primitives.
 // Any type which implements BasicGraphics can use generic implementations
 // of the Graphics methods.
 type BasicGraphics interface {
-	FontMetrics(font Font) (fw float32, fh int, mono bool)  // Return fontwidth and -height in pixel
-	TextLen(t string, font Font) int                        // Length=width of t in screen units if set on font 
-	Line(x0, y0, x1, y1 int, style Style)                   // Draw line from (x0,y0) to (x1,y1)
-	Symbol(x, y int, style Style)                           // Put symbol s at (x,y)
-	Text(x, y int, t string, align string, rot int, f Font) // Put t at (x,y) rotated by rot aligned [[tcb]][lcr]
-	Rect(x, y, w, h int, style Style)                       // Draw (w x h) rectangle at (x,y)
+	MinimalGraphics
+	Symbol(x, y int, style Style)                          // Put symbol s at (x,y)
+	Rect(x, y, w, h int, style Style)                      // Draw (w x h) rectangle at (x,y)
+	Wedge(x, y, ro, ri int, phi, psi float64, style Style) // Wedge
+	Path(x, y []int, style Style)                          // Path of straight lines
 }
-
 
 // Graphics is the interface all chart drivers have to implement
 type Graphics interface {
@@ -31,7 +40,7 @@ type Graphics interface {
 	// screen coordinates,
 	XAxis(xr Range, ys, yms int) // Draw x axis xr at screen position ys (and yms if mirrored)
 	YAxis(yr Range, xs, xms int) // Same for y axis.
-	Title(text string)           // Draw title onto chart, box if l,r,y != 0
+	Title(text string)           // Draw title onto chart
 
 	Scatter(points []EPoint, plotstyle PlotStyle, style Style) // Points, Lines and Line+Points
 	Boxes(boxes []Box, width int, style Style)                 // Boxplots
@@ -56,10 +65,9 @@ type Wedgeinfo struct {
 	Shift    int     // Highlighting of wedge 
 }
 
-
-func GenericTextLen(bg BasicGraphics, t string, font Font) (width int) {
+func GenericTextLen(mg MinimalGraphics, t string, font Font) (width int) {
 	// TODO: how handle newlines?  same way like Text does
-	fw, _, mono := bg.FontMetrics(font)
+	fw, _, mono := mg.FontMetrics(font)
 	if mono {
 		for _ = range t {
 			width++
@@ -84,11 +92,11 @@ func GenericTextLen(bg BasicGraphics, t string, font Font) (width int) {
 // Normalize (= (x,y) is top-left and w and h>0) and hounour line width r.
 func SanitizeRect(x, y, w, h, r int) (int, int, int, int) {
 	if w < 0 {
-		x -= w
+		x += w
 		w = -w
 	}
 	if h < 0 {
-		y -= h
+		y += h
 		h = -h
 	}
 
@@ -99,34 +107,42 @@ func SanitizeRect(x, y, w, h, r int) (int, int, int, int) {
 
 // GenericRect draws a rectangle of size w x h at (x,y).  Drawing is done
 // by simple lines only.
-func GenericRect(bg BasicGraphics, x, y, w, h int, style Style) {
+func GenericRect(mg MinimalGraphics, x, y, w, h int, style Style) {
 	x, y, w, h = SanitizeRect(x, y, w, h, style.LineWidth)
 
 	if style.FillColor != "" {
 		fs := Style{LineWidth: 1, LineColor: style.FillColor, LineStyle: SolidLine, Alpha: style.Alpha}
 		for i := 1; i < h; i++ {
-			bg.Line(x+1, y+i, x+w-1, y+i, fs)
+			mg.Line(x+1, y+i, x+w-1, y+i, fs)
 		}
 	}
 
-	bg.Line(x, y, x+w, y, style)
-	bg.Line(x+w, y, x+w, y+h, style)
-	bg.Line(x+w, y+h, x, y+h, style)
-	bg.Line(x, y+h, x, y, style)
+	mg.Line(x, y, x+w, y, style)
+	mg.Line(x+w, y, x+w, y+h, style)
+	mg.Line(x+w, y+h, x, y+h, style)
+	mg.Line(x, y+h, x, y, style)
 }
 
+// GenericPath is the incomplete implementation of a list of points
+// connected by straight lines. Incomplete: Dashed lines won't work properly.
+func GenericPath(mg MinimalGraphics, x, y []int, style Style) {
+	n := imin(len(x), len(y))
+	for i := 1; i < n; i++ {
+		mg.Line(x[i-1], y[i-1], x[i], y[i], style)
+	}
+}
 
 func drawXTics(bg BasicGraphics, rng Range, y, ym, ticLen int) {
 	xe := rng.Data2Screen(rng.Max)
 
 	// Grid below tics
-	if rng.TicSetting.Grid > 0 {
+	if rng.TicSetting.Grid > GridOff {
 		for ticcnt, tic := range rng.Tics {
 			x := rng.Data2Screen(tic.Pos)
-			if ticcnt > 0 && ticcnt < len(rng.Tics)-1 && rng.TicSetting.Grid == 1 {
+			if ticcnt > 0 && ticcnt < len(rng.Tics)-1 && rng.TicSetting.Grid == GridLines {
 				// fmt.Printf("Gridline at x=%d\n", x)
 				bg.Line(x, y-1, x, ym+1, DefaultStyle["gridl"])
-			} else if rng.TicSetting.Grid == 2 {
+			} else if rng.TicSetting.Grid == GridBlocks {
 				if ticcnt%2 == 1 {
 					x0 := rng.Data2Screen(rng.Tics[ticcnt-1].Pos)
 					bg.Rect(x0, ym, x-x0, y-ym, DefaultStyle["gridb"])
@@ -178,7 +194,6 @@ func drawXTics(bg BasicGraphics, rng Range, y, ym, ticLen int) {
 	}
 }
 
-
 // GenericAxis draws the axis r solely by graphic primitives of bg.
 func GenericXAxis(bg BasicGraphics, rng Range, y, ym int) {
 	_, fontheight, _ := bg.FontMetrics(DefaultFont["label"])
@@ -228,15 +243,15 @@ func drawYTics(bg BasicGraphics, rng Range, x, xm, ticLen int) {
 	ye := rng.Data2Screen(rng.Max)
 
 	// Grid below tics
-	if rng.TicSetting.Grid > 0 {
+	if rng.TicSetting.Grid > GridOff {
 		for ticcnt, tic := range rng.Tics {
 			y := rng.Data2Screen(tic.Pos)
-			if rng.TicSetting.Grid == 1 {
+			if rng.TicSetting.Grid == GridLines {
 				if ticcnt > 0 && ticcnt < len(rng.Tics)-1 {
 					// fmt.Printf("Gridline at x=%d\n", x)
 					bg.Line(x+1, y, xm-1, y, DefaultStyle["gridl"])
 				}
-			} else if rng.TicSetting.Grid == 2 {
+			} else if rng.TicSetting.Grid == GridBlocks {
 				if ticcnt%2 == 1 {
 					y0 := rng.Data2Screen(rng.Tics[ticcnt-1].Pos)
 					bg.Rect(x, y0, xm-x, y-y0, DefaultStyle["gridb"])
@@ -333,7 +348,6 @@ func GenericYAxis(bg BasicGraphics, rng Range, x, xm int) {
 
 }
 
-
 // GenericScatter draws the given points according to style.
 // style.FillColor is used as color of error bars and style.FontSize is used
 // as the length of the endmarks of the error bars. Both have suitable defaults
@@ -383,6 +397,7 @@ func GenericScatter(bg BasicGraphics, points []EPoint, plotstyle PlotStyle, styl
 }
 
 // GenericBoxes draws box plots. (Default implementation for box plots).
+// The values for each box in boxes are in screen coordinates!
 func GenericBoxes(bg BasicGraphics, boxes []Box, width int, style Style) {
 	if width%2 == 0 {
 		width += 1
@@ -391,7 +406,7 @@ func GenericBoxes(bg BasicGraphics, boxes []Box, width int, style Style) {
 	for _, d := range boxes {
 		x := int(d.X)
 		q1, q3 := int(d.Q1), int(d.Q3)
-
+		// debug.Printf("q1=%d  q3=%d  q3-q1=%d", q1,q3,q3-q1)
 		bg.Rect(x-hbw, q1, width, q3-q1, style)
 		if !math.IsNaN(d.Med) {
 			med := int(d.Med)
@@ -457,7 +472,7 @@ func GenericBars(bg BasicGraphics, bars []Barinfo, style Style) {
 }
 
 // GenericWedge draws a pie/wedge just by lines
-func GenericWedge(bg BasicGraphics, x, y, ro, ri int, phi, psi, ecc float64, style Style) {
+func GenericWedge(mg MinimalGraphics, x, y, ro, ri int, phi, psi, ecc float64, style Style) {
 	for phi < 0 {
 		phi += 2 * math.Pi
 	}
@@ -477,7 +492,7 @@ func GenericWedge(bg BasicGraphics, x, y, ro, ri int, phi, psi, ecc float64, sty
 	}
 
 	if style.FillColor != "" {
-		fillWedge(bg, x, y, ro, ri, phi, psi, ecc, style)
+		fillWedge(mg, x, y, ro, ri, phi, psi, ecc, style)
 	}
 
 	roe, rof := float64(ro)*ecc, float64(ro)
@@ -491,11 +506,11 @@ func GenericWedge(bg BasicGraphics, x, y, ro, ri int, phi, psi, ecc float64, sty
 		phi, psi = 0, 2*math.Pi
 	} else {
 		if ri > 0 {
-			bg.Line(xai, yai, xa, ya, style)
-			bg.Line(xci, yci, xc, yc, style)
+			mg.Line(xai, yai, xa, ya, style)
+			mg.Line(xci, yci, xc, yc, style)
 		} else {
-			bg.Line(x, y, xa, ya, style)
-			bg.Line(x, y, xc, yc, style)
+			mg.Line(x, y, xa, ya, style)
+			mg.Line(x, y, xc, yc, style)
 		}
 	}
 
@@ -507,10 +522,10 @@ func GenericWedge(bg BasicGraphics, x, y, ro, ri int, phi, psi, ecc float64, sty
 			rho -= 2 * math.Pi
 		}
 		xb, yb = int(math.Cos(rho)*roe)+x, y-int(math.Sin(rho)*rof)
-		bg.Line(xa, ya, xb, yb, style)
+		mg.Line(xa, ya, xb, yb, style)
 		xa, ya = xb, yb
 	}
-	bg.Line(xb, yb, xc, yc, style)
+	mg.Line(xb, yb, xc, yc, style)
 
 	if ri > 0 {
 		exit := phi < psi
@@ -520,17 +535,17 @@ func GenericWedge(bg BasicGraphics, x, y, ro, ri int, phi, psi, ecc float64, sty
 				rho -= 2 * math.Pi
 			}
 			xb, yb = int(math.Cos(rho)*rie)+x, y-int(math.Sin(rho)*rif)
-			bg.Line(xai, yai, xb, yb, style)
+			mg.Line(xai, yai, xb, yb, style)
 			xai, yai = xb, yb
 		}
-		bg.Line(xb, yb, xci, yci, style)
+		mg.Line(xb, yb, xci, yci, style)
 
 	}
 }
 
 // Fill wedge with center (xi,yi), radius ri from alpha to beta with style.
 // Precondition:  0 <= beta < alpha < pi/2
-func fillQuarterWedge(bg BasicGraphics, xi, yi, ri int, alpha, beta, e float64, style Style, quadrant int) {
+func fillQuarterWedge(mg MinimalGraphics, xi, yi, ri int, alpha, beta, e float64, style Style, quadrant int) {
 	if alpha < beta {
 		// debug.Printf("Swaping alpha and beta")
 		alpha, beta = beta, alpha
@@ -571,7 +586,7 @@ func fillQuarterWedge(bg BasicGraphics, xi, yi, ri int, alpha, beta, e float64, 
 			panic("No such quadrant.")
 		}
 		// debug.Printf("Line %d,%d to %d,%d", xx0,yy, xx1,yy)
-		bg.Line(xx0, yy, xx1, yy, style)
+		mg.Line(xx0, yy, xx1, yy, style)
 	}
 }
 
@@ -597,7 +612,7 @@ func mapQ(w float64, q int) float64 {
 
 // Fill wedge with center (xi,yi), radius ri from alpha to beta with style.
 // Any combination of phi, psi allowed as long 0 <= phi < psi < 2pi.
-func fillWedge(bg BasicGraphics, xi, yi, ro, ri int, phi, psi, epsilon float64, style Style) {
+func fillWedge(mg MinimalGraphics, xi, yi, ro, ri int, phi, psi, epsilon float64, style Style) {
 	// ls := Style{LineColor: style.FillColor, LineWidth: 1, Symbol: style.Symbol}
 
 	qPhi := quadrant(phi)
@@ -614,9 +629,9 @@ func fillWedge(bg BasicGraphics, xi, yi, ro, ri int, phi, psi, epsilon float64, 
 		// debug.Printf("qPhi = %d", qPhi)
 		w := float64(qPhi+1) * math.Pi / 2
 		if math.Fabs(w-phi) > 0.01 {
-			fillQuarterWedge(bg, xi, yi, ro, mapQ(phi, qPhi), mapQ(w, qPhi), epsilon, style, qPhi)
+			fillQuarterWedge(mg, xi, yi, ro, mapQ(phi, qPhi), mapQ(w, qPhi), epsilon, style, qPhi)
 			if ri > 0 {
-				fillQuarterWedge(bg, xi, yi, ri, mapQ(phi, qPhi), mapQ(w, qPhi), epsilon, blank, qPhi)
+				fillQuarterWedge(mg, xi, yi, ri, mapQ(phi, qPhi), mapQ(w, qPhi), epsilon, blank, qPhi)
 			}
 		}
 		phi = w
@@ -628,13 +643,12 @@ func fillWedge(bg BasicGraphics, xi, yi, ro, ri int, phi, psi, epsilon float64, 
 	}
 	if phi != psi {
 		// debug.Printf("Last wedge")
-		fillQuarterWedge(bg, xi, yi, ro, mapQ(phi, qPhi), mapQ(psi, qPhi), epsilon, style, qPhi)
+		fillQuarterWedge(mg, xi, yi, ro, mapQ(phi, qPhi), mapQ(psi, qPhi), epsilon, style, qPhi)
 		if ri > 0 {
-			fillQuarterWedge(bg, xi, yi, ri, mapQ(phi, qPhi), mapQ(psi, qPhi), epsilon, blank, qPhi)
+			fillQuarterWedge(mg, xi, yi, ri, mapQ(phi, qPhi), mapQ(psi, qPhi), epsilon, blank, qPhi)
 		}
 	}
 }
-
 
 func GenericRings(bg BasicGraphics, wedges []Wedgeinfo, x, y, ro, ri int, eccentricity float64) {
 	// debug.Printf("GenericRings with %d wedges center %d,%d, radii %d/%d,  ecc=%.3f)", len(wedges), x, y, ro, ri, eccentricity)
@@ -650,7 +664,7 @@ func GenericRings(bg BasicGraphics, wedges []Wedgeinfo, x, y, ro, ri int, eccent
 		dx, dy := p*math.Cos((w.Phi+w.Psi)/2)/a, p*math.Sin((w.Phi+w.Psi)/2)/a
 		// debug.Printf("Center adjustment (lw=%d, p=%.2f), for wedge %d°-%d° of (%.1f,%.1f)", w.Style.LineWidth, p, int(180*w.Phi/math.Pi), int(180*w.Psi/math.Pi), dx, dy)
 		xi, yi := x+int(dx+0.5), y-int(dy+0.5)
-		GenericWedge(bg, xi, yi, ro, ri, w.Phi, w.Psi, eccentricity, w.Style)
+		bg.Wedge(xi, yi, ro, ri, w.Phi, w.Psi, w.Style)
 
 		if w.Text != "" {
 			_, fh, _ := bg.FontMetrics(w.Font)
@@ -674,43 +688,6 @@ func GenericRings(bg BasicGraphics, wedges []Wedgeinfo, x, y, ro, ri int, eccent
 
 	}
 
-	/***************
-	var d string
-	p := 0.4 * float64(w.Style.LineWidth)
-	cphi, sphi := math.Cos(w.Phi), math.Sin(w.Phi)
-	cpsi, spsi := math.Cos(w.Psi), math.Sin(w.Psi)
-
-	if ri <= 0 {
-		// real wedge drawn as center -> outer radius -> arc -> closed to center
-		rf := float64(ro)
-		a := math.Sin((w.Psi - w.Phi) / 2)
-		dx, dy := p*math.Cos((w.Phi+w.Psi)/2)/a, p*math.Sin((w.Phi+w.Psi)/2)/a
-		d = fmt.Sprintf("M %d,%d ", x+int(dx+0.5), y+int(dy+0.5))
-
-		dx, dy = p*math.Cos(w.Phi+math.Pi/2), p*math.Sin(w.Phi+math.Pi/2)
-		d += fmt.Sprintf("L %d,%d ", int(rf*cphi+0.5+dx)+x, int(rf*sphi+0.5+dy)+y)
-
-		dx, dy = p*math.Cos(w.Psi-math.Pi/2), p*math.Sin(w.Psi-math.Pi/2)
-		d += fmt.Sprintf("A %d,%d 0 0 1 %d,%d ", ro, ro, int(rf*cpsi+0.5+dx)+x, int(rf*spsi+0.5+dy)+y)
-		d += fmt.Sprintf("z")
-	} else {
-		// ring drawn as inner radius -> outer radius -> outer arc -> inner radius -> inner arc
-		rof, rif := float64(ro), float64(ri)
-		dx, dy := p*math.Cos(w.Phi+math.Pi/2), p*math.Sin(w.Phi+math.Pi/2)
-		a, b := int(rif*cphi+0.5+dx)+x, int(rif*sphi+0.5+dy)+y
-		d = fmt.Sprintf("M %d,%d ", a, b)
-		d += fmt.Sprintf("L %d,%d ", int(rof*cphi+0.5+dx)+x, int(rof*sphi+0.5+dy)+y)
-
-		dx, dy = p*math.Cos(w.Psi-math.Pi/2), p*math.Sin(w.Psi-math.Pi/2)
-		d += fmt.Sprintf("A %d,%d 0 0 1 %d,%d ", ro, ro, int(rof*cpsi+0.5+dx)+x, int(rof*spsi+0.5+dy)+y)
-		d += fmt.Sprintf("L %d,%d ", int(rif*cpsi+0.5+dx)+x, int(rif*spsi+0.5+dy)+y)
-		d += fmt.Sprintf("A %d,%d 0 0 0 %d,%d ", ri, ri, a, b)
-		d += fmt.Sprintf("z")
-
-	}
-
-	sg.svg.Path(d, s+sf)
-	 *************************/
 }
 
 func GenericCircle(bg BasicGraphics, x, y, r int, style Style) {
@@ -731,7 +708,6 @@ func polygon(bg BasicGraphics, x, y []int, style Style) {
 	}
 	bg.Line(x[n], y[n], x[0], y[0], style)
 }
-
 
 func GenericSymbol(bg BasicGraphics, x, y int, style Style) {
 	f := style.SymbolSize

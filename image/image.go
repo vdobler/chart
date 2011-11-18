@@ -3,11 +3,9 @@ package imgg
 import (
 	"image"
 	"fmt"
-	"sync"
 
 	"github.com/vdobler/chart"
 )
-
 
 // ImageGraphics implements BasicGraphics and uses the generic implementations
 type ImageGraphics struct {
@@ -31,75 +29,43 @@ func New(width, height int, background image.RGBAColor) *ImageGraphics {
 
 // AddTo returns a new ImageGraphics which will write to (width x height) sized
 // area starting at (x,y) on the provided image img.
-func AddTo(img *image.RGBA, x, y, width, height int) *ImageGraphics {
-	bg := img.At(x, y).(image.RGBAColor)
-	return &ImageGraphics{Image: img, x0: x, y0: y, w: width, h: height, bg: bg}
+func AddTo(img *image.RGBA, x, y, width, height int, background image.RGBAColor) *ImageGraphics {
+	return &ImageGraphics{Image: img, x0: x, y0: y, w: width, h: height, bg: background}
 }
 
-
-func (ig *ImageGraphics) Begin() {
-}
-
-func (ig *ImageGraphics) End() {
-}
-
-func (ig *ImageGraphics) Dimensions() (int, int) {
-	return ig.w, ig.h
-}
-
-func (ig *ImageGraphics) fontheight(font chart.Font) (fh int) {
-	return 15
-}
-
+func (ig *ImageGraphics) Begin()                              {}
+func (ig *ImageGraphics) End()                                {}
+func (ig *ImageGraphics) Background() (r, g, b, a uint8)      { return ig.bg.R, ig.bg.G, ig.bg.B, ig.bg.A }
+func (ig *ImageGraphics) Dimensions() (int, int)              { return ig.w, ig.h }
+func (ig *ImageGraphics) fontheight(font chart.Font) (fh int) { return 15 }
 func (ig *ImageGraphics) FontMetrics(font chart.Font) (fw float32, fh int, mono bool) {
 	return 8, 15, true
 }
-
 func (ig *ImageGraphics) TextLen(t string, font chart.Font) int {
 	return chart.GenericTextLen(ig, t, font)
 }
 
-var lastP map[string]int
-var rwmutex sync.RWMutex
-
-func init() {
-	lastP = make(map[string]int, 100)
-}
-
-func (ig *ImageGraphics) Line(x0, y0, x1, y1 int, style chart.Style) {
-	var pat []bool
+func ddAndPat(style chart.Style) (d, dd int, pat []bool) {
 	var ok bool
 	if pat, ok = dashPattern[style.LineStyle]; !ok {
 		pat = dashPattern[chart.SolidLine]
 	}
 
-	var P int
-	s := fmt.Sprintf("%v", style)
-	rwmutex.RLock()
-	if lp, ok := lastP[s]; ok {
-		P = lp
-	}
-	rwmutex.RUnlock()
-
-	d := (style.LineWidth - 1) / 2
-	dd := d
+	d = (style.LineWidth - 1) / 2
+	dd = d
 	if style.LineWidth%2 == 0 {
 		dd++
 	}
-	var np int = -1
+	return
+}
 
+func (ig *ImageGraphics) Line(x0, y0, x1, y1 int, style chart.Style) {
+	d, dd, pat := ddAndPat(style)
 	for xd := -d; xd <= dd; xd++ {
 		for yd := -d; yd <= dd; yd++ {
-			p := ig.oneLine(x0+xd, y0+yd, x1+xd, y1+yd, style, pat, P)
-			if np == -1 {
-				np = p
-			}
+			ig.oneLine(x0+xd, y0+yd, x1+xd, y1+yd, style, pat, 0)
 		}
 	}
-
-	rwmutex.Lock()
-	lastP[s] = np
-	rwmutex.Unlock()
 }
 
 var dashPattern map[int][]bool = map[int][]bool{
@@ -111,7 +77,6 @@ var dashPattern map[int][]bool = map[int][]bool{
 		false, false, false, false, false, false, false, false},
 	chart.LongDotLine: []bool{true, true, true, false, false, false, false, false, false},
 }
-
 
 func (ig *ImageGraphics) oneLine(x0, y0, x1, y1 int, style chart.Style, pat []bool, P int) int {
 	R, G, B := chart.Color2rgb(style.LineColor)
@@ -171,6 +136,24 @@ func (ig *ImageGraphics) oneLine(x0, y0, x1, y1 int, style chart.Style, pat []bo
 
 	}
 	return 0
+}
+
+func (ig *ImageGraphics) Path(x, y []int, style chart.Style) {
+	n := min(len(x), len(y))
+	d, dd, pat := ddAndPat(style)
+
+	p := 0
+	for i := 1; i < n; i++ {
+		x0, y0 := x[i-1], y[i-1]
+		x1, y1 := x[i], y[i]
+		np := 0
+		for xd := -d; xd <= dd; xd++ {
+			for yd := -d; yd <= dd; yd++ {
+				np = ig.oneLine(x0+xd, y0+yd, x1+xd, y1+yd, style, pat, p)
+			}
+		}
+		p = np
+	}
 }
 
 func (ig *ImageGraphics) Text(x, y int, t string, align string, rot int, f chart.Font) {
@@ -271,13 +254,16 @@ func (ig *ImageGraphics) paint(x, y int, R, G, B uint32, alpha uint32) {
 	ig.Image.Set(x, y, image.RGBAColor{uint8(r), uint8(g), uint8(b), uint8(a)})
 }
 
-
 func (ig *ImageGraphics) Symbol(x, y int, style chart.Style) {
 	chart.GenericSymbol(ig, x, y, style)
 }
 
 func (ig *ImageGraphics) Rect(x, y, w, h int, style chart.Style) {
 	chart.GenericRect(ig, x, y, w, h, style)
+}
+
+func (ig *ImageGraphics) Wedge(x, y, ro, ri int, phi, psi float64, style chart.Style) {
+	chart.GenericWedge(ig, x, y, ro, ri, phi, psi, 1, style)
 }
 
 func (ig *ImageGraphics) Title(text string) {
@@ -313,7 +299,6 @@ func (ig *ImageGraphics) Bars(bars []chart.Barinfo, style chart.Style) {
 func (ig *ImageGraphics) Rings(wedges []chart.Wedgeinfo, x, y, ro, ri int) {
 	chart.GenericRings(ig, wedges, x, y, ro, ri, 1)
 }
-
 
 func min(a, b int) int {
 	if a < b {

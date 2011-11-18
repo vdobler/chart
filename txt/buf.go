@@ -7,7 +7,6 @@ import (
 // Different edge styles for boxes
 var Edge = [][4]int{{'+', '+', '+', '+'}, {'.', '.', '\'', '\''}, {'/', '\\', '\\', '/'}}
 
-
 // A Text Buffer
 type TextBuf struct {
 	Buf  []int // the internal buffer.  Point (x,y) is mapped to x + y*(W+1)
@@ -28,7 +27,6 @@ func NewTextBuf(w, h int) (tb *TextBuf) {
 	// tb.Buf[0], tb.Buf[(w+1)*h-1] = 'X', 'X'
 	return
 }
-
 
 // Put character c at (x,y)
 func (tb *TextBuf) Put(x, y, c int) {
@@ -129,7 +127,6 @@ func (tb *TextBuf) Text(x, y int, txt string, align int) {
 	}
 }
 
-
 // Paste buf at (x,y)
 func (tb *TextBuf) Paste(x, y int, buf *TextBuf) {
 	s := buf.W + 1
@@ -181,12 +178,10 @@ func (tb *TextBuf) Line(x0, y0, x1, y1 int, symbol int) {
 	}
 }
 
-
 // Convert to plain (utf8) string.
 func (tb *TextBuf) String() string {
 	return string(tb.Buf)
 }
-
 
 func min(a, b int) int {
 	if a < b {
@@ -218,7 +213,6 @@ func sign(a int) int {
 	}
 	return 1
 }
-
 
 // Debugging and tracing
 type debugging bool

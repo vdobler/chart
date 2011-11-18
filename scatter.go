@@ -4,7 +4,6 @@ import (
 	"math"
 )
 
-
 // ScatterChart represents scatter charts, line charts and function plots.
 type ScatterChart struct {
 	XRange, YRange Range              // X and Y axis
@@ -41,7 +40,6 @@ func (c *ScatterChart) AddFunc(name string, f func(float64) float64, plotstyle P
 		c.Key.Entries = append(c.Key.Entries, ke)
 	}
 }
-
 
 // AddData adds points in data to chart. A key/legend entry is produced 
 // if name is not empty. 
@@ -93,7 +91,6 @@ func (c *ScatterChart) AddData(name string, data []EPoint, plotstyle PlotStyle, 
 	}
 }
 
-
 // AddDataGeneric is the generiv version of AddData which allows any type
 // to be plotted that implements the XYErrValue interface.
 func (c *ScatterChart) AddDataGeneric(name string, data []XYErrValue, plotstyle PlotStyle, style Style) {
@@ -109,7 +106,6 @@ func (c *ScatterChart) AddDataGeneric(name string, data []XYErrValue, plotstyle 
 	c.AddData(name, edata, plotstyle, style)
 }
 
-
 // AddDataPair is a convenience method which wrapps around AddData: It adds the points
 // (x[n],y[n]) to the chart.
 func (c *ScatterChart) AddDataPair(name string, x, y []float64, plotstyle PlotStyle, style Style) {
@@ -122,6 +118,11 @@ func (c *ScatterChart) AddDataPair(name string, x, y []float64, plotstyle PlotSt
 	c.AddData(name, data, plotstyle, style)
 }
 
+// Reset chart to state before plotting.
+func (c *ScatterChart) Reset() {
+	c.XRange.Reset()
+	c.YRange.Reset()
+}
 
 // Plot outputs the scatter chart to the graphic output g.
 func (c *ScatterChart) Plot(g Graphics) {

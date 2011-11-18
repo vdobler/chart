@@ -7,7 +7,6 @@ import (
 	// "strings"
 )
 
-
 // PieChart represents pie and ring charts.
 type PieChart struct {
 	Title string              // The title
@@ -17,7 +16,6 @@ type PieChart struct {
 
 	FmtVal func(value, sume float64) string // Produce labels
 }
-
 
 // AbsoluteValue will format value (ignoring sum).  It is a convenience function which
 // can be assigned to PieChart.FmtVal.
@@ -46,13 +44,11 @@ func PercentValue(value, sum float64) (s string) {
 	return
 }
 
-
 type CategoryChartData struct {
 	Name    string
 	Style   []Style
 	Samples []CatValue
 }
-
 
 func (c *PieChart) AddData(name string, data []CatValue, style []Style) {
 	if len(style) < len(data) {
@@ -79,9 +75,11 @@ func (c *PieChart) AddDataPair(name string, cat []string, val []float64) {
 	c.AddData(name, data, nil)
 }
 
-
 var PieChartShrinkage = 0.66 // Scaling factor of radius of next data set.
 var PieChartHighlight = 0.15 // How much are flaged segments offset. 
+
+// Reset chart to state before plotting.
+func (c *PieChart) Reset() {}
 
 // Plot outputs the scatter chart sc to g.
 func (c *PieChart) Plot(g Graphics) {

@@ -7,13 +7,11 @@ import (
 	//	"strings"
 )
 
-
 type HistChartData struct {
 	Name    string
 	Style   Style
 	Samples []float64
 }
-
 
 // HistChart represents histogram charts. (Not to be mixed up with BarChart!)
 type HistChart struct {
@@ -22,6 +20,7 @@ type HistChart struct {
 	Key            Key    // Key/Legend
 	Counts         bool   // Display counts instead of frequencies
 	Stacked        bool   // Display different data sets ontop of each other
+	Shifted        bool   // Shift non-stacked bars sideways (and make them smaler)
 	Data           []HistChartData
 	FirstBin       float64   // center of the first (lowest bin)
 	BinWidth       float64   // Width of bins (0: auto)
@@ -128,7 +127,6 @@ func (c *HistChart) AddDataGeneric(name string, data []Value, style Style) {
 	c.AddData(name, fdata, style)
 }
 
-
 // G = B * Gf;  S = W *Sf
 // W = (B(1-Gf))/(N-(N-1)Sf)
 // S = (B(1-Gf))/(N/Sf - (N-1))
@@ -138,7 +136,7 @@ func (c *HistChart) AddDataGeneric(name string, data []Value, style Style) {
 // 4   1/6  2/3
 // 5   1/6  3/4
 func (c *HistChart) widthFactor() (gf, sf float64) {
-	if c.Stacked {
+	if c.Stacked || !c.Shifted {
 		gf = c.Gap
 		sf = -1
 		return
@@ -171,7 +169,6 @@ func (c *HistChart) widthFactor() (gf, sf float64) {
 	}
 	return
 }
-
 
 // Prepare binCnt bins of width binWidth starting from binStart and count
 // data samples per bin for each data set.  If c.Counts is true than the
@@ -263,6 +260,11 @@ func (c *HistChart) findBinWidth() {
 	c.BinWidth = bw
 }
 
+// Reset chart to state before plotting.
+func (c *HistChart) Reset() {
+	c.XRange.Reset()
+	c.YRange.Reset()
+}
 
 // Plot will output the chart to the graphic device g.
 func (c *HistChart) Plot(g Graphics) {
@@ -331,7 +333,7 @@ func (c *HistChart) Plot(g Graphics) {
 
 	ww := c.BinWidth * (1 - gf) // w'
 	var w, s float64
-	if !c.Stacked {
+	if !c.Stacked && c.Shifted {
 		w = ww / (n + (n-1)*sf)
 		s = w * sf
 	} else {
@@ -340,33 +342,83 @@ func (c *HistChart) Plot(g Graphics) {
 	}
 
 	// debug.Printf("gf=%.3f, sf=%.3f, bw=%.3f   ===>  ww=%.2f,   w=%.2f,  s=%.2f\n", gf, sf, c.BinWidth, ww, w, s)
-	for d := numSets - 1; d >= 0; d-- {
-		bars := make([]Barinfo, 0, binCnt)
-		ws := 0
-		for b := 0; b < binCnt; b++ {
-			if counts[d][b] == 0 {
-				continue
-			}
-			xb := binStart + (float64(b)+0.5)*c.BinWidth
-			x := xb - ww/2 + float64(d)*(s+w)
-			xs := xf(x)
-			xss := xf(x + w)
-			ws = xss - xs
-			thebar := Barinfo{x: xs, w: xss - xs}
 
-			off := 0.0
-			if c.Stacked {
-				for dd := d - 1; dd >= 0; dd-- {
-					off += counts[dd][b]
+	if c.Shifted || c.Stacked {
+		for d := numSets - 1; d >= 0; d-- {
+			bars := make([]Barinfo, 0, binCnt)
+			ws := 0
+			for b := 0; b < binCnt; b++ {
+				if counts[d][b] == 0 {
+					continue
+				}
+				xb := binStart + (float64(b)+0.5)*c.BinWidth
+				x := xb - ww/2 + float64(d)*(s+w)
+				xs := xf(x)
+				xss := xf(x + w)
+				ws = xss - xs
+				thebar := Barinfo{x: xs, w: xss - xs}
+
+				off := 0.0
+				if c.Stacked {
+					for dd := d - 1; dd >= 0; dd-- {
+						off += counts[dd][b]
+					}
+				}
+				a, aa := yf(float64(off+counts[d][b])), yf(float64(off))
+				thebar.y, thebar.h = a, iabs(a-aa)
+				bars = append(bars, thebar)
+			}
+			g.Bars(bars, c.Data[d].Style)
+
+			if !c.Stacked && sf < 0 && gf != 0 && fh > 1 {
+				// Whitelining
+				lw := 1
+				if ws > 25 {
+					lw = 2
+				}
+				white := Style{LineColor: "#ffffff", LineWidth: lw, LineStyle: SolidLine}
+				for _, b := range bars {
+					g.Line(b.x, b.y-1, b.x+b.w+1, b.y-1, white)
+					g.Line(b.x+b.w+1, b.y-1, b.x+b.w+1, b.y+b.h, white)
 				}
 			}
-			a, aa := yf(float64(off+counts[d][b])), yf(float64(off))
-			thebar.y, thebar.h = a, iabs(a-aa)
-			bars = append(bars, thebar)
 		}
-		g.Bars(bars, c.Data[d].Style)
 
-		if !c.Stacked && c.Kernel != nil {
+	} else {
+		bars := make([]Barinfo, 1)
+		order := make([]int, numSets)
+		for b := 0; b < binCnt; b++ {
+			// shame on me...
+			for d := 0; d < numSets; d++ {
+				order[d] = d
+			}
+			for d := 0; d < numSets; d++ {
+				for p := 0; p < numSets-1; p++ {
+					if counts[order[p]][b] < counts[order[p+1]][b] {
+						order[p], order[p+1] = order[p+1], order[p]
+					}
+				}
+			}
+			for d := 0; d < numSets; d++ {
+				if counts[order[d]][b] == 0 {
+					continue
+				}
+				xb := binStart + (float64(b)+0.5)*c.BinWidth
+				x := xb - ww/2 + float64(d)*(s+w)
+				xs := xf(x)
+				xss := xf(x + w)
+				thebar := Barinfo{x: xs, w: xss - xs}
+
+				a, aa := yf(float64(counts[order[d]][b])), yf(0)
+				thebar.y, thebar.h = a, iabs(a-aa)
+				bars[0] = thebar
+				g.Bars(bars, c.Data[order[d]].Style)
+			}
+		}
+	}
+
+	if !c.Stacked && c.Kernel != nil {
+		for d := numSets - 1; d >= 0; d-- {
 			style := Style{Symbol:/*c.Data[d].Style.Symbol*/ 'X', LineColor: c.Data[d].Style.LineColor,
 				LineWidth: 1, LineStyle: SolidLine}
 			for j := range smoothed[d] {
@@ -374,18 +426,6 @@ func (c *HistChart) Plot(g Graphics) {
 				smoothed[d][j].Y = float64(c.YRange.Data2Screen(smoothed[d][j].Y))
 			}
 			g.Scatter(smoothed[d], PlotStyleLines, style)
-		}
-		if !c.Stacked && sf < 0 && gf != 0 && fh > 1 {
-			// Whitelining
-			lw := 1
-			if ws > 25 {
-				lw = 2
-			}
-			white := Style{LineColor: "#ffffff", LineWidth: lw, LineStyle: SolidLine}
-			for _, b := range bars {
-				g.Line(b.x, b.y-1, b.x+b.w+1, b.y-1, white)
-				g.Line(b.x+b.w+1, b.y-1, b.x+b.w+1, b.y+b.h, white)
-			}
 		}
 	}
 

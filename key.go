@@ -26,7 +26,6 @@ type Key struct {
 	X, Y    int
 }
 
-
 // KeyEntry encapsulates an antry in the key/legend.
 type KeyEntry struct {
 	Text      string    // Text to display
@@ -34,7 +33,6 @@ type KeyEntry struct {
 	Style     Style     // How to show
 
 }
-
 
 // Place layouts the Entries in key in the requested (by key.Cols) matrix format
 func (key Key) Place() (matrix [][]*KeyEntry) {
@@ -96,7 +94,6 @@ func (key Key) Place() (matrix [][]*KeyEntry) {
 	}
 	return
 }
-
 
 func textviewlen(t string) (length float32) {
 	n := 0

@@ -15,14 +15,12 @@ type Real float64
 
 func (r Real) XVal() float64 { return float64(r) }
 
-
 // XY-Value is an interface for any type of data which is point-like and has
 // a x- and y-coordinate. Its standard implementationhere is Point.
 type XYValue interface {
 	XVal() float64
 	YVal() float64
 }
-
 
 // Point is a point in two dimensions (x,y) implementing XYValue.
 type Point struct{ X, Y float64 }
@@ -31,7 +29,6 @@ func (p Point) XVal() float64            { return p.X }
 func (p Point) YVal() float64            { return p.Y }
 func (p Point) XErr() (float64, float64) { return math.NaN(), math.NaN() }
 func (p Point) YErr() (float64, float64) { return math.NaN(), math.NaN() }
-
 
 // XYErrValue is an interface any type of data which is point-like (x,y) and
 // has some measurement error.
@@ -74,7 +71,6 @@ func (p EPoint) BoundingBox() (xl, yl, xh, yh float64) { // bounding box
 	return
 }
 
-
 // CategoryValue is an interface for any type of data which is category-real-pair.
 type CategoryValue interface {
 	Category() string
@@ -92,7 +88,6 @@ type CatValue struct {
 func (c CatValue) Category() string { return c.Cat }
 func (c CatValue) Value() float64   { return c.Val }
 func (c CatValue) Flaged() bool     { return c.Flag }
-
 
 // Box represents a box in an boxplot.
 type Box struct {

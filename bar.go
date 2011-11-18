@@ -112,6 +112,12 @@ func (c *BarChart) rescaleStackedY() {
 	}
 }
 
+// Reset chart to state before plotting.
+func (c *BarChart) Reset() {
+	c.XRange.Reset()
+	c.YRange.Reset()
+}
+
 // Plot renders the chart to the graphics output g.
 func (c *BarChart) Plot(g Graphics) {
 	// layout
@@ -300,7 +306,6 @@ func (c *BarChart) Plot(g Graphics) {
 	 **********************************************************/
 }
 
-
 func (c *BarChart) minimumSampleSep(d int) (min float64) {
 	n := len(c.Data[d].Samples) - 1
 	min = math.MaxFloat64
@@ -313,7 +318,6 @@ func (c *BarChart) minimumSampleSep(d int) (min float64) {
 	}
 	return
 }
-
 
 func (c *BarChart) addLabel(bar *Barinfo, y float64) {
 	if c.ShowVal == 0 {

@@ -7,7 +7,6 @@ import (
 	//	"strings"
 )
 
-
 // BoxChart represents box charts.
 //
 // To faciliate standard use of box plots, the method AddSet() exists which will
@@ -42,7 +41,6 @@ func (c *BoxChart) NextDataSet(name string, style Style) {
 	ps := PlotStyle(PlotStylePoints | PlotStyleBox)
 	c.Key.Entries = append(c.Key.Entries, KeyEntry{Text: name, Style: style, PlotStyle: ps})
 }
-
 
 // AddSet will add to last data set in the chart one new box calculated from data.
 // If outlier is true, than outliers (1.5*IQR from 25/75 percentil) are
@@ -95,6 +93,11 @@ func (c *BoxChart) AddSet(x float64, data []float64, outlier bool) {
 	c.Data[j].Samples = append(c.Data[j].Samples, b)
 }
 
+// Reset chart to state before plotting.
+func (c *BoxChart) Reset() {
+	c.XRange.Reset()
+	c.YRange.Reset()
+}
 
 // Plot renders the chart to the graphic output g.
 func (c *BoxChart) Plot(g Graphics) {
@@ -128,6 +131,7 @@ func (c *BoxChart) Plot(g Graphics) {
 		boxes := make([]Box, len(data.Samples))
 		for i, d := range data.Samples {
 			x := float64(c.XRange.Data2Screen(d.X))
+			// debug.Printf("Q1=%.2f  Q3=%.3f", d.Q1, d.Q3) 
 			q1, q3 := float64(yf(d.Q1)), float64(yf(d.Q3))
 			med, avg := nan, nan
 			high, low := nan, nan

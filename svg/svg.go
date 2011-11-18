@@ -2,46 +2,71 @@ package svgg
 
 import (
 	"fmt"
+	"image"
 	"math"
 	"github.com/ajstarks/svgo"
 	"github.com/vdobler/chart"
 )
 
-
 // SvgGraphics implements BasicGraphics and uses the generic implementations
 type SvgGraphics struct {
-	svg  *svg.SVG
-	w, h int
-	font string
-	fs   int
+	svg    *svg.SVG
+	w, h   int
+	font   string
+	fs     int
+	bg     image.RGBAColor
+	tx, ty int
 }
 
 // New creates a new SvgGraphics of dimension w x h, with a default font font of size fontsize.
-func New(sp *svg.SVG, width, height int, font string, fontsize int) *SvgGraphics {
+func New(sp *svg.SVG, width, height int, font string, fontsize int, background image.RGBAColor) *SvgGraphics {
 	if font == "" {
 		font = "Helvetica"
 	}
 	if fontsize == 0 {
 		fontsize = 12
 	}
-	s := SvgGraphics{svg: sp, w: width, h: height, font: font, fs: fontsize}
+	s := SvgGraphics{svg: sp, w: width, h: height, font: font, fs: fontsize, bg: background}
 	return &s
+}
+
+// AddTo returns a new ImageGraphics which will write to (width x height) sized
+// area starting at (x,y) on the provided SVG
+func AddTo(sp *svg.SVG, x, y, width, height int, font string, fontsize int, background image.RGBAColor) *SvgGraphics {
+	s := New(sp, width, height, font, fontsize, background)
+	s.tx, s.ty = x, y
+	return s
 }
 
 func (sg *SvgGraphics) Begin() {
 	font, fs := sg.font, sg.fs
 	if font == "" {
-		font = "Arial"
+		font = "Helvetica"
 	}
 	if fs == 0 {
 		fs = 12
 	}
 	sg.svg.Gstyle(fmt.Sprintf("stroke:#000000; stroke-width:1; font-family: %s; font-size: %d; opacity: 1; fill-opacity: 1",
 		font, fs))
+	if sg.tx != 0 || sg.ty != 0 {
+		sg.svg.Gtransform(fmt.Sprintf("translate(%d %d)", sg.tx, sg.ty))
+	}
+
+	bgc := fmt.Sprintf("#%02x%02x%02x", sg.bg.R>>8, sg.bg.G>>8, sg.bg.B>>8)
+	opa := fmt.Sprintf("%.4f", float64(sg.bg.A>>8)/255)
+	bgs := fmt.Sprintf("stroke: %s; opacity: %s; fill: %s; fill-opacity: %s", bgc, opa, bgc, opa)
+	sg.svg.Rect(0, 0, sg.w, sg.h, bgs)
 }
 
 func (sg *SvgGraphics) End() {
 	sg.svg.Gend()
+	if sg.tx != 0 || sg.ty != 0 {
+		sg.svg.Gend()
+	}
+}
+
+func (sg *SvgGraphics) Background() (r, g, b, a uint8) {
+	return uint8(sg.bg.R >> 8), uint8(sg.bg.G >> 8), uint8(sg.bg.B >> 8), uint8(sg.bg.A >> 8)
 }
 
 func (sg *SvgGraphics) Dimensions() (int, int) {
@@ -89,7 +114,6 @@ func (sg *SvgGraphics) FontMetrics(font chart.Font) (fw float32, fh int, mono bo
 func (sg *SvgGraphics) TextLen(t string, font chart.Font) int {
 	return chart.GenericTextLen(sg, t, font)
 }
-
 
 var dashlength [][]int = [][]int{[]int{}, []int{4, 1}, []int{1, 1}, []int{4, 1, 1, 1, 1, 1}, []int{4, 4}, []int{1, 3}}
 
@@ -228,6 +252,23 @@ func (sg *SvgGraphics) Rect(x, y, w, h int, style chart.Style) {
 	// GenericRect(sg, x, y, w, h, style) // TODO
 }
 
+func (sg *SvgGraphics) Path(x, y []int, style chart.Style) {
+	n := len(x)
+	if len(y) < n {
+		n = len(y)
+	}
+	path := fmt.Sprintf("M %d,%d", x[0], y[0])
+	for i := 1; i < n; i++ {
+		path += fmt.Sprintf("L %d,%d", x[i], y[i])
+	}
+	st := linestyle(style)
+	sg.svg.Path(path, st)
+}
+
+func (sg *SvgGraphics) Wedge(x, y, ro, ri int, phi, psi float64, style chart.Style) {
+	panic("No Wedge() for SvgGraphics.")
+}
+
 func (sg *SvgGraphics) Title(text string) {
 	font := chart.DefaultFont["title"]
 	_, fh, _ := sg.FontMetrics(font)
@@ -259,6 +300,9 @@ func linestyle(style chart.Style) (s string) {
 }
 
 func (sg *SvgGraphics) Scatter(points []chart.EPoint, plotstyle chart.PlotStyle, style chart.Style) {
+	chart.GenericScatter(sg, points, plotstyle, style)
+
+	/***********************************************
 	// First pass: Error bars
 	ebs := style
 	ebs.LineColor, ebs.LineWidth, ebs.LineStyle = ebs.FillColor, 1, chart.SolidLine
@@ -296,7 +340,7 @@ func (sg *SvgGraphics) Scatter(points []chart.EPoint, plotstyle chart.PlotStyle,
 		}
 	}
 
-	// chart.GenericScatter(sg, points, plotstyle, style)
+	****************************************************/
 }
 
 func (sg *SvgGraphics) Boxes(boxes []chart.Box, width int, style chart.Style) {
@@ -310,7 +354,6 @@ func (sg *SvgGraphics) Key(x, y int, key chart.Key) {
 func (sg *SvgGraphics) Bars(bars []chart.Barinfo, style chart.Style) {
 	chart.GenericBars(sg, bars, style)
 }
-
 
 func (sg *SvgGraphics) Rings(wedges []chart.Wedgeinfo, x, y, ro, ri int) {
 	for _, w := range wedges {

@@ -30,7 +30,6 @@ func maximum(data []float64) float64 {
 	return max
 }
 
-
 func imin(a, b int) int {
 	if a < b {
 		return a

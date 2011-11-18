@@ -119,7 +119,6 @@ func (d *Style) empty() bool {
 	return d.Symbol == 0 && d.SymbolColor == "" && d.LineStyle == 0 && d.LineColor == "" && d.FillColor == "" && d.SymbolSize == 0
 }
 
-
 // Standard colors used by AutoStyle
 var StandardColors = []string{"#cc0000", "#00bb00", "#0000dd", "#996600", "#bb00bb", "#00aaaa", "#aaaa00"}
 
@@ -131,7 +130,6 @@ var StandardSymbols = []int{'o', '=', '%', '&', '+', 'X', '*', '@', '#', 'A', 'Z
 
 // How much brighter/darker filled elements become.
 var StandardFillFactor = 0.5
-
 
 // AutoStyle produces a styles based on StandardColors, StandardLineStyles, and StandardSymbols.
 // Call with fill = true for charts with filled elements (hist, bar, cbar, pie).
@@ -278,7 +276,6 @@ func Color2rgb(color string) (r, g, b int) {
 	// fmt.Printf("%s  -->  %d %d %d\n", color,r,g,b)
 	return
 }
-
 
 func lighter(color string, f float64) string {
 	r, g, b := Color2rgb(color)

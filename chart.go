@@ -10,9 +10,9 @@ import (
 
 // Chart ist the very simple interface for all charts: They can be plotted to a graphics output.
 type Chart interface {
-	Plot(g Graphics)
+	Plot(g Graphics) // Output chart to g
+	Reset()          // Reset any setting made during last plot
 }
-
 
 type Expansion int
 
@@ -68,11 +68,13 @@ type TicSetting struct {
 	Minor  int        // 0: off, 1: auto, >1: number of intervalls (not number of tics!)
 	Delta  float64    // Wanted step between major tics. 0 means auto 
 	TDelta TimeDelta  // Same as Delta, used for Date/Time axis
-	Grid   int        // 0: none, 1: lines, 2: blocks
+	Grid   GridMode   // GridOff, GridLines, GridBlocks
 	Mirror MirrorAxis // 0: mirror axis and tics, -1: don't mirror anything, 1: mirror axis only (no tics)
 
 	Format  func(float64) string               // User function to format tics.
 	TFormat func(*time.Time, TimeDelta) string // User function to format tics for date/time axis
+
+	UserDelta bool // true if Delta or TDelta was input
 }
 
 // Tic describs a single tic on an axis.
@@ -114,9 +116,29 @@ func (r *Range) Fixed(min, max, delta float64) {
 	r.TicSetting.Delta = delta
 }
 
+func (r *Range) TFixed(min, max *time.Time, delta TimeDelta) {
+	r.MinMode.Fixed, r.MaxMode.Fixed = true, true
+	r.MinMode.TValue, r.MaxMode.TValue = min, max
+	r.TicSetting.TDelta = delta
+}
+
+// Reset resets the fields in r which have been set up during a plot.
+func (r *Range) Reset() {
+	r.Min, r.Max = 0, 0
+	r.TMin, r.TMax = nil, nil
+	r.Tics = nil
+	r.Norm, r.InvNorm = nil, nil
+	r.Data2Screen, r.Screen2Data = nil, nil
+
+	if !r.TicSetting.UserDelta {
+		r.TicSetting.Delta = 0
+		r.TicSetting.TDelta = nil
+	}
+}
 
 // Prepare the range r for use, especially set up all values needed for autoscale() to work properly
-func (r *Range) init() {
+func (r *Range) init() { r.Init() }
+func (r *Range) Init() {
 	// All the min stuff
 	if r.MinMode.Fixed {
 		// copy TValue to Value if set and time axis
@@ -170,7 +192,6 @@ func (r *Range) init() {
 	// fmt.Printf("At end of init: DataMin / DataMax  =   %g / %g\n", r.DataMin, r.DataMax)
 }
 
-
 // Update DataMin and DataMax according to the RangeModes.
 func (r *Range) autoscale(x float64) {
 
@@ -192,7 +213,6 @@ func (r *Range) autoscale(x float64) {
 		}
 	}
 }
-
 
 // Units are the SI prefixes for 10^3n
 var Units = []string{" y", " z", " a", " f", " p", " n", " µ", "m", " k", " M", " G", " T", " P", " E", " Z", " Y"}
@@ -230,7 +250,6 @@ func FmtFloat(f float64) string {
 func almostEqual(a, b, d float64) bool {
 	return math.Fabs(a-b) < d
 }
-
 
 // applyRangeMode returns val constrained by mode. val is considered the upper end of an range/axis
 // if upper is true. To allow proper rounding to tic (depending on desired RangeMode)
@@ -307,7 +326,6 @@ func applyRangeMode(mode RangeMode, val, ticDelta float64, upper, log bool) floa
 	return val
 }
 
-
 // tApplyRangeMode is the same as applyRangeMode for date/time axis/ranges.
 func tApplyRangeMode(mode RangeMode, val *time.Time, step TimeDelta, upper bool) (bound *time.Time, tic *time.Time) {
 	if mode.Fixed {
@@ -375,13 +393,17 @@ func f2d(x float64) string {
 	return t.Format("2006-01-02 15:04:05 (Mon)")
 }
 
-
 func (r *Range) tSetup(desiredNumberOfTics, maxNumberOfTics int, delta, mindelta float64) {
+	debug.Printf("Data: [ %s : %s ] --> delta/mindelta = %.3g/%.3g (desired %d/max %d)\n",
+		f2d(r.DataMin), f2d(r.DataMax), delta, mindelta, desiredNumberOfTics, maxNumberOfTics)
+
 	var td TimeDelta
 	if r.TicSetting.TDelta != nil {
 		td = r.TicSetting.TDelta
+		r.TicSetting.UserDelta = true
 	} else {
 		td = MatchingTimeDelta(delta, 3)
+		r.TicSetting.UserDelta = false
 	}
 	r.ShowLimits = true
 
@@ -399,10 +421,9 @@ func (r *Range) tSetup(desiredNumberOfTics, maxNumberOfTics int, delta, mindelta
 	actNumTics := int((r.Max - r.Min) / ftd)
 	if actNumTics > maxNumberOfTics {
 		// recalculate time tic delta
-		// debug.Printf("Switching to next (%d > %d) delta from %s", actNumTics, maxNumberOfTics, td)
+		debug.Printf("Switching from %s no next larger step %s", td, NextTimeDelta(td))
 		td = NextTimeDelta(td)
 		ftd = float64(td.Seconds())
-		// debug.Printf("  -->  %s\n", td)
 		r.TMin, ftic = tApplyRangeMode(r.MinMode, mint, td, false)
 		r.TMax, ltic = tApplyRangeMode(r.MaxMode, maxt, td, true)
 		r.TicSetting.Delta, r.TicSetting.TDelta = float64(td.Seconds()), td
@@ -410,9 +431,10 @@ func (r *Range) tSetup(desiredNumberOfTics, maxNumberOfTics int, delta, mindelta
 		actNumTics = int((r.Max - r.Min) / ftd)
 	}
 
-	// debug.Printf("TimeRange: %s TO %s --> %s TO %s  Delta: %s  Tics: %s to %s\n",
-	//	f2d(r.DataMin), f2d(r.DataMax), f2d(r.Min), f2d(r.Max), td,
-	//	ftic.Format("2006-01-02 15:04:05 (Mon)"), ltic.Format("2006-01-02 15:04:05 (Mon)"))
+	debug.Printf("DataRange:  %s  TO  %s", f2d(r.DataMin), f2d(r.DataMax))
+	debug.Printf("AxisRange:  %s  TO  %s", f2d(r.Min), f2d(r.Max))
+	debug.Printf("TicsRange:  %s  TO  %s  Step  %s",
+		ftic.Format("2006-01-02 15:04:05 (Mon)"), ltic.Format("2006-01-02 15:04:05 (Mon)"), td)
 
 	// Set up tics
 	r.Tics = make([]Tic, 0)
@@ -426,7 +448,7 @@ func (r *Range) tSetup(desiredNumberOfTics, maxNumberOfTics int, delta, mindelta
 		formater = func(t *time.Time, td TimeDelta) string { return td.Format(t) }
 	}
 
-	for i := 0; ftic.Seconds() <= ltic.Seconds(); i++ {
+	for i := 0; ftic.Seconds() < ltic.Seconds(); i++ {
 		x := float64(ftic.Seconds())
 		label := formater(ftic, td)
 		var labelPos float64
@@ -438,9 +460,17 @@ func (r *Range) tSetup(desiredNumberOfTics, maxNumberOfTics int, delta, mindelta
 		t := Tic{Pos: x, LabelPos: labelPos, Label: label, Align: align}
 		r.Tics = append(r.Tics, t)
 		ftic = RoundDown(time.SecondsToLocalTime(ftic.Seconds()+step+step/5), td)
-		if i > maxNumberOfTics+3 {
-			break
-		}
+	}
+	// last tic might not get label if period
+	if td.Period() {
+		r.Tics = append(r.Tics, Tic{Pos: float64(ftic.Seconds())})
+	} else {
+		x := float64(ftic.Seconds())
+		label := formater(ftic, td)
+		var labelPos float64
+		labelPos = x
+		t := Tic{Pos: x, LabelPos: labelPos, Label: label, Align: align}
+		r.Tics = append(r.Tics, t)
 	}
 }
 
@@ -483,15 +513,24 @@ func (r *Range) fDelta(delta, mindelta float64) float64 {
 
 // Set up normal (=non date/time axis)
 func (r *Range) fSetup(desiredNumberOfTics, maxNumberOfTics int, delta, mindelta float64) {
+	debug.Printf("Data: [ %.5g : %.5g ] --> delta/mindelta = %.3g/%.3g (desired %d/max %d)\n",
+		r.DataMin, r.DataMax, delta, mindelta, desiredNumberOfTics, maxNumberOfTics)
 	if r.TicSetting.Delta != 0 {
 		delta = r.TicSetting.Delta
+		r.TicSetting.UserDelta = true
 	} else {
 		delta = r.fDelta(delta, mindelta)
+		r.TicSetting.UserDelta = false
 	}
 
 	r.Min = applyRangeMode(r.MinMode, r.DataMin, delta, false, r.Log)
 	r.Max = applyRangeMode(r.MaxMode, r.DataMax, delta, true, r.Log)
 	r.TicSetting.Delta = delta
+
+	debug.Printf("DataRange:  %.6g  TO  %.6g", r.DataMin, r.DataMax)
+	debug.Printf("AxisRange:  %.6g  TO  %.6g", r.Min, r.Max)
+	debug.Printf("TicsRange:  %.6g  TO  %.6g  Step  %.6g")
+
 	formater := FmtFloat
 	if r.TicSetting.Format != nil {
 		formater = r.TicSetting.Format
@@ -500,6 +539,7 @@ func (r *Range) fSetup(desiredNumberOfTics, maxNumberOfTics int, delta, mindelta
 	if r.Log {
 		x := math.Pow10(int(math.Ceil(math.Log10(r.Min))))
 		last := math.Pow10(int(math.Floor(math.Log10(r.Max))))
+		debug.Printf("TicsRange:  %.6g  TO  %.6g  Factor  %.6g", x, last, delta)
 		r.Tics = make([]Tic, 0, maxNumberOfTics)
 		for ; x <= last; x = x * delta {
 			t := Tic{Pos: x, LabelPos: x, Label: formater(x)}
@@ -509,6 +549,7 @@ func (r *Range) fSetup(desiredNumberOfTics, maxNumberOfTics int, delta, mindelta
 
 	} else {
 		if len(r.Category) > 0 {
+			debug.Printf("TicsRange:  %d categorical tics.", len(r.Category))
 			r.Tics = make([]Tic, len(r.Category))
 			for i, c := range r.Category {
 				x := float64(i)
@@ -527,8 +568,7 @@ func (r *Range) fSetup(desiredNumberOfTics, maxNumberOfTics int, delta, mindelta
 			// normal numeric axis
 			first := delta * math.Ceil(r.Min/delta)
 			num := int(-first/delta + math.Floor(r.Max/delta) + 1.5)
-			// debug.Printf("Range: (%.3f,%.3f) --> (%g,%g), Tic-Delta: %g, %d tics from %g\n",
-			//	r.DataMin, r.DataMax, r.Min, r.Max, delta, num, first)
+			debug.Printf("TicsRange:  %.6g  TO  %.6g  Step  %.6g", first, first+float64(num)*delta, delta)
 
 			// Set up tics
 			r.Tics = make([]Tic, num)
@@ -540,7 +580,6 @@ func (r *Range) fSetup(desiredNumberOfTics, maxNumberOfTics int, delta, mindelta
 		// TODO(vodo) r.ShowLimits = true
 	}
 }
-
 
 // SetUp sets up several fields of Range r according to RangeModes and TicSettings.
 // DataMin and DataMax of r must be present and should indicate lowest and highest
@@ -570,9 +609,6 @@ func (r *Range) Setup(desiredNumberOfTics, maxNumberOfTics, sWidth, sOffset int,
 	}
 	delta := (r.DataMax - r.DataMin) / float64(desiredNumberOfTics-1)
 	mindelta := (r.DataMax - r.DataMin) / float64(maxNumberOfTics-1)
-
-	// debug.Printf("Data: [%.2f:%.2f] --> delta/mindelta = %.2f/%.2f (desired %d/max %d)\n",
-	// 	r.DataMin, r.DataMax, delta, mindelta, desiredNumberOfTics, maxNumberOfTics)
 
 	if r.Time {
 		r.tSetup(desiredNumberOfTics, maxNumberOfTics, delta, mindelta)
@@ -607,7 +643,6 @@ func (r *Range) Setup(desiredNumberOfTics, maxNumberOfTics, sWidth, sOffset int,
 
 }
 
-
 // LayoutData encapsulates the layout of the graph area in the whole drawing area.
 type LayoutData struct {
 	Width, Height      int // width and height of graph area
@@ -615,7 +650,6 @@ type LayoutData struct {
 	KeyX, KeyY         int // x and y coordiante of key
 	NumXtics, NumYtics int // suggested numer of tics for both axis
 }
-
 
 // Layout graph data area on screen and place key.
 func layout(g Graphics, title, xlabel, ylabel string, hidextics, hideytics bool, key *Key) (ld LayoutData) {
@@ -732,7 +766,6 @@ func layout(g Graphics, title, xlabel, ylabel string, hidextics, hideytics bool,
 	return
 }
 
-
 // Debugging and tracing
 type debugging bool
 
@@ -740,6 +773,16 @@ const debug debugging = true
 
 func (d debugging) Printf(fmt string, args ...interface{}) {
 	if d {
+		log.Printf(fmt, args...)
+	}
+}
+
+type tracing bool
+
+const trace tracing = true
+
+func (t tracing) Printf(fmt string, args ...interface{}) {
+	if t {
 		log.Printf(fmt, args...)
 	}
 }

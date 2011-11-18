@@ -6,7 +6,6 @@ import (
 	"github.com/vdobler/chart"
 )
 
-
 // TextGraphics
 type TextGraphics struct {
 	tb   *TextBuf // the underlying text buffer
@@ -23,12 +22,12 @@ func New(w, h int) *TextGraphics {
 	return &tg
 }
 
-
 func (g *TextGraphics) Begin() {
 	g.tb = NewTextBuf(g.w, g.h)
 }
 
-func (g *TextGraphics) End() {}
+func (g *TextGraphics) End()                            {}
+func (tg *TextGraphics) Background() (r, g, b, a uint8) { return 255, 255, 255, 255 }
 func (g *TextGraphics) Dimensions() (int, int) {
 	return g.w, g.h
 }
@@ -40,13 +39,19 @@ func (g *TextGraphics) TextLen(t string, font chart.Font) int {
 	return len(t)
 }
 
-
 func (g *TextGraphics) Line(x0, y0, x1, y1 int, style chart.Style) {
 	symbol := style.Symbol
 	if symbol < ' ' || symbol > '~' {
 		symbol = 'x'
 	}
 	g.tb.Line(x0, y0, x1, y1, symbol)
+}
+func (g *TextGraphics) Path(x, y []int, style chart.Style) {
+	chart.GenericPath(g, x, y, style)
+}
+
+func (g *TextGraphics) Wedge(x, y, ro, ri int, phi, psi float64, style chart.Style) {
+	chart.GenericWedge(g, x, y, ro, ri, phi, psi, CircleStretchFactor, style)
 }
 
 func (g *TextGraphics) Text(x, y int, t string, align string, rot int, font chart.Font) {
@@ -312,16 +317,16 @@ func (g *TextGraphics) Boxes(boxes []chart.Box, width int, style chart.Style) {
 	}
 }
 
-
 func (g *TextGraphics) Key(x, y int, key chart.Key) {
 	m := key.Place()
 	if len(m) == 0 {
 		return
 	}
 	tw, th, cw, rh := key.Layout(g, m)
+	// fmt.Printf("Text-Key:  %d x %d\n", tw,th)
 	style := chart.DefaultStyle["key"]
 	if style.LineWidth > 0 || style.FillColor != "" {
-		g.tb.Rect(x, y, tw, th, 1, ' ')
+		g.tb.Rect(x, y, tw, th-1, 1, ' ')
 	}
 	x += int(chart.KeyHorSep)
 	vsep := chart.KeyVertSep
