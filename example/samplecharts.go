@@ -10,6 +10,7 @@ import (
 	"github.com/vdobler/chart/txtg"
 	"image"
 	"image/color"
+	"image/draw"
 	"image/jpeg"
 	"image/png"
 	"math"
@@ -79,11 +80,11 @@ func stripChart() {
 	thesvg.End()
 	file.Close()
 
-	jpgf, _ := os.Create("jpeg.jpg")
+	pngf, _ := os.Create("xstrip1.png")
 	ig := imgg.New(600, 400, color.RGBA{220, 220, 220, 255})
 	c.Plot(ig)
-	jpeg.Encode(jpgf, ig.Image, &jpeg.Options{98})
-	jpgf.Close()
+	png.Encode(pngf, ig.Image)
+	pngf.Close()
 }
 
 //
@@ -974,53 +975,96 @@ func logAxis() {
 	file.Close()
 }
 
+type Dumper struct {
+	N, M                      int
+	W, H                      int
+	Cnt                       int
+	S                         *svg.SVG
+	I                         *image.RGBA
+	svgFile, imgFile, txtFile *os.File
+}
+
+func NewDumper(name string, n, m, w, h int) *Dumper {
+	var err error
+	dumper := Dumper{N: n, M: m, W: w, H: h}
+
+	dumper.svgFile, err = os.Create(name + ".svg")
+	if err != nil {
+		panic(err)
+	}
+	dumper.S = svg.New(dumper.svgFile)
+	dumper.S.Start(n*w, m*h)
+	dumper.S.Title(name)
+	dumper.S.Rect(0, 0, n*w, m*h, "fill: #ffffff")
+
+	dumper.imgFile, err = os.Create(name + ".png")
+	if err != nil {
+		panic(err)
+	}
+	dumper.I = image.NewRGBA(image.Rect(0, 0, n*w, m*h))
+	bg := image.NewUniform(color.RGBA{0xff, 0xff, 0xff, 0xff})
+	draw.Draw(dumper.I, dumper.I.Bounds(), bg, image.ZP, draw.Src)
+
+	dumper.txtFile, err = os.Create(name + ".txt")
+	if err != nil {
+		panic(err)
+	}
+
+	return &dumper
+}
+func (d *Dumper) Close() {
+	png.Encode(d.imgFile, d.I)
+	d.imgFile.Close()
+
+	d.S.End()
+	d.svgFile.Close()
+
+	d.txtFile.Close()
+}
+
+func (d *Dumper) Plot(c chart.Chart) {
+	row, col := d.Cnt/d.N, d.Cnt%d.N
+
+	igr := imgg.AddTo(d.I, col*d.W, row*d.H, d.W, d.H, color.RGBA{0xff, 0xff, 0xff, 0xff})
+	c.Plot(igr)
+
+	sgr := svgg.AddTo(d.S, col*d.W, row*d.H, d.W, d.H, "", 12, color.RGBA{0xff, 0xff, 0xff, 0xff})
+	c.Plot(sgr)
+
+	tgr := txtg.New(100, 30)
+	c.Plot(tgr)
+	d.txtFile.Write([]byte(tgr.String() + "\n\n\n"))
+
+	d.Cnt++
+
+}
+
 func pieChart() {
-	file, _ := os.Create("xpie1.svg")
-	thesvg := svg.New(file)
-	thesvg.Start(800, 600)
-	thesvg.Title("Pie Charts")
-	thesvg.Rect(0, 0, 800, 600, "fill: #ffffff")
-	svggraphics := svgg.New(thesvg, 400, 300, "Arial", 12, Background)
-	txtgraphics := txtg.New(120, 30)
+	dumper := NewDumper("xpie1", 2, 2, 500, 250)
 
 	pc := chart.PieChart{Title: "Some Pies"}
 	pc.AddDataPair("Data1", []string{"2009", "2010", "2011"}, []float64{10, 20, 30})
 	pc.Inner = 0.75
-	pc.Plot(svggraphics)
-	pc.Plot(txtgraphics)
-	fmt.Printf("%s\n", txtgraphics.String())
+	dumper.Plot(&pc)
 
-	thesvg.Gtransform("translate(400 0)")
-	pc.Inner = 0
 	piec := chart.PieChart{Title: "Some Pies"}
-	piec.AddDataPair("Europe", []string{"D", "AT", "CH", "F", "E", "I"}, []float64{10, 20, 30, 35, 15, 25})
+	piec.AddDataPair("Europe",
+		[]string{"D", "AT", "CH", "F", "E", "I"},
+		[]float64{10, 20, 30, 35, 15, 25})
 	piec.Data[0].Samples[3].Flag = true
-	piec.Plot(svggraphics)
-	piec.Plot(txtgraphics)
-	fmt.Printf("%s\n", txtgraphics.String())
-	thesvg.Gend()
+	dumper.Plot(&piec)
 
-	thesvg.Gtransform("translate(0 300)")
 	piec.Inner = 0.5
 	piec.FmtVal = chart.AbsoluteValue
-	piec.Plot(svggraphics)
-	piec.Plot(txtgraphics)
-	fmt.Printf("%s\n", txtgraphics.String())
-	thesvg.Gend()
+	dumper.Plot(&piec)
 
-	piec.AddDataPair("America", []string{"North", "Middel", "South"}, []float64{20, 10, 15})
-	thesvg.Gtransform("translate(400 300)")
 	piec.Inner = 0.65
 	piec.Key.Cols = 2
 	piec.FmtVal = chart.PercentValue
 	chart.PieChartShrinkage = 0.45
-	piec.Plot(svggraphics)
-	piec.Plot(txtgraphics)
-	fmt.Printf("%s\n", txtgraphics.String())
-	thesvg.Gend()
+	dumper.Plot(&piec)
 
-	thesvg.End()
-	file.Close()
+	dumper.Close()
 }
 
 func textlen() {
@@ -1260,17 +1304,16 @@ func bestOf() {
 	// Output all charts as image
 	canvas := image.NewRGBA(image.Rect(0, 0, N*width, M*height))
 	white := color.RGBA{0xff, 0xff, 0xff, 0xff}
-	for y := 0; y < M*height; y++ {
-		for x := 0; x < N*width; x++ {
-			canvas.Set(x, y, white)
-		}
-	}
+	draw.Draw(canvas, canvas.Bounds(), image.NewUniform(white), image.ZP, draw.Src)
+
 	for i, c := range charts {
 		row, col := i/N, i%N
 		gr := imgg.AddTo(canvas, col*width, row*height, width, height, white)
 		c.Plot(gr)
 		c.Reset()
 	}
+
+	// save as jpg
 	cf, err := os.Create("xbestof.jpg")
 	if err != nil {
 		fmt.Printf("Cannot create xbestof.jpg: %s", err.Error())
@@ -1279,23 +1322,13 @@ func bestOf() {
 	jpeg.Encode(cf, canvas, &jpeg.Options{98})
 	cf.Close()
 
-	// Recode as png
-	canvas2 := image.NewNRGBA(image.Rect(0, 0, N*width, M*height))
-	for y := 0; y < M*height; y++ {
-		for x := 0; x < N*width; x++ {
-			r, g, b, _ := canvas.At(x, y).RGBA()
-			r >>= 8
-			g >>= 8
-			b >>= 8
-			canvas2.Set(x, y, color.NRGBA{uint8(r), uint8(g), uint8(b), uint8(255)})
-		}
-	}
+	// save as png
 	cf, err = os.Create("xbestof.png")
 	if err != nil {
 		fmt.Printf("Cannot create xbestof.png: %s", err.Error())
 		os.Exit(1)
 	}
-	png.Encode(cf, canvas2)
+	png.Encode(cf, canvas)
 	cf.Close()
 
 	// Output as svg

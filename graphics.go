@@ -2,6 +2,7 @@ package chart
 
 import (
 	"fmt"
+	"log"
 	"math"
 )
 
@@ -663,7 +664,7 @@ func GenericRings(bg BasicGraphics, wedges []Wedgeinfo, x, y, ro, ri int, eccent
 		a := math.Sin((w.Psi - w.Phi) / 2)
 		dx, dy := p*math.Cos((w.Phi+w.Psi)/2)/a, p*math.Sin((w.Phi+w.Psi)/2)/a
 		// debug.Printf("Center adjustment (lw=%d, p=%.2f), for wedge %d°-%d° of (%.1f,%.1f)", w.Style.LineWidth, p, int(180*w.Phi/math.Pi), int(180*w.Psi/math.Pi), dx, dy)
-		xi, yi := x+int(dx+0.5), y-int(dy+0.5)
+		xi, yi := x+int(dx+0.5), y+int(dy+0.5)
 		bg.Wedge(xi, yi, ro, ri, w.Phi, w.Psi, w.Style)
 
 		if w.Text != "" {
@@ -681,7 +682,7 @@ func GenericRings(bg BasicGraphics, wedges []Wedgeinfo, x, y, ro, ri int, eccent
 			}
 			// debug.Printf("Text %s at %d° r=%d", w.Text, int(180*alpha/math.Pi), rt)
 			tx := int(float64(rt)*math.Cos(alpha)*eccentricity+0.5) + x
-			ty := y - int(float64(rt)*math.Sin(alpha)+0.5)
+			ty := y + int(float64(rt)*math.Sin(alpha)+0.5)
 
 			bg.Text(tx, ty, w.Text, "cc", 0, w.Font)
 		}
@@ -730,6 +731,7 @@ func GenericSymbol(bg BasicGraphics, x, y int, style Style) {
 	}
 
 	style.LineColor = style.SymbolColor
+	log.Printf("GenericSymbol '%c', width %d, color %v", style.Symbol, style.LineWidth, style.LineColor)
 
 	const n = 5               // default size
 	a := int(n*f + 0.5)       // standard

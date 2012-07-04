@@ -1,6 +1,7 @@
 package imgg
 
 import (
+	"code.google.com/p/draw2d/draw2d"
 	"code.google.com/p/freetype-go/freetype"
 	"code.google.com/p/freetype-go/freetype/truetype"
 	"code.google.com/p/graphics-go/graphics"
@@ -20,24 +21,33 @@ type ImageGraphics struct {
 	x0, y0 int
 	w, h   int
 	bg     color.RGBA
+	gc     draw2d.GraphicContext
 }
 
 // New creates a new ImageGraphics of dimension w x h.
 func New(width, height int, background color.RGBA) *ImageGraphics {
 	_ = fmt.Sprintf("")
 	img := image.NewRGBA(image.Rect(0, 0, width, height))
-	for y := 0; y < height; y++ {
-		for x := 0; x < width; x++ {
-			img.Set(x, y, background)
-		}
-	}
-	return &ImageGraphics{Image: img, x0: 0, y0: 0, w: width, h: height, bg: background}
+	gc := draw2d.NewGraphicContext(img)
+	gc.SetLineJoin(draw2d.MiterJoin)
+	gc.SetLineCap(draw2d.SquareCap)
+	gc.SetStrokeColor(image.Black)
+	gc.SetFillColor(background)
+	gc.Clear()
+	return &ImageGraphics{Image: img, x0: 0, y0: 0, w: width, h: height,
+		bg: background, gc: gc}
 }
 
 // AddTo returns a new ImageGraphics which will write to (width x height) sized
 // area starting at (x,y) on the provided image img.
 func AddTo(img *image.RGBA, x, y, width, height int, background color.RGBA) *ImageGraphics {
-	return &ImageGraphics{Image: img, x0: x, y0: y, w: width, h: height, bg: background}
+	gc := draw2d.NewGraphicContext(img)
+	gc.SetStrokeColor(image.Black)
+	gc.SetFillColor(background)
+	gc.Translate(float64(x), float64(y))
+	gc.ClearRect(x, y, x+width, y+height)
+
+	return &ImageGraphics{Image: img, x0: x, y0: y, w: width, h: height, bg: background, gc: gc}
 }
 
 func (ig *ImageGraphics) Begin()                              {}
@@ -52,115 +62,38 @@ func (ig *ImageGraphics) TextLen(t string, font chart.Font) int {
 	return chart.GenericTextLen(ig, t, font)
 }
 
-func ddAndPat(style chart.Style) (d, dd int, pat []bool) {
-	var ok bool
-	if pat, ok = dashPattern[style.LineStyle]; !ok {
-		pat = dashPattern[chart.SolidLine]
-	}
-
-	d = (style.LineWidth - 1) / 2
-	dd = d
-	if style.LineWidth%2 == 0 {
-		dd++
-	}
-	return
+func (ig *ImageGraphics) setStyle(style chart.Style) {
+	ig.gc.SetStrokeColor(chart.Color2RGBA(style.LineColor, 0xff))
+	ig.gc.SetLineWidth(float64(style.LineWidth))
+	ig.gc.SetLineDash(dashPattern[style.LineStyle], 0)
 }
 
 func (ig *ImageGraphics) Line(x0, y0, x1, y1 int, style chart.Style) {
-	d, dd, pat := ddAndPat(style)
-	for xd := -d; xd <= dd; xd++ {
-		for yd := -d; yd <= dd; yd++ {
-			ig.oneLine(x0+xd, y0+yd, x1+xd, y1+yd, style, pat, 0)
-		}
+	if style.LineWidth <= 0 {
+		style.LineWidth = 1
 	}
+	ig.setStyle(style)
+	ig.gc.MoveTo(float64(x0)+0.5, float64(y0)+0.5)
+	ig.gc.LineTo(float64(x1)+0.5, float64(y1)+0.5)
+	ig.gc.Stroke()
 }
 
-var dashPattern map[int][]bool = map[int][]bool{
-	chart.SolidLine:      []bool{true},
-	chart.DashedLine:     []bool{true, true, true, true, true, true, true, true, false, false, false},
-	chart.DottedLine:     []bool{true, true, true, false, false, false},
-	chart.DashDotDotLine: []bool{true, true, true, true, true, true, false, false, true, true, false, false},
-	chart.LongDashLine: []bool{true, true, true, true, true, true, true, true,
-		false, false, false, false, false, false, false, false},
-	chart.LongDotLine: []bool{true, true, true, false, false, false, false, false, false},
-}
-
-func (ig *ImageGraphics) oneLine(x0, y0, x1, y1 int, style chart.Style, pat []bool, P int) int {
-	R, G, B := chart.Color2rgb(style.LineColor)
-	r, g, b := uint32(R), uint32(G), uint32(B)
-	alpha := uint32(0xff * style.Alpha)
-	N := len(pat)
-
-	// handle trivial cases first
-	if x0 == x1 {
-		if y0 > y1 {
-			y0, y1 = y1, y0
-		}
-		for ; y0 <= y1; y0++ {
-			if pat[P%N] {
-				ig.paint(ig.x0+x0, ig.y0+y0, r, g, b, alpha)
-				// ig.Image.Set(ig.x0+x0, ig.y0+y0, col)
-			}
-			P++
-		}
-		return P
-	}
-	if y0 == y1 {
-		if x0 > x1 {
-			x0, x1 = x1, x0
-		}
-		for ; x0 <= x1; x0++ {
-			if pat[P%N] {
-				ig.paint(ig.x0+x0, ig.y0+y0, r, g, b, alpha)
-				// ig.Image.Set(ig.x0+x0, ig.y0+y0, col)
-			}
-			P++
-		}
-		return P
-	}
-	dx, dy := abs(x1-x0), -abs(y1-y0)
-	sx, sy := sign(x1-x0), sign(y1-y0)
-	err, e2 := dx+dy, 0
-	for {
-		if pat[P%N] {
-			ig.paint(ig.x0+x0, ig.y0+y0, r, g, b, alpha)
-			// ig.Image.Set(ig.x0+x0, ig.y0+y0, col)
-		}
-		P++
-		// fmt.Printf("%d %d   %d %d\n", x0,y0, x1, y1)
-		if x0 == x1 && y0 == y1 {
-			return P
-		}
-		e2 = 2 * err
-		if e2 >= dy {
-			err += dy
-			x0 += sx
-		}
-		if e2 <= dx {
-			err += dx
-			y0 += sy
-		}
-
-	}
-	return 0
+var dashPattern map[int][]float64 = map[int][]float64{
+	chart.SolidLine:      nil, // []float64{10},
+	chart.DashedLine:     []float64{50, 20},
+	chart.DottedLine:     []float64{20, 20},
+	chart.DashDotDotLine: []float64{50, 20, 20, 20, 20, 20},
+	chart.LongDashLine:   []float64{50, 50},
+	chart.LongDotLine:    []float64{20, 50},
 }
 
 func (ig *ImageGraphics) Path(x, y []int, style chart.Style) {
-	n := min(len(x), len(y))
-	d, dd, pat := ddAndPat(style)
-
-	p := 0
-	for i := 1; i < n; i++ {
-		x0, y0 := x[i-1], y[i-1]
-		x1, y1 := x[i], y[i]
-		np := 0
-		for xd := -d; xd <= dd; xd++ {
-			for yd := -d; yd <= dd; yd++ {
-				np = ig.oneLine(x0+xd, y0+yd, x1+xd, y1+yd, style, pat, p)
-			}
-		}
-		p = np
+	ig.setStyle(style)
+	ig.gc.MoveTo(float64(x[0]), float64(y[0]))
+	for i := 1; i < len(x); i++ {
+		ig.gc.LineTo(float64(x[i]), float64(y[i]))
 	}
+	ig.gc.Stroke()
 }
 
 func (ig *ImageGraphics) Text(x, y int, t string, align string, rot int, f chart.Font) {
@@ -300,11 +233,58 @@ func (ig *ImageGraphics) Symbol(x, y int, style chart.Style) {
 }
 
 func (ig *ImageGraphics) Rect(x, y, w, h int, style chart.Style) {
-	chart.GenericRect(ig, x, y, w, h, style)
+	ig.setStyle(style)
+	stroke := func() { ig.gc.Stroke() }
+	if style.FillColor != "" {
+		ig.gc.SetFillColor(chart.Color2RGBA(style.FillColor, 0x0ff /*uint8(style.Alpha*255)*/))
+		stroke = func() { ig.gc.FillStroke() }
+	}
+	ig.gc.MoveTo(float64(x), float64(y))
+	ig.gc.LineTo(float64(x+w), float64(y))
+	ig.gc.LineTo(float64(x+w), float64(y+h))
+	ig.gc.LineTo(float64(x), float64(y+h))
+	ig.gc.LineTo(float64(x), float64(y))
+	stroke()
 }
 
-func (ig *ImageGraphics) Wedge(x, y, ro, ri int, phi, psi float64, style chart.Style) {
-	chart.GenericWedge(ig, x, y, ro, ri, phi, psi, 1, style)
+func (ig *ImageGraphics) Wedge(ix, iy, iro, iri int, phi, psi float64, style chart.Style) {
+	ig.setStyle(style)
+	stroke := func() { ig.gc.Stroke() }
+	if style.FillColor != "" {
+		ig.gc.SetFillColor(chart.Color2RGBA(style.FillColor, 0x0ff /*uint8(style.Alpha*255)*/))
+		stroke = func() { ig.gc.FillStroke() }
+	}
+
+	iri = 0
+	ecc := 1.0                           // eccentricity
+	x, y := float64(ix), float64(iy)     // center as float
+	ro, ri := float64(iro), float64(iri) // radius outer and inner as float
+	roe, rie := ro*ecc, ri*ecc           // inner and outer radius corrected by ecc
+
+	xao, yao := math.Cos(phi)*roe+x, y+math.Sin(phi)*ro
+	// xco, yco := math.Cos(psi)*roe+x, y-math.Sin(psi)*ro
+	xai, yai := math.Cos(phi)*rie+x, y+math.Sin(phi)*ri
+	xci, yci := math.Cos(psi)*rie+x, y+math.Sin(psi)*ri
+
+	// outbound straight line
+	if ri > 0 {
+		ig.gc.MoveTo(xai, yai)
+	} else {
+		ig.gc.MoveTo(x, y)
+	}
+	ig.gc.LineTo(xao, yao)
+
+	// outer arc
+	ig.gc.ArcTo(x, y, ro, roe, phi, psi-phi)
+
+	// inbound straight line
+	if ri > 0 {
+		ig.gc.LineTo(xci, yci)
+		ig.gc.ArcTo(x, y, ri, rie, psi, phi-psi)
+	} else {
+		ig.gc.LineTo(x, y)
+	}
+	stroke()
 }
 
 func (ig *ImageGraphics) Title(text string) {

@@ -2,6 +2,7 @@ package chart
 
 import (
 	"fmt"
+	"image/color"
 	"math"
 )
 
@@ -275,6 +276,11 @@ func Color2rgb(color string) (r, g, b int) {
 	}
 	// fmt.Printf("%s  -->  %d %d %d\n", color,r,g,b)
 	return
+}
+
+func Color2RGBA(col string, a uint8) color.RGBA {
+	r, g, b := Color2rgb(col)
+	return color.RGBA{uint8(r), uint8(g), uint8(b), a}
 }
 
 func lighter(color string, f float64) string {
