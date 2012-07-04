@@ -1,10 +1,9 @@
 package chart
 
 import (
-	"testing"
 	"fmt"
+	"testing"
 )
-
 
 func TestRgb2Hsv(t *testing.T) {
 	type rgbhsv struct{ r, g, b, h, s, v int }

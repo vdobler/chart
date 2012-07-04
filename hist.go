@@ -48,7 +48,7 @@ var (
 	// 1 - |x|
 	TriangularKernel = func(x float64) float64 {
 		if x >= -1 && x < 1 {
-			return 1 - math.Fabs(x)
+			return 1 - math.Abs(x)
 		}
 		return 0
 	}

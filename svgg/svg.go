@@ -2,10 +2,10 @@ package svgg
 
 import (
 	"fmt"
-	"image"
-	"math"
 	"github.com/ajstarks/svgo"
 	"github.com/vdobler/chart"
+	"image/color"
+	"math"
 )
 
 // SvgGraphics implements BasicGraphics and uses the generic implementations
@@ -14,12 +14,12 @@ type SvgGraphics struct {
 	w, h   int
 	font   string
 	fs     int
-	bg     image.RGBAColor
+	bg     color.RGBA
 	tx, ty int
 }
 
 // New creates a new SvgGraphics of dimension w x h, with a default font font of size fontsize.
-func New(sp *svg.SVG, width, height int, font string, fontsize int, background image.RGBAColor) *SvgGraphics {
+func New(sp *svg.SVG, width, height int, font string, fontsize int, background color.RGBA) *SvgGraphics {
 	if font == "" {
 		font = "Helvetica"
 	}
@@ -32,7 +32,7 @@ func New(sp *svg.SVG, width, height int, font string, fontsize int, background i
 
 // AddTo returns a new ImageGraphics which will write to (width x height) sized
 // area starting at (x,y) on the provided SVG
-func AddTo(sp *svg.SVG, x, y, width, height int, font string, fontsize int, background image.RGBAColor) *SvgGraphics {
+func AddTo(sp *svg.SVG, x, y, width, height int, font string, fontsize int, background color.RGBA) *SvgGraphics {
 	s := New(sp, width, height, font, fontsize, background)
 	s.tx, s.ty = x, y
 	return s
@@ -373,7 +373,7 @@ func (sg *SvgGraphics) Rings(wedges []chart.Wedgeinfo, x, y, ro, ri int) {
 			sf = "fill-opacity: 0"
 		}
 
-		if math.Fabs(w.Phi-w.Psi) >= 4*math.Pi {
+		if math.Abs(w.Phi-w.Psi) >= 4*math.Pi {
 			sg.svg.Circle(x, y, ro, s+sf)
 			if ri > 0 {
 				sf = "fill: #ffffff; fill-opacity: 1"

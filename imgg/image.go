@@ -1,10 +1,17 @@
 package imgg
 
 import (
-	"image"
+	"code.google.com/p/freetype-go/freetype"
+	"code.google.com/p/freetype-go/freetype/truetype"
+	"code.google.com/p/graphics-go/graphics"
 	"fmt"
-
 	"github.com/vdobler/chart"
+	"image"
+	"image/color"
+	"image/draw"
+	"io/ioutil"
+	"log"
+	"math"
 )
 
 // ImageGraphics implements BasicGraphics and uses the generic implementations
@@ -12,13 +19,13 @@ type ImageGraphics struct {
 	Image  *image.RGBA
 	x0, y0 int
 	w, h   int
-	bg     image.RGBAColor
+	bg     color.RGBA
 }
 
 // New creates a new ImageGraphics of dimension w x h.
-func New(width, height int, background image.RGBAColor) *ImageGraphics {
+func New(width, height int, background color.RGBA) *ImageGraphics {
 	_ = fmt.Sprintf("")
-	img := image.NewRGBA(width, height)
+	img := image.NewRGBA(image.Rect(0, 0, width, height))
 	for y := 0; y < height; y++ {
 		for x := 0; x < width; x++ {
 			img.Set(x, y, background)
@@ -29,7 +36,7 @@ func New(width, height int, background image.RGBAColor) *ImageGraphics {
 
 // AddTo returns a new ImageGraphics which will write to (width x height) sized
 // area starting at (x,y) on the provided image img.
-func AddTo(img *image.RGBA, x, y, width, height int, background image.RGBAColor) *ImageGraphics {
+func AddTo(img *image.RGBA, x, y, width, height int, background color.RGBA) *ImageGraphics {
 	return &ImageGraphics{Image: img, x0: x, y0: y, w: width, h: height, bg: background}
 }
 
@@ -160,78 +167,112 @@ func (ig *ImageGraphics) Text(x, y int, t string, align string, rot int, f chart
 	if len(align) == 1 {
 		align = "c" + align
 	}
-	fw, fh, _ := ig.FontMetrics(f)
+	// fw, fh, _ := ig.FontMetrics(f)
 	//fmt.Printf("Text '%s' at (%d,%d) %s\n", t, x,y, align)
 	// TODO: handle rot
 
-	if rot == 90 {
-		switch align[0] {
-		case 'b':
-			x -= fh
-		case 't':
-			y += 0
-		default:
-			x -= fh / 2
-		}
-		// TODO: rune count
-		switch align[1] {
-		case 'l':
-			y += 0
-		case 'r':
-			y += int(fw * float32(len(t)))
-		default:
-			y += int(fw / 2 * float32(len(t)))
+	size := 12
+	if f.Size < 0 {
+		size = 10
+	} else if f.Size > 0 {
+		size = 14
+	}
+	textImage := textBox(t, size)
+	bounds := textImage.Bounds()
+	w, h := bounds.Dx(), bounds.Dy()
+	var centerX, centerY int
+
+	if rot != 0 {
+		alpha := float64(rot) / 180 * math.Pi
+		cos := math.Cos(alpha)
+		sin := math.Sin(alpha)
+		hs, hc := float64(h)*sin, float64(h)*cos
+		ws, wc := float64(w)*sin, float64(w)*cos
+		W := int(math.Ceil(hs + wc))
+		H := int(math.Ceil(hc + ws))
+		rotated := image.NewAlpha(image.Rect(0, 0, W, H))
+		graphics.Rotate(rotated, textImage, &graphics.RotateOptions{-alpha})
+		textImage = rotated
+		centerX, centerY = W/2, H/2
+
+		switch align {
+		case "bl":
+			centerX, centerY = int(hs), H
+		case "bc":
+			centerX, centerY = W-int(wc/2), int(ws/2)
+		case "br":
+			centerX, centerY = W, int(hc)
+		case "tl":
+			centerX, centerY = 0, H-int(hc)
+		case "tc":
+			centerX, centerY = int(ws/2), H-int(ws/2)
+		case "tr":
+			centerX, centerY = W-int(hs), 0
+		case "cl":
+			centerX, centerY = int(hs/2), H-int(hc/2)
+		case "cr":
+			centerX, centerY = W-int(hs/2), int(hc/2)
 		}
 	} else {
+		centerX, centerY = w/2, h/2
 		switch align[0] {
 		case 'b':
-			y -= fh
+			centerY = h
 		case 't':
-			y += 0
-		default:
-			y -= fh / 2
+			centerY = 0
 		}
-		// TODO: rune count
 		switch align[1] {
 		case 'l':
-			x += 0
+			centerX = 0
 		case 'r':
-			x -= int(fw * float32(len(t)))
-		default:
-			x -= int(fw / 2 * float32(len(t)))
+			centerX = w
 		}
 	}
 
-	color := "#000000"
+	bounds = textImage.Bounds()
+	w, h = bounds.Dx(), bounds.Dy()
+	x -= centerX
+	y -= centerY
+	x += ig.x0
+	y += ig.y0
+
+	col := "#000000"
 	if f.Color != "" {
-		color = f.Color
+		col = f.Color
 	}
-	RR, GG, BB := chart.Color2rgb(color)
-	R, G, B := uint32(RR), uint32(GG), uint32(BB)
+	r, g, b := chart.Color2rgb(col)
+	tcol := image.NewUniform(color.RGBA{uint8(r), uint8(g), uint8(b), 255})
 
-	// ig.Text(x, y, t, trans, s)
-	var xx, yy int
-	for i, c := range t {
-		if _, ok := font[c]; !ok {
-			c = '?'
-		}
-		for l := 0; l < 15; l++ {
-			q := font[c][l]
-			for bit := 7; bit >= 0; bit-- {
-				v := uint32(q & 0xff)
-				if v > 0 {
-					if rot == 90 {
-						xx, yy = ig.x0+x+l, ig.y0+y-i*8-bit
-					} else {
-						xx, yy = ig.x0+x+i*8+bit, ig.y0+y+l
-					}
-					ig.paint(xx, yy, R, G, B, 0xff-v)
-				}
-				q >>= 8
-			}
-		}
+	draw.DrawMask(ig.Image, image.Rect(x, y, x+w, y+h), tcol, image.ZP,
+		textImage, textImage.Bounds().Min, draw.Over)
+}
+
+// textBox renders t into a tight fitting image
+func textBox(t string, size int) image.Image {
+	// Initialize the context.
+	fg := image.NewUniform(color.Alpha{0xff})
+	bg := image.NewUniform(color.Alpha{0x00})
+	canvas := image.NewAlpha(image.Rect(0, 0, 400, 40))
+	draw.Draw(canvas, canvas.Bounds(), bg, image.ZP, draw.Src)
+
+	c := freetype.NewContext()
+	c.SetDPI(dpi)
+	c.SetFont(theFont)
+	c.SetFontSize(float64(size))
+	c.SetClip(canvas.Bounds())
+	c.SetDst(canvas)
+	c.SetSrc(fg)
+
+	// Draw the text.
+	h := c.FUnitToPixelRU(theFont.UnitsPerEm())
+	pt := freetype.Pt(0, h)
+	extent, err := c.DrawString(t, pt)
+	if err != nil {
+		log.Println(err)
+		return nil
 	}
-
+	// log.Printf("text %q, extent: %v", t, extent)
+	return canvas.SubImage(image.Rect(0, 0, int(extent.X/256), h*5/4))
 }
 
 func (ig *ImageGraphics) paint(x, y int, R, G, B uint32, alpha uint32) {
@@ -251,7 +292,7 @@ func (ig *ImageGraphics) paint(x, y int, R, G, B uint32, alpha uint32) {
 	g >>= 8
 	b >>= 8
 	a >>= 8
-	ig.Image.Set(x, y, image.RGBAColor{uint8(r), uint8(g), uint8(b), uint8(a)})
+	ig.Image.Set(x, y, color.RGBA{uint8(r), uint8(g), uint8(b), uint8(a)})
 }
 
 func (ig *ImageGraphics) Symbol(x, y int, style chart.Style) {
@@ -329,4 +370,24 @@ func sign(a int) int {
 		return 0
 	}
 	return 1
+}
+
+var (
+	dpi      = 72
+	fontfile = "../../../../code.google.com/p/freetype-go/luxi-fonts/luximr.ttf"
+	size     = 14
+	theFont  *truetype.Font
+)
+
+func init() {
+	// Read the font data.
+	fontBytes, err := ioutil.ReadFile(fontfile)
+	if err != nil {
+		log.Println(err)
+	}
+	theFont, err = freetype.ParseFont(fontBytes)
+	if err != nil {
+		log.Println(err)
+	}
+	log.Println("Loaded Font")
 }

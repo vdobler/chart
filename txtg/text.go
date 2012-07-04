@@ -2,8 +2,8 @@ package txtg
 
 import (
 	"fmt"
-	"math"
 	"github.com/vdobler/chart"
+	"math"
 )
 
 // TextGraphics
@@ -44,7 +44,7 @@ func (g *TextGraphics) Line(x0, y0, x1, y1 int, style chart.Style) {
 	if symbol < ' ' || symbol > '~' {
 		symbol = 'x'
 	}
-	g.tb.Line(x0, y0, x1, y1, symbol)
+	g.tb.Line(x0, y0, x1, y1, rune(symbol))
 }
 func (g *TextGraphics) Path(x, y []int, style chart.Style) {
 	chart.GenericPath(g, x, y, style)
@@ -89,12 +89,12 @@ func (g *TextGraphics) Rect(x, y, w, h int, style chart.Style) {
 	// Border
 	if style.LineWidth > 0 {
 		for i := 0; i < w; i++ {
-			g.tb.Put(x+i, y, style.Symbol)
-			g.tb.Put(x+i, y+h-1, style.Symbol)
+			g.tb.Put(x+i, y, rune(style.Symbol))
+			g.tb.Put(x+i, y+h-1, rune(style.Symbol))
 		}
 		for i := 1; i < h-1; i++ {
-			g.tb.Put(x, y+i, style.Symbol)
-			g.tb.Put(x+w-1, y+i, style.Symbol)
+			g.tb.Put(x, y+i, rune(style.Symbol))
+			g.tb.Put(x+w-1, y+i, rune(style.Symbol))
 		}
 	}
 
@@ -111,7 +111,7 @@ func (g *TextGraphics) Rect(x, y, w, h int, style chart.Style) {
 		}
 		for i := 1; i < h-1; i++ {
 			for j := 1; j < w-1; j++ {
-				g.tb.Put(x+j, y+i, s)
+				g.tb.Put(x+j, y+i, rune(s))
 			}
 		}
 	}
@@ -122,7 +122,7 @@ func (g *TextGraphics) String() string {
 }
 
 func (g *TextGraphics) Symbol(x, y int, style chart.Style) {
-	g.tb.Put(x, y, style.Symbol)
+	g.tb.Put(x, y, rune(style.Symbol))
 }
 func (g *TextGraphics) Title(text string) {
 	x, y := g.w/2, 1
@@ -257,7 +257,7 @@ func (g *TextGraphics) Scatter(points []chart.EPoint, plotstyle chart.PlotStyle,
 		for i := 1; i < len(points); i++ {
 			x, y := int(points[i].X), int(points[i].Y)
 			// fmt.Printf("LineSegment %d (%d,%d) -> (%d,%d)\n", i, lastx,lasty,x,y)
-			g.tb.Line(lastx, lasty, x, y, style.Symbol)
+			g.tb.Line(lastx, lasty, x, y, rune(style.Symbol))
 			lastx, lasty = x, y
 		}
 	}
@@ -265,7 +265,7 @@ func (g *TextGraphics) Scatter(points []chart.EPoint, plotstyle chart.PlotStyle,
 	// Third pass: symbols
 	if (plotstyle&chart.PlotStylePoints) != 0 && len(points) != 0 {
 		for _, p := range points {
-			g.tb.Put(int(p.X), int(p.Y), style.Symbol)
+			g.tb.Put(int(p.X), int(p.Y), rune(style.Symbol))
 		}
 	}
 	// chart.GenericScatter(g, points, plotstyle, style)
@@ -295,7 +295,7 @@ func (g *TextGraphics) Boxes(boxes []chart.Box, width int, style chart.Style) {
 		}
 
 		if !math.IsNaN(box.Avg) && style.Symbol != 0 {
-			g.tb.Put(x, int(box.Avg), style.Symbol)
+			g.tb.Put(x, int(box.Avg), rune(style.Symbol))
 		}
 
 		if !math.IsNaN(box.High) {
@@ -312,7 +312,7 @@ func (g *TextGraphics) Boxes(boxes []chart.Box, width int, style chart.Style) {
 
 		for _, ol := range box.Outliers {
 			y := int(ol)
-			g.tb.Put(x, y, style.Symbol)
+			g.tb.Put(x, y, rune(style.Symbol))
 		}
 	}
 }
@@ -355,7 +355,7 @@ func (g *TextGraphics) Key(x, y int, key chart.Key) {
 					g.Symbol(x+int(chart.KeySymbolWidth/2), yy, e.Style)
 				}
 				if (plotStyle & chart.PlotStyleBox) != 0 {
-					g.tb.Put(x+int(chart.KeySymbolWidth/2), yy, e.Style.Symbol)
+					g.tb.Put(x+int(chart.KeySymbolWidth/2), yy, rune(e.Style.Symbol))
 				}
 				g.tb.Text(x+int((chart.KeySymbolWidth+chart.KeySymbolSep)), yy, e.Text, -1)
 			}

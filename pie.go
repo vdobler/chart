@@ -20,7 +20,7 @@ type PieChart struct {
 // AbsoluteValue will format value (ignoring sum).  It is a convenience function which
 // can be assigned to PieChart.FmtVal.
 func AbsoluteValue(value, sum float64) (s string) {
-	fv := math.Fabs(value)
+	fv := math.Abs(value)
 	switch {
 	case fv < 0.01:
 		s = fmt.Sprintf(" %g ", value)

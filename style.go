@@ -1,8 +1,8 @@
 package chart
 
 import (
-	"math"
 	"fmt"
+	"math"
 )
 
 // Symbol is the list of different symbols. 

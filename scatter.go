@@ -326,11 +326,11 @@ func screenPointFunc(xf, yf func(float64) int, xmin, xmax, ymin, ymax float64) (
 		var xo, yo float64
 
 		if xsl != xsh {
-			dx = math.Fabs(xsh - xsl)
+			dx = math.Abs(xsh - xsl)
 			xo = xsl - x + dx/2
 		}
 		if ysl != ysh {
-			dy = math.Fabs(ysh - ysl)
+			dy = math.Abs(ysh - ysl)
 			yo = ysh - y + dy/2
 		}
 		// fmt.Printf("  >> dx=%.0f  dy=%.0f   xo=%.0f  yo=%.0f\n", dx,dy,xo,yo)

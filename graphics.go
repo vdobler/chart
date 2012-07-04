@@ -75,8 +75,8 @@ func GenericTextLen(mg MinimalGraphics, t string, font Font) (width int) {
 		width = int(float32(width)*fw + 0.5)
 	} else {
 		var length float32
-		for _, rune := range t {
-			if w, ok := CharacterWidth[rune]; ok {
+		for _, r := range t {
+			if w, ok := CharacterWidth[int(r)]; ok {
 				length += w
 			} else {
 				length += 20 // save above average
@@ -502,7 +502,7 @@ func GenericWedge(mg MinimalGraphics, x, y, ro, ri int, phi, psi, ecc float64, s
 	xai, yai := int(math.Cos(phi)*rie)+x, y-int(math.Sin(phi)*rif)
 	xci, yci := int(math.Cos(psi)*rie)+x, y-int(math.Sin(psi)*rif)
 
-	if math.Fabs(phi-psi) >= 4*math.Pi {
+	if math.Abs(phi-psi) >= 4*math.Pi {
 		phi, psi = 0, 2*math.Pi
 	} else {
 		if ri > 0 {
@@ -628,7 +628,7 @@ func fillWedge(mg MinimalGraphics, xi, yi, ro, ri int, phi, psi, epsilon float64
 	for qPhi != qPsi {
 		// debug.Printf("qPhi = %d", qPhi)
 		w := float64(qPhi+1) * math.Pi / 2
-		if math.Fabs(w-phi) > 0.01 {
+		if math.Abs(w-phi) > 0.01 {
 			fillQuarterWedge(mg, xi, yi, ro, mapQ(phi, qPhi), mapQ(w, qPhi), epsilon, style, qPhi)
 			if ri > 0 {
 				fillQuarterWedge(mg, xi, yi, ri, mapQ(phi, qPhi), mapQ(w, qPhi), epsilon, blank, qPhi)

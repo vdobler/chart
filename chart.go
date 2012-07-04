@@ -36,13 +36,13 @@ var ExpandABitFraction = 0.5 // Fraction of tic spacing added in ExpandABit Rang
 // For both autoscaling modes Expand defines how much expansion is done below/above
 // the lowest/highest data point.
 type RangeMode struct {
-	Fixed          bool       // If false: autoscaling. If true: use (T)Value/TValue as fixed setting
-	Constrained    bool       // If false: full autoscaling. If true: use (T)Lower (T)Upper as limits
-	Expand         Expansion  // One of ExpandNextTic, ExpandTight, ExpandABit
-	Value          float64    // Value of end point of axis in Fixed=true mode, ignorder otherwise
-	TValue         *time.Time // Same as Value, but used for Date/Time axis
-	Lower, Upper   float64    // Lower and upper limit for constrained autoscaling
-	TLower, TUpper *time.Time // Same s Lower/Upper, but used for Date/Time axis
+	Fixed          bool      // If false: autoscaling. If true: use (T)Value/TValue as fixed setting
+	Constrained    bool      // If false: full autoscaling. If true: use (T)Lower (T)Upper as limits
+	Expand         Expansion // One of ExpandNextTic, ExpandTight, ExpandABit
+	Value          float64   // Value of end point of axis in Fixed=true mode, ignorder otherwise
+	TValue         time.Time // Same as Value, but used for Date/Time axis
+	Lower, Upper   float64   // Lower and upper limit for constrained autoscaling
+	TLower, TUpper time.Time // Same s Lower/Upper, but used for Date/Time axis
 }
 
 type GridMode int
@@ -71,8 +71,8 @@ type TicSetting struct {
 	Grid   GridMode   // GridOff, GridLines, GridBlocks
 	Mirror MirrorAxis // 0: mirror axis and tics, -1: don't mirror anything, 1: mirror axis only (no tics)
 
-	Format  func(float64) string               // User function to format tics.
-	TFormat func(*time.Time, TimeDelta) string // User function to format tics for date/time axis
+	Format  func(float64) string              // User function to format tics.
+	TFormat func(time.Time, TimeDelta) string // User function to format tics for date/time axis
 
 	UserDelta bool // true if Delta or TDelta was input
 }
@@ -97,9 +97,9 @@ type Range struct {
 	Category         []string   // If not empty (and neither Log nor Time): Use Category[n] as tic label at pos n+1.
 
 	// The following values are set up during plotting
-	Min, Max   float64    // Actual minium and maximum of this axis/range.
-	TMin, TMax *time.Time // Same as Min/Max, but used for Date/Time axis
-	Tics       []Tic      // List of tics to display
+	Min, Max   float64   // Actual minium and maximum of this axis/range.
+	TMin, TMax time.Time // Same as Min/Max, but used for Date/Time axis
+	Tics       []Tic     // List of tics to display
 
 	// The following functions are set up during plotting
 	Norm        func(float64) float64 // Function to map [Min:Max] to [0:1]
@@ -116,7 +116,7 @@ func (r *Range) Fixed(min, max, delta float64) {
 	r.TicSetting.Delta = delta
 }
 
-func (r *Range) TFixed(min, max *time.Time, delta TimeDelta) {
+func (r *Range) TFixed(min, max time.Time, delta TimeDelta) {
 	r.MinMode.Fixed, r.MaxMode.Fixed = true, true
 	r.MinMode.TValue, r.MaxMode.TValue = min, max
 	r.TicSetting.TDelta = delta
@@ -125,7 +125,7 @@ func (r *Range) TFixed(min, max *time.Time, delta TimeDelta) {
 // Reset resets the fields in r which have been set up during a plot.
 func (r *Range) Reset() {
 	r.Min, r.Max = 0, 0
-	r.TMin, r.TMax = nil, nil
+	r.TMin, r.TMax = time.Time{}, time.Time{}
 	r.Tics = nil
 	r.Norm, r.InvNorm = nil, nil
 	r.Data2Screen, r.Screen2Data = nil, nil
@@ -142,17 +142,17 @@ func (r *Range) Init() {
 	// All the min stuff
 	if r.MinMode.Fixed {
 		// copy TValue to Value if set and time axis
-		if r.Time && r.MinMode.TValue != nil {
-			r.MinMode.Value = float64(r.MinMode.TValue.Seconds())
+		if r.Time && !r.MinMode.TValue.IsZero() {
+			r.MinMode.Value = float64(r.MinMode.TValue.Unix())
 		}
 		r.DataMin = r.MinMode.Value
 	} else if r.MinMode.Constrained {
 		// copy TLower/TUpper to Lower/Upper if set and time axis
-		if r.Time && r.MinMode.TLower != nil {
-			r.MinMode.Lower = float64(r.MinMode.TLower.Seconds())
+		if r.Time && !r.MinMode.TLower.IsZero() {
+			r.MinMode.Lower = float64(r.MinMode.TLower.Unix())
 		}
-		if r.Time && r.MinMode.TUpper != nil {
-			r.MinMode.Upper = float64(r.MinMode.TUpper.Seconds())
+		if r.Time && !r.MinMode.TUpper.IsZero() {
+			r.MinMode.Upper = float64(r.MinMode.TUpper.Unix())
 		}
 		if r.MinMode.Lower == 0 && r.MinMode.Upper == 0 {
 			// Constrained but un-initialized: Full autoscaling
@@ -167,17 +167,17 @@ func (r *Range) Init() {
 	// All the max stuff
 	if r.MaxMode.Fixed {
 		// copy TValue to Value if set and time axis
-		if r.Time && r.MaxMode.TValue != nil {
-			r.MaxMode.Value = float64(r.MaxMode.TValue.Seconds())
+		if r.Time && !r.MaxMode.TValue.IsZero() {
+			r.MaxMode.Value = float64(r.MaxMode.TValue.Unix())
 		}
 		r.DataMax = r.MaxMode.Value
 	} else if r.MaxMode.Constrained {
 		// copy TLower/TUpper to Lower/Upper if set and time axis
-		if r.Time && r.MaxMode.TLower != nil {
-			r.MaxMode.Lower = float64(r.MaxMode.TLower.Seconds())
+		if r.Time && !r.MaxMode.TLower.IsZero() {
+			r.MaxMode.Lower = float64(r.MaxMode.TLower.Unix())
 		}
-		if r.Time && r.MaxMode.TUpper != nil {
-			r.MaxMode.Upper = float64(r.MaxMode.TUpper.Seconds())
+		if r.Time && !r.MaxMode.TUpper.IsZero() {
+			r.MaxMode.Upper = float64(r.MaxMode.TUpper.Unix())
 		}
 		if r.MaxMode.Lower == 0 && r.MaxMode.Upper == 0 {
 			// Constrained but un-initialized: Full autoscaling
@@ -219,7 +219,7 @@ var Units = []string{" y", " z", " a", " f", " p", " n", " µ", "m", " k", " M",
 
 // FmtFloat yields a string representation of f. E.g. 12345.67 --> "12.3 k";  0.09876 --> "99 m"
 func FmtFloat(f float64) string {
-	af := math.Fabs(f)
+	af := math.Abs(f)
 	if f == 0 {
 		return "0"
 	} else if 1 <= af && af < 10 {
@@ -230,14 +230,14 @@ func FmtFloat(f float64) string {
 
 	if af < 1 {
 		var p = 8
-		for math.Fabs(f) < 1 && p >= 0 {
+		for math.Abs(f) < 1 && p >= 0 {
 			f *= 1000
 			p--
 		}
 		return FmtFloat(f) + Units[p]
 	} else {
 		var p = 7
-		for math.Fabs(f) > 1000 && p < 16 {
+		for math.Abs(f) > 1000 && p < 16 {
 			f /= 1000
 			p++
 		}
@@ -248,7 +248,7 @@ func FmtFloat(f float64) string {
 }
 
 func almostEqual(a, b, d float64) bool {
-	return math.Fabs(a-b) < d
+	return math.Abs(a-b) < d
 }
 
 // applyRangeMode returns val constrained by mode. val is considered the upper end of an range/axis
@@ -327,7 +327,7 @@ func applyRangeMode(mode RangeMode, val, ticDelta float64, upper, log bool) floa
 }
 
 // tApplyRangeMode is the same as applyRangeMode for date/time axis/ranges.
-func tApplyRangeMode(mode RangeMode, val *time.Time, step TimeDelta, upper bool) (bound *time.Time, tic *time.Time) {
+func tApplyRangeMode(mode RangeMode, val time.Time, step TimeDelta, upper bool) (bound time.Time, tic time.Time) {
 	if mode.Fixed {
 		bound = mode.TValue
 		if upper {
@@ -338,13 +338,13 @@ func tApplyRangeMode(mode RangeMode, val *time.Time, step TimeDelta, upper bool)
 		return
 	}
 	if mode.Constrained { // TODO(vodo) use T...
-		sval := val.Seconds()
+		sval := val.Unix()
 		if sval < int64(mode.Lower) {
 			sval = int64(mode.Lower)
 		} else if sval > int64(mode.Upper) {
 			sval = int64(mode.Upper)
 		}
-		val = time.SecondsToLocalTime(sval)
+		val = time.Unix(sval, 0)
 	}
 
 	switch mode.Expand {
@@ -361,12 +361,12 @@ func tApplyRangeMode(mode RangeMode, val *time.Time, step TimeDelta, upper bool)
 		} else {
 			tic = RoundDown(val, step)
 		}
-		s := tic.Seconds()
-		if math.Fabs(float64(s-val.Seconds())/float64(step.Seconds())) < 0.15 {
+		s := tic.Unix()
+		if math.Abs(float64(s-val.Unix())/float64(step.Seconds())) < 0.15 {
 			if upper {
-				val = RoundUp(time.SecondsToLocalTime(s+step.Seconds()/2), step)
+				val = RoundUp(time.Unix(s+step.Seconds()/2, 0), step)
 			} else {
-				val = RoundDown(time.SecondsToLocalTime(s-step.Seconds()/2), step)
+				val = RoundDown(time.Unix(s-step.Seconds()/2, 0), step)
 			}
 		} else {
 			val = tic
@@ -375,10 +375,10 @@ func tApplyRangeMode(mode RangeMode, val *time.Time, step TimeDelta, upper bool)
 	case ExpandABit:
 		if upper {
 			tic = RoundDown(val, step)
-			val = time.SecondsToLocalTime(tic.Seconds() + step.Seconds()/2)
+			val = time.Unix(tic.Unix()+step.Seconds()/2, 0)
 		} else {
 			tic = RoundUp(val, step)
-			val = time.SecondsToLocalTime(tic.Seconds() - step.Seconds()/2)
+			val = time.Unix(tic.Unix()-step.Seconds()/2, 0)
 		}
 		return
 
@@ -389,7 +389,7 @@ func tApplyRangeMode(mode RangeMode, val *time.Time, step TimeDelta, upper bool)
 
 func f2d(x float64) string {
 	s := int64(x)
-	t := time.SecondsToLocalTime(s)
+	t := time.Unix(s, 0)
 	return t.Format("2006-01-02 15:04:05 (Mon)")
 }
 
@@ -408,14 +408,14 @@ func (r *Range) tSetup(desiredNumberOfTics, maxNumberOfTics int, delta, mindelta
 	r.ShowLimits = true
 
 	// Set up time tic delta
-	mint := time.SecondsToLocalTime(int64(r.DataMin))
-	maxt := time.SecondsToLocalTime(int64(r.DataMax))
+	mint := time.Unix(int64(r.DataMin), 0)
+	maxt := time.Unix(int64(r.DataMax), 0)
 
-	var ftic, ltic *time.Time
+	var ftic, ltic time.Time
 	r.TMin, ftic = tApplyRangeMode(r.MinMode, mint, td, false)
 	r.TMax, ltic = tApplyRangeMode(r.MaxMode, maxt, td, true)
 	r.TicSetting.Delta, r.TicSetting.TDelta = float64(td.Seconds()), td
-	r.Min, r.Max = float64(r.TMin.Seconds()), float64(r.TMax.Seconds())
+	r.Min, r.Max = float64(r.TMin.Unix()), float64(r.TMax.Unix())
 
 	ftd := float64(td.Seconds())
 	actNumTics := int((r.Max - r.Min) / ftd)
@@ -427,7 +427,7 @@ func (r *Range) tSetup(desiredNumberOfTics, maxNumberOfTics int, delta, mindelta
 		r.TMin, ftic = tApplyRangeMode(r.MinMode, mint, td, false)
 		r.TMax, ltic = tApplyRangeMode(r.MaxMode, maxt, td, true)
 		r.TicSetting.Delta, r.TicSetting.TDelta = float64(td.Seconds()), td
-		r.Min, r.Max = float64(r.TMin.Seconds()), float64(r.TMax.Seconds())
+		r.Min, r.Max = float64(r.TMin.Unix()), float64(r.TMax.Unix())
 		actNumTics = int((r.Max - r.Min) / ftd)
 	}
 
@@ -441,15 +441,15 @@ func (r *Range) tSetup(desiredNumberOfTics, maxNumberOfTics int, delta, mindelta
 	step := int64(td.Seconds())
 	align := 0
 
-	var formater func(t *time.Time, td TimeDelta) string
+	var formater func(t time.Time, td TimeDelta) string
 	if r.TicSetting.TFormat != nil {
 		formater = r.TicSetting.TFormat
 	} else {
-		formater = func(t *time.Time, td TimeDelta) string { return td.Format(t) }
+		formater = func(t time.Time, td TimeDelta) string { return td.Format(t) }
 	}
 
-	for i := 0; ftic.Seconds() < ltic.Seconds(); i++ {
-		x := float64(ftic.Seconds())
+	for i := 0; ftic.Unix() < ltic.Unix(); i++ {
+		x := float64(ftic.Unix())
 		label := formater(ftic, td)
 		var labelPos float64
 		if td.Period() {
@@ -459,13 +459,13 @@ func (r *Range) tSetup(desiredNumberOfTics, maxNumberOfTics int, delta, mindelta
 		}
 		t := Tic{Pos: x, LabelPos: labelPos, Label: label, Align: align}
 		r.Tics = append(r.Tics, t)
-		ftic = RoundDown(time.SecondsToLocalTime(ftic.Seconds()+step+step/5), td)
+		ftic = RoundDown(time.Unix(ftic.Unix()+step+step/5, 0), td)
 	}
 	// last tic might not get label if period
 	if td.Period() {
-		r.Tics = append(r.Tics, Tic{Pos: float64(ftic.Seconds())})
+		r.Tics = append(r.Tics, Tic{Pos: float64(ftic.Unix())})
 	} else {
-		x := float64(ftic.Seconds())
+		x := float64(ftic.Unix())
 		label := formater(ftic, td)
 		var labelPos float64
 		labelPos = x

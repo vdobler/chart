@@ -97,8 +97,8 @@ func (key Key) Place() (matrix [][]*KeyEntry) {
 
 func textviewlen(t string) (length float32) {
 	n := 0
-	for _, rune := range t {
-		if w, ok := CharacterWidth[rune]; ok {
+	for _, r := range t {
+		if w, ok := CharacterWidth[int(r)]; ok {
 			length += w
 		} else {
 			length += 23 // save above average

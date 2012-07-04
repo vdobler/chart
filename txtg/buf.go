@@ -5,19 +5,19 @@ import (
 )
 
 // Different edge styles for boxes
-var Edge = [][4]int{{'+', '+', '+', '+'}, {'.', '.', '\'', '\''}, {'/', '\\', '\\', '/'}}
+var Edge = [][4]rune{{'+', '+', '+', '+'}, {'.', '.', '\'', '\''}, {'/', '\\', '\\', '/'}}
 
 // A Text Buffer
 type TextBuf struct {
-	Buf  []int // the internal buffer.  Point (x,y) is mapped to x + y*(W+1)
-	W, H int   // Width and Height
+	Buf  []rune // the internal buffer.  Point (x,y) is mapped to x + y*(W+1)
+	W, H int    // Width and Height
 }
 
 // Set up a new TextBuf with width w and height h.
 func NewTextBuf(w, h int) (tb *TextBuf) {
 	tb = new(TextBuf)
 	tb.W, tb.H = w, h
-	tb.Buf = make([]int, (w+1)*h)
+	tb.Buf = make([]rune, (w+1)*h)
 	for i, _ := range tb.Buf {
 		tb.Buf[i] = ' '
 	}
@@ -29,7 +29,7 @@ func NewTextBuf(w, h int) (tb *TextBuf) {
 }
 
 // Put character c at (x,y)
-func (tb *TextBuf) Put(x, y, c int) {
+func (tb *TextBuf) Put(x, y int, c rune) {
 	if x < 0 || y < 0 || x >= tb.W || y >= tb.H || c < ' ' {
 		// debug.Printf("Ooooops Put(): %d, %d, %d='%c' \n", x, y, c, c)
 		return
@@ -41,7 +41,7 @@ func (tb *TextBuf) Put(x, y, c int) {
 // Draw rectangle of width w and height h from corner at (x,y).
 // Use one of the corner style defined in Edge. 
 // Interior is filled with charater fill iff != 0.
-func (tb *TextBuf) Rect(x, y, w, h int, style int, fill int) {
+func (tb *TextBuf) Rect(x, y, w, h int, style int, fill rune) {
 	style = style % len(Edge)
 
 	if h < 0 {
@@ -72,7 +72,7 @@ func (tb *TextBuf) Rect(x, y, w, h int, style int, fill int) {
 	}
 }
 
-func (tb *TextBuf) Block(x, y, w, h int, fill int) {
+func (tb *TextBuf) Block(x, y, w, h int, fill rune) {
 	if h < 0 {
 		h = -h
 		y -= h
@@ -108,8 +108,8 @@ func (tb *TextBuf) Text(x, y int, txt string, align int) {
 			x -= StrLen(txt)
 		}
 		i := 0
-		for _, rune := range txt {
-			tb.Put(x+i, y, rune)
+		for _, r := range txt {
+			tb.Put(x+i, y, r)
 			i++
 		}
 	} else {
@@ -120,8 +120,8 @@ func (tb *TextBuf) Text(x, y int, txt string, align int) {
 			x -= StrLen(txt)
 		}
 		i := 0
-		for _, rune := range txt {
-			tb.Put(x, y+i, rune)
+		for _, r := range txt {
+			tb.Put(x, y+i, r)
 			i++
 		}
 	}
@@ -137,7 +137,7 @@ func (tb *TextBuf) Paste(x, y int, buf *TextBuf) {
 	}
 }
 
-func (tb *TextBuf) Line(x0, y0, x1, y1 int, symbol int) {
+func (tb *TextBuf) Line(x0, y0, x1, y1 int, symbol rune) {
 	// handle trivial cases first
 	if x0 == x1 {
 		if y0 > y1 {

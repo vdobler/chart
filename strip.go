@@ -2,8 +2,8 @@ package chart
 
 import (
 	// "fmt"
-	"rand"
 	"math"
+	"math/rand"
 	//	"os"
 	//	"strings"
 )
@@ -73,10 +73,10 @@ func (sc *StripChart) Plot(g Graphics) {
 		// big to be ugly or even overlapp other
 
 		null := sc.YRange.Screen2Data(0)
-		absmin := 1.4 * math.Fabs(sc.YRange.Screen2Data(1)-null)           // would be one pixel
-		tenpc := math.Fabs(sc.YRange.Screen2Data(height)-null) / 10        // 10 percent of graph area
-		smplcnt := len(sc.ScatterChart.Data) + 1                           //  as samples are borders
-		noverlp := math.Fabs(sc.YRange.Screen2Data(height/smplcnt) - null) // do not overlapp other sample
+		absmin := 1.4 * math.Abs(sc.YRange.Screen2Data(1)-null)           // would be one pixel
+		tenpc := math.Abs(sc.YRange.Screen2Data(height)-null) / 10        // 10 percent of graph area
+		smplcnt := len(sc.ScatterChart.Data) + 1                          //  as samples are borders
+		noverlp := math.Abs(sc.YRange.Screen2Data(height/smplcnt) - null) // do not overlapp other sample
 
 		yj := noverlp
 		if tenpc < yj {

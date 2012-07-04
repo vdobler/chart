@@ -2,24 +2,23 @@ package chart_test
 
 import (
 	"fmt"
-	"testing"
-	"math"
 	"github.com/vdobler/chart"
 	"github.com/vdobler/chart/txtg"
+	"math"
+	"testing"
 )
 
 const r = 18
 const ri = 10
 
-
 func initDemoCircle() *txtg.TextGraphics {
 	g := txtg.NewTextGraphics(60, 40)
-	g.Line(0,20, 59,20, chart.Style{Symbol: '-'})
-	g.Line(30,0, 30,39, chart.Style{Symbol: '|'})
-	for p := 0.0; p <=2*math.Pi; p += 0.1 {
-		x := int(r * math.Cos(p)*1.5)
+	g.Line(0, 20, 59, 20, chart.Style{Symbol: '-'})
+	g.Line(30, 0, 30, 39, chart.Style{Symbol: '|'})
+	for p := 0.0; p <= 2*math.Pi; p += 0.1 {
+		x := int(r * math.Cos(p) * 1.5)
 		y := int(r * math.Sin(p))
-		g.Symbol(30+x,20+y, '*', chart.Style{Symbol: '*'})
+		g.Symbol(30+x, 20+y, '*', chart.Style{Symbol: '*'})
 	}
 	return g
 }
@@ -27,8 +26,8 @@ func initDemoCircle() *txtg.TextGraphics {
 func TestGenericWedge(t *testing.T) {
 	g := initDemoCircle()
 	s := chart.Style{Symbol: '#', FillColor: "#ff0000", LineColor: "#0000ff"}
-	ra := math.Pi/2
-		
+	ra := math.Pi / 2
+
 	chart.GenericWedge(g, 30, 20, r, ri, 0.15*ra, 0.5*ra, 1.5, s)
 	fmt.Printf("\n%s\n", g.String())
 
@@ -40,7 +39,6 @@ func TestGenericWedge(t *testing.T) {
 
 	chart.GenericWedge(g, 30, 20, r, ri, 3.15*ra, 3.5*ra, 1.5, s)
 	fmt.Printf("\n%s\n", g.String())
-
 
 	// mored than one quadrant
 	g = initDemoCircle()

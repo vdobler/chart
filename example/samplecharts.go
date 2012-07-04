@@ -1,21 +1,22 @@
 package main
 
 import (
-	"github.com/vdobler/chart"
 	"flag"
 	"fmt"
-	"math"
-	"image"
-	"image/jpeg"
-	"image/png"
-	"os"
-	"rand"
-	"sort"
-	"time"
 	"github.com/ajstarks/svgo"
+	"github.com/vdobler/chart"
+	"github.com/vdobler/chart/imgg"
 	"github.com/vdobler/chart/svgg"
 	"github.com/vdobler/chart/txtg"
-	"github.com/vdobler/chart/imgg"
+	"image"
+	"image/color"
+	"image/jpeg"
+	"image/png"
+	"math"
+	"math/rand"
+	"os"
+	"sort"
+	"time"
 )
 
 var (
@@ -26,7 +27,7 @@ var (
 	data3 = []float64{50e-7, 55e-7, 55e-7, 60e-7, 50e-7, 65e-7, 60e-7, 65e-7, 55e-7, 50e-7}
 )
 
-var Background = image.RGBAColor{255, 255, 255, 255}
+var Background = color.RGBA{255, 255, 255, 255}
 
 //
 // Some sample strip charts
@@ -79,7 +80,7 @@ func stripChart() {
 	file.Close()
 
 	jpgf, _ := os.Create("jpeg.jpg")
-	ig := imgg.New(600, 400, image.RGBAColor{220, 220, 220, 255})
+	ig := imgg.New(600, 400, color.RGBA{220, 220, 220, 255})
 	c.Plot(ig)
 	jpeg.Encode(jpgf, ig.Image, &jpeg.Options{98})
 	jpgf.Close()
@@ -624,7 +625,7 @@ func histChart(name, title string, stacked, counts, shifted bool) {
 	hc.Key.Hide = true
 	points := gauss(150, 10, 20, 0, 50)
 	hc.AddData("Sample 1", points,
-		chart.Style{ /*LineColor: "#ff0000", LineWidth: 1, LineStyle: 1, FillColor: "#ff8080"*/ })
+		chart.Style{ /*LineColor: "#ff0000", LineWidth: 1, LineStyle: 1, FillColor: "#ff8080"*/})
 	hc.Kernel = chart.BisquareKernel //  chart.GaussKernel // chart.EpanechnikovKernel // chart.RectangularKernel // chart.BisquareKernel
 	hc.Plot(svggraphics)
 	hc.Plot(txtgraphics)
@@ -634,7 +635,7 @@ func histChart(name, title string, stacked, counts, shifted bool) {
 		points2 := gauss(80, 4, 37, 0, 50)
 		// hc.Kernel = nil
 		hc.AddData("Sample 2", points2,
-			chart.Style{ /*LineColor: "#00ff00", LineWidth: 1, LineStyle: 1, FillColor: "#80ff80"*/ })
+			chart.Style{ /*LineColor: "#00ff00", LineWidth: 1, LineStyle: 1, FillColor: "#80ff80"*/})
 		thesvg.Gtransform("translate(400 0)")
 		hc.YRange.TicSetting.Delta = 0
 		hc.Plot(svggraphics)
@@ -645,7 +646,7 @@ func histChart(name, title string, stacked, counts, shifted bool) {
 		thesvg.Gtransform("translate(0 300)")
 		points3 := gauss(60, 15, 0, 0, 50)
 		hc.AddData("Sample 3", points3,
-			chart.Style{ /*LineColor: "#0000ff", LineWidth: 1, LineStyle: 1, FillColor: "#8080ff"*/ })
+			chart.Style{ /*LineColor: "#0000ff", LineWidth: 1, LineStyle: 1, FillColor: "#8080ff"*/})
 		hc.YRange.TicSetting.Delta = 0
 		hc.Plot(svggraphics)
 		hc.Plot(txtgraphics)
@@ -654,7 +655,7 @@ func histChart(name, title string, stacked, counts, shifted bool) {
 
 		thesvg.Gtransform("translate(400 300)")
 		points4 := gauss(40, 30, 15, 0, 50)
-		hc.AddData("Sample 4", points4, chart.Style{ /*LineColor: "#000000", LineWidth: 1, LineStyle: 1*/ })
+		hc.AddData("Sample 4", points4, chart.Style{ /*LineColor: "#000000", LineWidth: 1, LineStyle: 1*/})
 		hc.Kernel = nil
 		hc.YRange.TicSetting.Delta = 0
 		hc.Plot(svggraphics)
@@ -1032,7 +1033,7 @@ func textlen() {
 	sgr.Begin()
 
 	texts := []string{"ill", "WWW", "Some normal text.", "Illi, is. illigalli: ill!", "OO WORKSHOOPS OMWWW BMWWMB"}
-	fonts := []string{"Arial", "Helvetica", "Times", "Courier" /* "Calibri", "Palatino" */ }
+	fonts := []string{"Arial", "Helvetica", "Times", "Courier" /* "Calibri", "Palatino" */}
 	sizes := []int{-3, -2, -1, 0, 1, 2, 3}
 	font := chart.Font{Color: "#000000"}
 
@@ -1229,7 +1230,7 @@ func bestOf() {
 	} {
 		t0, _ := time.Parse("02.01.2006", q[0])
 		t1, _ := time.Parse("02.01.2006", q[1])
-		ep := chart.EPoint{X: float64(t0.Seconds()), Y: float64(t1.Seconds()),
+		ep := chart.EPoint{X: float64(t0.Unix()), Y: float64(t1.Unix()),
 			DeltaX: math.NaN(), DeltaY: math.NaN()}
 		dt = append(dt, ep)
 	}
@@ -1257,8 +1258,8 @@ func bestOf() {
 	charts = append(charts, &ebit)
 
 	// Output all charts as image
-	canvas := image.NewRGBA(N*width, M*height)
-	white := image.RGBAColor{0xff, 0xff, 0xff, 0xff}
+	canvas := image.NewRGBA(image.Rect(0, 0, N*width, M*height))
+	white := color.RGBA{0xff, 0xff, 0xff, 0xff}
 	for y := 0; y < M*height; y++ {
 		for x := 0; x < N*width; x++ {
 			canvas.Set(x, y, white)
@@ -1272,26 +1273,26 @@ func bestOf() {
 	}
 	cf, err := os.Create("xbestof.jpg")
 	if err != nil {
-		fmt.Printf("Cannot create xbestof.jpg: %s", err.String())
+		fmt.Printf("Cannot create xbestof.jpg: %s", err.Error())
 		os.Exit(1)
 	}
 	jpeg.Encode(cf, canvas, &jpeg.Options{98})
 	cf.Close()
 
 	// Recode as png
-	canvas2 := image.NewNRGBA(N*width, M*height)
+	canvas2 := image.NewNRGBA(image.Rect(0, 0, N*width, M*height))
 	for y := 0; y < M*height; y++ {
 		for x := 0; x < N*width; x++ {
 			r, g, b, _ := canvas.At(x, y).RGBA()
 			r >>= 8
 			g >>= 8
 			b >>= 8
-			canvas2.Set(x, y, image.NRGBAColor{uint8(r), uint8(g), uint8(b), uint8(255)})
+			canvas2.Set(x, y, color.NRGBA{uint8(r), uint8(g), uint8(b), uint8(255)})
 		}
 	}
 	cf, err = os.Create("xbestof.png")
 	if err != nil {
-		fmt.Printf("Cannot create xbestof.png: %s", err.String())
+		fmt.Printf("Cannot create xbestof.png: %s", err.Error())
 		os.Exit(1)
 	}
 	png.Encode(cf, canvas2)
@@ -1300,7 +1301,7 @@ func bestOf() {
 	// Output as svg
 	svgf, err := os.Create("xbestof.svg")
 	if err != nil {
-		fmt.Printf("Cannot create xbestof.svg: %s", err.String())
+		fmt.Printf("Cannot create xbestof.svg: %s", err.Error())
 		os.Exit(1)
 	}
 	thesvg := svg.New(svgf)
@@ -1322,7 +1323,7 @@ func bestOf() {
 	// Output as Text
 	txtf, err := os.Create("xbestof.txt")
 	if err != nil {
-		fmt.Printf("Cannot create xbestof.txt: %s", err.String())
+		fmt.Printf("Cannot create xbestof.txt: %s", err.Error())
 		os.Exit(1)
 	}
 	for _, c := range charts {
@@ -1350,7 +1351,7 @@ func timeRange() {
 	}
 	sort.Float64s(steps)
 
-	now := float64(time.Seconds())
+	now := float64(time.Now().Unix())
 	steps = []float64{1100000}
 	for _, step := range steps {
 		fmt.Printf("\nStep %d seconds\n", int64(step))

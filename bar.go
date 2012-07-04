@@ -311,7 +311,7 @@ func (c *BarChart) minimumSampleSep(d int) (min float64) {
 	min = math.MaxFloat64
 
 	for i := 0; i < n; i++ {
-		sep := math.Fabs(c.Data[d].Samples[i].X - c.Data[d].Samples[i+1].X)
+		sep := math.Abs(c.Data[d].Samples[i].X - c.Data[d].Samples[i+1].X)
 		if sep < min {
 			min = sep
 		}
@@ -325,11 +325,11 @@ func (c *BarChart) addLabel(bar *Barinfo, y float64) {
 	}
 
 	var sval string
-	if math.Fabs(y) >= 100 {
+	if math.Abs(y) >= 100 {
 		sval = fmt.Sprintf("%i", int(y+0.5))
-	} else if math.Fabs(y) >= 10 {
+	} else if math.Abs(y) >= 10 {
 		sval = fmt.Sprintf("%.1f", y)
-	} else if math.Fabs(y) >= 1 {
+	} else if math.Abs(y) >= 1 {
 		sval = fmt.Sprintf("%.2f", y)
 	} else {
 		sval = fmt.Sprintf("%.3f", y)
