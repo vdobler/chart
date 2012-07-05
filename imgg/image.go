@@ -14,9 +14,10 @@ import (
 	"log"
 	"math"
 )
+
 var (
-	dpi      = 72
-	defaultFont  *truetype.Font
+	dpi         = 72
+	defaultFont *truetype.Font
 )
 
 func init() {
@@ -35,7 +36,7 @@ type ImageGraphics struct {
 	bg     color.RGBA
 	gc     draw2d.GraphicContext
 	font   *truetype.Font
-	fs int
+	fs     int
 }
 
 // New creates a new ImageGraphics including an image.RGBA of dimension w x h 
@@ -53,9 +54,9 @@ func New(width, height int, bgcol color.RGBA, font *truetype.Font, fontsize int)
 	if font == nil {
 		font = defaultFont
 	}
-	
+
 	return &ImageGraphics{Image: img, x0: 0, y0: 0, w: width, h: height,
-	bg: bgcol, gc: gc, font: font, fs: fontsize}
+		bg: bgcol, gc: gc, font: font, fs: fontsize}
 }
 
 // AddTo returns a new ImageGraphics which will write to (width x height) sized
@@ -74,14 +75,14 @@ func AddTo(img *image.RGBA, x, y, width, height int, bgcol color.RGBA, font *tru
 	return &ImageGraphics{Image: img, x0: x, y0: y, w: width, h: height, bg: bgcol, gc: gc, font: font, fs: fontsize}
 }
 
-func (ig *ImageGraphics) Begin()                              {}
-func (ig *ImageGraphics) End()                                {}
-func (ig *ImageGraphics) Background() (r, g, b, a uint8)      { return ig.bg.R, ig.bg.G, ig.bg.B, ig.bg.A }
-func (ig *ImageGraphics) Dimensions() (int, int)              { return ig.w, ig.h }
+func (ig *ImageGraphics) Begin()                         {}
+func (ig *ImageGraphics) End()                           {}
+func (ig *ImageGraphics) Background() (r, g, b, a uint8) { return ig.bg.R, ig.bg.G, ig.bg.B, ig.bg.A }
+func (ig *ImageGraphics) Dimensions() (int, int)         { return ig.w, ig.h }
 func (ig *ImageGraphics) FontMetrics(font chart.Font) (fw float32, fh int, mono bool) {
 	fh = ig.relFontsizeToPixel(font.Size)
 	// typical width is 0.6 * height
-	fw = 0.6*float32(fh)
+	fw = 0.6 * float32(fh)
 	mono = true
 	return
 }
@@ -95,15 +96,15 @@ func (ig *ImageGraphics) TextLen(s string, font chart.Font) int {
 
 	var p raster.Point
 	prev, hasPrev := truetype.Index(0), false
-   	for _, rune := range s {
-   		index := ig.font.Index(rune)
-   		if hasPrev {
-   			p.X += c.FUnitToFix32(int(ig.font.Kerning(prev, index)))
-   		}
-   		p.X += c.FUnitToFix32(int(ig.font.HMetric(index).AdvanceWidth))
-   		prev, hasPrev = index, true
-   	}
-   	return int(p.X/256)
+	for _, rune := range s {
+		index := ig.font.Index(rune)
+		if hasPrev {
+			p.X += c.FUnitToFix32(int(ig.font.Kerning(prev, index)))
+		}
+		p.X += c.FUnitToFix32(int(ig.font.HMetric(index).AdvanceWidth))
+		prev, hasPrev = index, true
+	}
+	return int(p.X / 256)
 }
 
 func (ig *ImageGraphics) setStyle(style chart.Style) {
@@ -141,25 +142,25 @@ func (ig *ImageGraphics) Path(x, y []int, style chart.Style) {
 }
 
 func (ig *ImageGraphics) relFontsizeToPixel(rel int) int {
-	if rel==0 {
+	if rel == 0 {
 		return ig.fs
 	}
 
 	fs := float64(ig.fs)
 	factor := 1.2
 	if rel < 0 {
-		factor = 1/factor
+		factor = 1 / factor
 		rel = -rel
 	}
-	for rel>0 {
+	for rel > 0 {
 		fs *= factor
 		rel--
 	}
-	
+
 	if factor < 1 {
 		return int(fs) // round down
 	}
-	return int(fs+0.5) // round up
+	return int(fs + 0.5) // round up
 }
 
 func (ig *ImageGraphics) Text(x, y int, t string, align string, rot int, f chart.Font) {
@@ -412,4 +413,3 @@ func sign(a int) int {
 	}
 	return 1
 }
-

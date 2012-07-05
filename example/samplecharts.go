@@ -11,7 +11,6 @@ import (
 	"image"
 	"image/color"
 	"image/draw"
-	"image/jpeg"
 	"image/png"
 	"math"
 	"math/rand"
@@ -36,7 +35,7 @@ var Background = color.RGBA{0xff, 0xff, 0xff, 0xff}
 // Dumper helps saving plots of size WxH in a NxM grid layout
 // in several formats
 type Dumper struct {
-	N, M, W, H, Cnt           int 
+	N, M, W, H, Cnt           int
 	S                         *svg.SVG
 	I                         *image.RGBA
 	svgFile, imgFile, txtFile *os.File
@@ -264,7 +263,7 @@ func scatterChart() {
 			return 500
 		}
 		return x * x
-	}, chart.PlotStyleLines, 
+	}, chart.PlotStyleLines,
 		chart.Style{Symbol: '%', LineWidth: 2, LineColor: "#a00000", LineStyle: chart.DashDotDotLine})
 	pl.AddFunc("30", func(x float64) float64 { return 30 }, chart.PlotStyleLines,
 		chart.Style{Symbol: '+', LineWidth: 1, LineColor: "#00a000", LineStyle: 1})
@@ -564,16 +563,16 @@ func barChart() {
 	dumper := NewDumper("xbar1", 3, 2, 400, 300)
 	defer dumper.Close()
 
-	red := chart.Style{Symbol: 'o', LineColor: "#cc0000", FillColor: "#ff8080", 
-	Alpha: 0, LineStyle: chart.SolidLine, LineWidth: 2}
-	green := chart.Style{Symbol: '#', LineColor: "#00cc00", FillColor: "#80ff80", 
-	Alpha: 0, LineStyle: chart.SolidLine, LineWidth: 2}
+	red := chart.Style{Symbol: 'o', LineColor: "#cc0000", FillColor: "#ff8080",
+		Alpha: 0, LineStyle: chart.SolidLine, LineWidth: 2}
+	green := chart.Style{Symbol: '#', LineColor: "#00cc00", FillColor: "#80ff80",
+		Alpha: 0, LineStyle: chart.SolidLine, LineWidth: 2}
 
 	barc := chart.BarChart{Title: "Simple Bar Chart"}
 	barc.Key.Hide = true
 	barc.XRange.ShowZero = true
-	barc.AddDataPair("Amount", 
-		[]float64{-10, 10, 20, 30, 35, 40, 50}, 
+	barc.AddDataPair("Amount",
+		[]float64{-10, 10, 20, 30, 35, 40, 50},
 		[]float64{90, 120, 180, 205, 230, 150, 190}, red)
 	dumper.Plot(&barc)
 	barc.XRange.TicSetting.Delta = 0
@@ -711,7 +710,6 @@ func logAxis() {
 	dumper := NewDumper("xlog1", 2, 2, 400, 300)
 	defer dumper.Close()
 
-
 	lc := chart.ScatterChart{}
 	lc.XRange.Label, lc.YRange.Label = "X-Value", "Y-Value"
 	lx := []float64{4e-2, 3e-1, 2e0, 1e1, 8e1, 7e2, 5e3}
@@ -745,12 +743,12 @@ func logAxis() {
 	dumper.Plot(&lc)
 }
 
-
 //
 // Pie Charts
 //
 func pieChart() {
 	dumper := NewDumper("xpie1", 2, 2, 500, 250)
+	defer dumper.Close()
 
 	pc := chart.PieChart{Title: "Some Pies"}
 	pc.AddDataPair("Data1", []string{"2009", "2010", "2011"}, []float64{10, 20, 30})
@@ -773,8 +771,6 @@ func pieChart() {
 	piec.FmtVal = chart.PercentValue
 	chart.PieChartShrinkage = 0.45
 	dumper.Plot(&piec)
-
-	dumper.Close()
 }
 
 func textlen() {
@@ -1011,67 +1007,12 @@ func bestOf() {
 		chart.Style{Symbol: 'O', LineColor: "#e04444", LineWidth: 2, FillColor: "#f6b5cc"})
 	charts = append(charts, &ebit)
 
-	// Output all charts as image
-	canvas := image.NewRGBA(image.Rect(0, 0, N*width, M*height))
-	white := color.RGBA{0xff, 0xff, 0xff, 0xff}
-	draw.Draw(canvas, canvas.Bounds(), image.NewUniform(white), image.ZP, draw.Src)
-
-	for i, c := range charts {
-		row, col := i/N, i%N
-		gr := imgg.AddTo(canvas, col*width, row*height, width, height, white, nil, 14)
-		c.Plot(gr)
-		c.Reset()
-	}
-
-	// save as png
-	cf, err = os.Create("xbestof.png")
-	if err != nil {
-		fmt.Printf("Cannot create xbestof.png: %s", err.Error())
-		os.Exit(1)
-	}
-	png.Encode(cf, canvas)
-	cf.Close()
-
-	// Output as svg
-	svgf, err := os.Create("xbestof.svg")
-	if err != nil {
-		fmt.Printf("Cannot create xbestof.svg: %s", err.Error())
-		os.Exit(1)
-	}
-	thesvg := svg.New(svgf)
-	thesvg.Start(N*width, M*height)
-	thesvg.Title("Best-Of Charts")
-	thesvg.Rect(0, 0, N*width, M*height, "fill: #ffffff")
-	svggraphics := svgg.New(thesvg, N*width, M*height, "Arial", 12, Background)
-	for i, c := range charts {
-		row, col := i/N, i%N
-		thesvg.Gtransform(fmt.Sprintf("translate(%d %d)", col*width, row*height))
-		c.Plot(svggraphics)
-		thesvg.Gend()
-		c.Reset()
-	}
-	svggraphics.End()
-	thesvg.End()
-	svgf.Close()
-
-	// Output as Text
-	txtf, err := os.Create("xbestof.txt")
-	if err != nil {
-		fmt.Printf("Cannot create xbestof.txt: %s", err.Error())
-		os.Exit(1)
-	}
+	dumper := NewDumper("xbestof", N, M, width, height)
+	defer dumper.Close()
 	for _, c := range charts {
-		txtgraphics := txtg.New(100, 30)
-		c.Plot(txtgraphics)
-		fmt.Fprintf(txtf, "%s\n\n", txtgraphics.String())
-		c.Reset()
-		txtgraphics = txtg.New(50, 15)
-		c.Plot(txtgraphics)
-		fmt.Fprintf(txtf, "%s\n\n", txtgraphics.String())
+		dumper.Plot(c)
 		c.Reset()
 	}
-	txtf.Close()
-
 }
 
 func timeRange() {
