@@ -1,11 +1,5 @@
-*.o
 *~
-*.8
-_obj/*
-*.a
-_test/*
-_test*
-8.out
-samplecharts
-*.svg
-
+x*.png
+x*.svg
+x*.txt
+example/example

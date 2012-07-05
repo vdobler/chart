@@ -2,7 +2,6 @@ package chart
 
 import (
 	"fmt"
-	"log"
 	"math"
 )
 
@@ -731,7 +730,6 @@ func GenericSymbol(bg BasicGraphics, x, y int, style Style) {
 	}
 
 	style.LineColor = style.SymbolColor
-	log.Printf("GenericSymbol '%c', width %d, color %v", style.Symbol, style.LineWidth, style.LineColor)
 
 	const n = 5               // default size
 	a := int(n*f + 0.5)       // standard

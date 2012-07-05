@@ -3,63 +3,107 @@ package imgg
 import (
 	"code.google.com/p/draw2d/draw2d"
 	"code.google.com/p/freetype-go/freetype"
+	"code.google.com/p/freetype-go/freetype/raster"
 	"code.google.com/p/freetype-go/freetype/truetype"
 	"code.google.com/p/graphics-go/graphics"
-	"fmt"
+	// "fmt"
 	"github.com/vdobler/chart"
 	"image"
 	"image/color"
 	"image/draw"
-	"io/ioutil"
 	"log"
 	"math"
 )
+var (
+	dpi      = 72
+	defaultFont  *truetype.Font
+)
 
-// ImageGraphics implements BasicGraphics and uses the generic implementations
+func init() {
+	var err error
+	defaultFont, err = freetype.ParseFont(defaultFontData())
+	if err != nil {
+		panic(err)
+	}
+}
+
+// ImageGraphics writes plot to an image.RGBA
 type ImageGraphics struct {
-	Image  *image.RGBA
+	Image  *image.RGBA // The image the plots are drawn onto.
 	x0, y0 int
 	w, h   int
 	bg     color.RGBA
 	gc     draw2d.GraphicContext
+	font   *truetype.Font
+	fs int
 }
 
-// New creates a new ImageGraphics of dimension w x h.
-func New(width, height int, background color.RGBA) *ImageGraphics {
-	_ = fmt.Sprintf("")
+// New creates a new ImageGraphics including an image.RGBA of dimension w x h 
+// with background bgcol. It uses font in the given fontsize for text.
+// If font is nil it will use a builtin font.
+func New(width, height int, bgcol color.RGBA, font *truetype.Font, fontsize int) *ImageGraphics {
 	img := image.NewRGBA(image.Rect(0, 0, width, height))
 	gc := draw2d.NewGraphicContext(img)
 	gc.SetLineJoin(draw2d.MiterJoin)
 	gc.SetLineCap(draw2d.SquareCap)
 	gc.SetStrokeColor(image.Black)
-	gc.SetFillColor(background)
+	gc.SetFillColor(bgcol)
+	gc.Translate(0.5, 0.5)
 	gc.Clear()
+	if font == nil {
+		font = defaultFont
+	}
+	
 	return &ImageGraphics{Image: img, x0: 0, y0: 0, w: width, h: height,
-		bg: background, gc: gc}
+	bg: bgcol, gc: gc, font: font, fs: fontsize}
 }
 
 // AddTo returns a new ImageGraphics which will write to (width x height) sized
-// area starting at (x,y) on the provided image img.
-func AddTo(img *image.RGBA, x, y, width, height int, background color.RGBA) *ImageGraphics {
+// area starting at (x,y) on the provided image img. The rest of the parameters
+// are the same as in New().
+func AddTo(img *image.RGBA, x, y, width, height int, bgcol color.RGBA, font *truetype.Font, fontsize int) *ImageGraphics {
 	gc := draw2d.NewGraphicContext(img)
 	gc.SetStrokeColor(image.Black)
-	gc.SetFillColor(background)
-	gc.Translate(float64(x), float64(y))
+	gc.SetFillColor(bgcol)
+	gc.Translate(float64(x)+0.5, float64(y)+0.5)
 	gc.ClearRect(x, y, x+width, y+height)
+	if font == nil {
+		font = defaultFont
+	}
 
-	return &ImageGraphics{Image: img, x0: x, y0: y, w: width, h: height, bg: background, gc: gc}
+	return &ImageGraphics{Image: img, x0: x, y0: y, w: width, h: height, bg: bgcol, gc: gc, font: font, fs: fontsize}
 }
 
 func (ig *ImageGraphics) Begin()                              {}
 func (ig *ImageGraphics) End()                                {}
 func (ig *ImageGraphics) Background() (r, g, b, a uint8)      { return ig.bg.R, ig.bg.G, ig.bg.B, ig.bg.A }
 func (ig *ImageGraphics) Dimensions() (int, int)              { return ig.w, ig.h }
-func (ig *ImageGraphics) fontheight(font chart.Font) (fh int) { return 15 }
 func (ig *ImageGraphics) FontMetrics(font chart.Font) (fw float32, fh int, mono bool) {
-	return 8, 15, true
+	fh = ig.relFontsizeToPixel(font.Size)
+	// typical width is 0.6 * height
+	fw = 0.6*float32(fh)
+	mono = true
+	return
 }
-func (ig *ImageGraphics) TextLen(t string, font chart.Font) int {
-	return chart.GenericTextLen(ig, t, font)
+func (ig *ImageGraphics) TextLen(s string, font chart.Font) int {
+	size := ig.relFontsizeToPixel(font.Size)
+
+	c := freetype.NewContext()
+	c.SetDPI(dpi)
+	c.SetFont(ig.font)
+	c.SetFontSize(float64(size))
+
+	var p raster.Point
+	prev, hasPrev := truetype.Index(0), false
+   	for _, rune := range s {
+   		index := ig.font.Index(rune)
+   		if hasPrev {
+   			p.X += c.FUnitToFix32(int(ig.font.Kerning(prev, index)))
+   		}
+   		p.X += c.FUnitToFix32(int(ig.font.HMetric(index).AdvanceWidth))
+   		prev, hasPrev = index, true
+   	}
+   	return int(p.X/256)
 }
 
 func (ig *ImageGraphics) setStyle(style chart.Style) {
@@ -96,6 +140,28 @@ func (ig *ImageGraphics) Path(x, y []int, style chart.Style) {
 	ig.gc.Stroke()
 }
 
+func (ig *ImageGraphics) relFontsizeToPixel(rel int) int {
+	if rel==0 {
+		return ig.fs
+	}
+
+	fs := float64(ig.fs)
+	factor := 1.2
+	if rel < 0 {
+		factor = 1/factor
+		rel = -rel
+	}
+	for rel>0 {
+		fs *= factor
+		rel--
+	}
+	
+	if factor < 1 {
+		return int(fs) // round down
+	}
+	return int(fs+0.5) // round up
+}
+
 func (ig *ImageGraphics) Text(x, y int, t string, align string, rot int, f chart.Font) {
 	if len(align) == 1 {
 		align = "c" + align
@@ -104,13 +170,8 @@ func (ig *ImageGraphics) Text(x, y int, t string, align string, rot int, f chart
 	//fmt.Printf("Text '%s' at (%d,%d) %s\n", t, x,y, align)
 	// TODO: handle rot
 
-	size := 12
-	if f.Size < 0 {
-		size = 10
-	} else if f.Size > 0 {
-		size = 14
-	}
-	textImage := textBox(t, size)
+	size := ig.relFontsizeToPixel(f.Size)
+	textImage := ig.textBox(t, size)
 	bounds := textImage.Bounds()
 	w, h := bounds.Dx(), bounds.Dy()
 	var centerX, centerY int
@@ -181,23 +242,23 @@ func (ig *ImageGraphics) Text(x, y int, t string, align string, rot int, f chart
 }
 
 // textBox renders t into a tight fitting image
-func textBox(t string, size int) image.Image {
+func (ig *ImageGraphics) textBox(t string, size int) image.Image {
 	// Initialize the context.
 	fg := image.NewUniform(color.Alpha{0xff})
 	bg := image.NewUniform(color.Alpha{0x00})
-	canvas := image.NewAlpha(image.Rect(0, 0, 400, 40))
+	canvas := image.NewAlpha(image.Rect(0, 0, 400, 2*size))
 	draw.Draw(canvas, canvas.Bounds(), bg, image.ZP, draw.Src)
 
 	c := freetype.NewContext()
 	c.SetDPI(dpi)
-	c.SetFont(theFont)
+	c.SetFont(ig.font)
 	c.SetFontSize(float64(size))
 	c.SetClip(canvas.Bounds())
 	c.SetDst(canvas)
 	c.SetSrc(fg)
 
 	// Draw the text.
-	h := c.FUnitToPixelRU(theFont.UnitsPerEm())
+	h := c.FUnitToPixelRU(ig.font.UnitsPerEm())
 	pt := freetype.Pt(0, h)
 	extent, err := c.DrawString(t, pt)
 	if err != nil {
@@ -352,22 +413,3 @@ func sign(a int) int {
 	return 1
 }
 
-var (
-	dpi      = 72
-	fontfile = "../../../../code.google.com/p/freetype-go/luxi-fonts/luximr.ttf"
-	size     = 14
-	theFont  *truetype.Font
-)
-
-func init() {
-	// Read the font data.
-	fontBytes, err := ioutil.ReadFile(fontfile)
-	if err != nil {
-		log.Println(err)
-	}
-	theFont, err = freetype.ParseFont(fontBytes)
-	if err != nil {
-		log.Println(err)
-	}
-	log.Println("Loaded Font")
-}

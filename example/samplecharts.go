@@ -28,957 +28,15 @@ var (
 	data3 = []float64{50e-7, 55e-7, 55e-7, 60e-7, 50e-7, 65e-7, 60e-7, 65e-7, 55e-7, 50e-7}
 )
 
-var Background = color.RGBA{255, 255, 255, 255}
+var Background = color.RGBA{0xff, 0xff, 0xff, 0xff}
 
-//
-// Some sample strip charts
-//
-func stripChart() {
-	file, _ := os.Create("xstrip1.svg")
-	thesvg := svg.New(file)
-	thesvg.Start(800, 600)
-	thesvg.Title("Srip Chart")
-	svggraphics := svgg.New(thesvg, 400, 300, "Arial", 12, Background)
-	txtgraphics := txtg.New(80, 25)
+// -------------------------------------------------------------------------
+// Dumper
 
-	c := chart.StripChart{}
-
-	c.AddData("Sample A", data1, chart.Style{})
-	c.AddData("Sample B", data2, chart.Style{})
-	c.AddData("Sample C", data3, chart.Style{})
-
-	c.Title = "Sample Strip Chart (no Jitter)"
-	c.XRange.Label = "X - Axis"
-	c.Key.Pos = "icr"
-	c.Plot(svggraphics)
-	c.Plot(txtgraphics)
-	fmt.Printf("%s\n", txtgraphics.String())
-
-	thesvg.Gtransform("translate(400 0)")
-	c.Jitter = true
-	c.Title = "Sample Strip Chart (with Jitter)"
-	c.Plot(svggraphics)
-	c.Plot(txtgraphics)
-	fmt.Printf("%s\n", txtgraphics.String())
-	thesvg.Gend()
-
-	thesvg.Gtransform("translate(0 300)")
-	c.Key.Hide = true
-	c.Plot(svggraphics)
-	c.Plot(txtgraphics)
-	fmt.Printf("%s\n", txtgraphics.String())
-	thesvg.Gend()
-
-	thesvg.Gtransform("translate(400 300)")
-	c.Jitter = false
-	c.Title = "Sample Strip Chart (no Jitter)"
-	c.Plot(svggraphics)
-	c.Plot(txtgraphics)
-	fmt.Printf("%s\n", txtgraphics.String())
-	thesvg.Gend()
-
-	thesvg.End()
-	file.Close()
-
-	pngf, _ := os.Create("xstrip1.png")
-	ig := imgg.New(600, 400, color.RGBA{220, 220, 220, 255})
-	c.Plot(ig)
-	png.Encode(pngf, ig.Image)
-	pngf.Close()
-}
-
-//
-// All different key styles
-// 
-func keyStyles() {
-	file, _ := os.Create("xkey1.svg")
-	thesvg := svg.New(file)
-	w, h := 400, 300
-	nw, nh := 6, 6
-	thesvg.Start(nw*w, nh*h)
-	thesvg.Title("Key Placements")
-	thesvg.Rect(0, 0, nw*w, nh*h, "fill: #ffffff")
-
-	svggraphics := svgg.New(thesvg, w, h, "Arial", 10, Background)
-	p := chart.ScatterChart{Title: "Key Placement"}
-	p.XRange.TicSetting.Mirror, p.YRange.TicSetting.Mirror = 1, 1
-	p.XRange.MinMode.Fixed, p.XRange.MaxMode.Fixed = true, true
-	p.XRange.MinMode.Value, p.XRange.MaxMode.Value = -5, 5
-	p.XRange.Min, p.XRange.Max = -5, 5
-	p.XRange.TicSetting.Delta = 2
-
-	p.YRange.MinMode.Fixed, p.YRange.MaxMode.Fixed = true, true
-	p.YRange.MinMode.Value, p.YRange.MaxMode.Value = -5, 5
-	p.YRange.Min, p.YRange.Max = -5, 5
-	p.YRange.TicSetting.Delta = 3
-
-	p.AddFunc("Sin", func(x float64) float64 { return math.Sin(x) }, chart.PlotStyleLines,
-		chart.Style{LineColor: "#a00000", LineWidth: 1, LineStyle: 1})
-	p.AddFunc("Cos", func(x float64) float64 { return math.Cos(x) }, chart.PlotStyleLines,
-		chart.Style{LineColor: "#00a000", LineWidth: 1, LineStyle: 1})
-	p.AddFunc("Tan", func(x float64) float64 { return math.Tan(x) }, chart.PlotStyleLines,
-		chart.Style{LineColor: "#0000a0", LineWidth: 1, LineStyle: 1})
-
-	x, y := 0, 0
-	for _, pos := range []string{"itl", "itc", "itr", "icl", "icc", "icr", "ibl", "ibc", "ibr",
-		"otl", "otc", "otr", "olt", "olc", "olb", "obl", "obc", "obr", "ort", "orc", "orb"} {
-		p.Key.Pos = pos
-		p.Title = "Key Placement: " + pos
-		thesvg.Gtransform(fmt.Sprintf("translate(%d %d)", x, y))
-		p.Plot(svggraphics)
-		thesvg.Gend()
-
-		x += w
-		if x+w > nw*w {
-			x, y = 0, y+h
-		}
-	}
-
-	p.Key.Pos = "itl"
-	p.AddFunc("Log", func(x float64) float64 { return math.Log(x) }, chart.PlotStyleLines,
-		chart.Style{LineColor: "#ff6060", LineWidth: 1, LineStyle: 1})
-	p.AddFunc("Exp", func(x float64) float64 { return math.Exp(x) }, chart.PlotStyleLines,
-		chart.Style{LineColor: "#60ff60", LineWidth: 1, LineStyle: 1})
-	p.AddFunc("Atan", func(x float64) float64 { return math.Atan(x) }, chart.PlotStyleLines,
-		chart.Style{LineColor: "#6060ff", LineWidth: 1, LineStyle: 1})
-	p.AddFunc("Y1", func(x float64) float64 { return math.Y1(x) }, chart.PlotStyleLines,
-		chart.Style{LineColor: "#d0d000", LineWidth: 1, LineStyle: 1})
-
-	for _, cols := range []int{-4, -3, -2, -1, 0, 1, 2, 3, 4} {
-		p.Key.Cols = cols
-		p.Title = fmt.Sprintf("Key Cols: %d", cols)
-		thesvg.Gtransform(fmt.Sprintf("translate(%d %d)", x, y))
-		p.Plot(svggraphics)
-		thesvg.Gend()
-
-		x += w
-		if x+w > nw*w {
-			x, y = 0, y+h
-		}
-	}
-
-	thesvg.End()
-	file.Close()
-}
-
-//
-// Scatter plots with different tic/grid settings
-//
-func scatterTics() {
-	file, _ := os.Create("xscatter1.svg")
-	thesvg := svg.New(file)
-	thesvg.Start(1200, 900)
-	thesvg.Title("Srip Chart")
-	thesvg.Rect(0, 0, 1200, 900, "fill: #ffffff")
-	svggraphics := svgg.New(thesvg, 400, 300, "Arial", 12, Background)
-
-	p := chart.ScatterChart{Title: "Sample Scatter Chart"}
-	p.AddDataPair("Sample A", data10, data1, chart.PlotStylePoints, chart.Style{})
-	p.XRange.TicSetting.Delta = 5000
-	p.XRange.Label = "X - Value"
-	p.YRange.Label = "Y - Value"
-
-	p.Plot(svggraphics)
-
-	thesvg.Gtransform("translate(400 0)")
-	p.XRange.TicSetting.Hide, p.YRange.TicSetting.Hide = true, true
-	p.Plot(svggraphics)
-	thesvg.Gend()
-
-	thesvg.Gtransform("translate(800 0)")
-	p.YRange.TicSetting.Hide = false
-	p.XRange.TicSetting.Grid, p.YRange.TicSetting.Grid = chart.GridLines, chart.GridLines
-	p.Plot(svggraphics)
-	thesvg.Gend()
-
-	thesvg.Gtransform("translate(0 300)")
-	p.XRange.TicSetting.Hide, p.YRange.TicSetting.Hide = false, false
-	p.XRange.TicSetting.Mirror, p.YRange.TicSetting.Mirror = 1, 2
-	p.Plot(svggraphics)
-	thesvg.Gend()
-
-	thesvg.Gtransform("translate(400 300)")
-	c := chart.ScatterChart{Title: "Own tics"}
-	c.XRange.Fixed(0, 4*math.Pi, math.Pi)
-	c.YRange.Fixed(-1.25, 1.25, 0.5)
-	c.XRange.TicSetting.Format = func(f float64) string {
-		w := int(180*f/math.Pi + 0.5)
-		return fmt.Sprintf("%d°", w)
-	}
-	c.AddFunc("Sin(x)", func(x float64) float64 { return math.Sin(x) }, chart.PlotStyleLines,
-		chart.Style{Symbol: '@', LineWidth: 2, LineColor: "#0000cc", LineStyle: 0})
-	c.AddFunc("Cos(x)", func(x float64) float64 { return math.Cos(x) }, chart.PlotStyleLines,
-		chart.Style{Symbol: '%', LineWidth: 2, LineColor: "#00cc00", LineStyle: 0})
-	c.Plot(svggraphics)
-	txtgraphics := txtg.New(78, 22)
-	c.Plot(txtgraphics)
-	fmt.Printf("%s\n", txtgraphics.String())
-	thesvg.Gend()
-
-	thesvg.Gtransform("translate(800 300)")
-	c.Title = "Tic Variants"
-	c.XRange.TicSetting.Tics = 1
-	c.YRange.TicSetting.Tics = 2
-	c.Plot(svggraphics)
-	thesvg.Gend()
-
-	thesvg.Gtransform("translate(0 600)")
-	c.Title = "Blocked Grid"
-	c.XRange.TicSetting.Tics = 1
-	c.YRange.TicSetting.Tics = 1
-	c.XRange.TicSetting.Mirror, c.YRange.TicSetting.Mirror = 1, 1
-	c.XRange.TicSetting.Grid = chart.GridBlocks
-	c.YRange.TicSetting.Grid = chart.GridBlocks
-	c.Plot(svggraphics)
-	thesvg.Gend()
-
-	thesvg.End()
-	file.Close()
-}
-
-//
-// Full fletched scatter plots
-//
-func scatterChart() {
-	pl := chart.ScatterChart{Title: "Scatter + Lines"}
-	pl.XRange.Label, pl.YRange.Label = "X - Value", "Y - Value"
-	pl.Key.Pos = "itl"
-	// pl.XRange.TicSetting.Delta = 5
-	pl.XRange.TicSetting.Grid = 1
-	x := []float64{-4, -3.3, -1.8, -1, 0.2, 0.8, 1.8, 3.1, 4, 5.3, 6, 7, 8, 9}
-	y := []float64{22, 18, -3, 0, 0.5, 2, 45, 12, 16.5, 24, 30, 55, 60, 70}
-	pl.AddDataPair("Data", x, y, chart.PlotStyleLinesPoints,
-		chart.Style{Symbol: '#', SymbolColor: "#0000ff", LineStyle: chart.SolidLine})
-	last := len(pl.Data) - 1
-	pl.Data[last].Samples[6].DeltaX = 2.5
-	pl.Data[last].Samples[6].OffX = 0.5
-	pl.Data[last].Samples[6].DeltaY = 16
-	pl.Data[last].Samples[6].OffY = 2
-
-	pl.AddData("Points", []chart.EPoint{chart.EPoint{-4, 40, 0, 0, 0, 0}, chart.EPoint{-3, 45, 0, 0, 0, 0},
-		chart.EPoint{-2, 35, 0, 0, 0, 0}}, chart.PlotStylePoints,
-		chart.Style{Symbol: '0', SymbolColor: "#ff00ff"})
-	pl.AddFunc("Theory", func(x float64) float64 {
-		if x > 5.25 && x < 5.75 {
-			return 75
-		}
-		if x > 7.25 && x < 7.75 {
-			return 500
-		}
-		return x * x
-	}, chart.PlotStyleLines, chart.Style{Symbol: '%', LineWidth: 2, LineColor: "#a00000", LineStyle: chart.DashDotDotLine})
-	pl.AddFunc("30", func(x float64) float64 { return 30 }, chart.PlotStyleLines,
-		chart.Style{Symbol: '+', LineWidth: 1, LineColor: "#00a000", LineStyle: 1})
-	pl.AddFunc("", func(x float64) float64 { return 7 }, chart.PlotStyleLines,
-		chart.Style{Symbol: '@', LineWidth: 1, LineColor: "#0000a0", LineStyle: 1})
-
-	pl.XRange.ShowZero = true
-	pl.XRange.TicSetting.Mirror = 1
-	pl.YRange.TicSetting.Mirror = 1
-	pl.XRange.TicSetting.Grid = 1
-	pl.XRange.Label = "X-Range"
-	pl.YRange.Label = "Y-Range"
-	pl.Key.Cols = 2
-	pl.Key.Pos = "orb"
-
-	s2f, _ := os.Create("xscatter2.svg")
-	mysvg := svg.New(s2f)
-	mysvg.Start(1000, 600)
-	mysvg.Title("My Plot")
-	mysvg.Rect(0, 0, 1000, 600, "fill: #ffffff")
-	svggraphics := svgg.New(mysvg, 1000, 600, "Arial", 18, Background)
-	pl.Plot(svggraphics)
-	mysvg.End()
-	s2f.Close()
-
-	txtgraphics := txtg.New(100, 30)
-	pl.Plot(txtgraphics)
-	fmt.Printf("%s\n", txtgraphics.String())
-}
-
-//
-// Function plots with fancy clippings
-//
-func functionPlots() {
-	p := chart.ScatterChart{Title: "Functions"}
-	p.XRange.Label, p.YRange.Label = "X - Value", "Y - Value"
-	p.Key.Pos = "ibl"
-	p.XRange.MinMode.Fixed, p.XRange.MaxMode.Fixed = true, true
-	p.XRange.MinMode.Value, p.XRange.MaxMode.Value = -10, 10
-	p.YRange.MinMode.Fixed, p.YRange.MaxMode.Fixed = true, true
-	p.YRange.MinMode.Value, p.YRange.MaxMode.Value = -10, 10
-
-	p.XRange.TicSetting.Delta = 2
-	p.YRange.TicSetting.Delta = 5
-	p.XRange.TicSetting.Mirror = 1
-	p.YRange.TicSetting.Mirror = 1
-
-	p.AddFunc("i+n", func(x float64) float64 {
-		if x > -7 && x < -5 {
-			return math.Inf(-1)
-		} else if x > -1.5 && x < 1.5 {
-			return math.NaN()
-		} else if x > 5 && x < 7 {
-			return math.Inf(1)
-		}
-		return -0.75 * x
-	},
-		chart.PlotStyleLines, chart.Style{Symbol: 'o', LineWidth: 2, LineColor: "#a00000", LineStyle: 1})
-	p.AddFunc("sin", func(x float64) float64 { return 13 * math.Sin(x) }, chart.PlotStyleLines,
-		chart.Style{Symbol: '#', LineWidth: 1, LineColor: "#0000a0", LineStyle: 1})
-	p.AddFunc("2x", func(x float64) float64 { return 2 * x }, chart.PlotStyleLines,
-		chart.Style{Symbol: 'X', LineWidth: 1, LineColor: "#00a000", LineStyle: 1})
-
-	s2f, _ := os.Create("xscatter3.svg")
-	mysvg := svg.New(s2f)
-	mysvg.Start(1000, 600)
-	mysvg.Title("Functions")
-	mysvg.Rect(0, 0, 1000, 600, "fill: #ffffff")
-	txtgraphics := txtg.New(125, 35)
-	svggraphics := svgg.New(mysvg, 1000, 600, "Arial", 14, Background)
-	p.Plot(svggraphics)
-	p.Plot(txtgraphics)
-	fmt.Printf("%s\n", txtgraphics.String())
-	mysvg.End()
-	s2f.Close()
-
-	{
-		p := chart.ScatterChart{Title: "Functions"}
-		p.Key.Hide = true
-		p.XRange.MinMode.Fixed, p.XRange.MaxMode.Fixed = true, true
-		p.XRange.MinMode.Value, p.XRange.MaxMode.Value = -2, 2
-		p.YRange.MinMode.Fixed, p.YRange.MaxMode.Fixed = true, true
-		p.YRange.MinMode.Value, p.YRange.MaxMode.Value = -2, 2
-		p.XRange.TicSetting.Delta = 1
-		p.YRange.TicSetting.Delta = 1
-		p.XRange.TicSetting.Mirror = 1
-		p.YRange.TicSetting.Mirror = 1
-		p.NSamples = 5
-		p.AddFunc("10x", func(x float64) float64 { return 10 * x }, chart.PlotStyleLines,
-			chart.Style{Symbol: 'o', LineWidth: 2, LineColor: "#00a000", LineStyle: 1})
-		txtgraphics := txtg.New(125, 35)
-		p.Plot(txtgraphics)
-		fmt.Printf("%s\n", txtgraphics.String())
-	}
-}
-
-//
-// Autoscaling
-//
-func autoscale() {
-	N := 200
-	points := make([]chart.EPoint, N)
-	for i := 0; i < N-1; i++ {
-		points[i].X = rand.Float64()*10000 - 5000 // Full range is [-5000:5000]
-		points[i].Y = rand.Float64()*10000 - 5000 // Full range is [-5000:5000]
-		points[i].DeltaX = rand.Float64() * 400
-		points[i].DeltaY = rand.Float64() * 400
-	}
-	points[N-1].X = -650
-	points[N-1].Y = -2150
-	points[N-1].DeltaX = 400
-	points[N-1].DeltaY = 400
-	points[N-1].OffX = 100
-	points[N-1].OffY = -150
-
-	s2f, _ := os.Create("xautoscale.svg")
-	mysvg := svg.New(s2f)
-	mysvg.Start(1000, 600)
-	mysvg.Title("My Plot")
-	mysvg.Rect(0, 0, 1000, 600, "fill: #ffffff")
-
-	{
-		s := chart.ScatterChart{Title: "Full Autoscaling"}
-		s.Key.Hide = true
-		s.XRange.TicSetting.Mirror = 1
-		s.YRange.TicSetting.Mirror = 1
-
-		s.AddData("Data", points, chart.PlotStylePoints, chart.Style{Symbol: 'o', SymbolColor: "#00ee00"})
-
-		svggraphics := svgg.New(mysvg, 500, 300, "Arial", 11, Background)
-		s.Plot(svggraphics)
-
-		txtgraphics := txtg.New(100, 30)
-		s.Plot(txtgraphics)
-		fmt.Printf("%s\n", txtgraphics.String())
-	}
-
-	{
-		s := chart.ScatterChart{Title: "Xmin: -1850, Xmax clipped to [500:900]"}
-		s.Key.Hide = true
-		s.XRange.TicSetting.Mirror = 1
-		s.YRange.TicSetting.Mirror = 1
-		s.XRange.MinMode.Fixed, s.XRange.MinMode.Value = true, -1850
-		s.XRange.MaxMode.Constrained = true
-		s.XRange.MaxMode.Lower, s.XRange.MaxMode.Upper = 500, 900
-
-		s.AddData("Data", points, chart.PlotStylePoints, chart.Style{Symbol: '0', SymbolColor: "#ee0000"})
-		mysvg.Gtransform("translate(500 0)")
-		svggraphics := svgg.New(mysvg, 500, 300, "Arial", 11, Background)
-		s.Plot(svggraphics)
-		txtgraphics := txtg.New(100, 30)
-		s.Plot(txtgraphics)
-		fmt.Printf("%s\n", txtgraphics.String())
-		mysvg.Gend()
-	}
-
-	{
-		s := chart.ScatterChart{Title: "Xmin: -1850, Ymax clipped to [9000:11000]"}
-		s.Key.Hide = true
-		s.XRange.TicSetting.Mirror = 1
-		s.YRange.TicSetting.Mirror = 1
-		s.XRange.MinMode.Fixed, s.XRange.MinMode.Value = true, -1850
-		s.YRange.MaxMode.Constrained = true
-		s.YRange.MaxMode.Lower, s.YRange.MaxMode.Upper = 9000, 11000
-
-		s.AddData("Data", points, chart.PlotStylePoints, chart.Style{Symbol: '0', SymbolColor: "#0000ee"})
-		mysvg.Gtransform("translate(0 300)")
-		svggraphics := svgg.New(mysvg, 500, 300, "Arial", 11, Background)
-		s.Plot(svggraphics)
-		txtgraphics := txtg.New(100, 30)
-		s.Plot(txtgraphics)
-		fmt.Printf("%s\n", txtgraphics.String())
-		mysvg.Gend()
-	}
-
-	{
-		s := chart.ScatterChart{Title: "Tiny fraction"}
-		s.Key.Hide = true
-		s.XRange.TicSetting.Mirror = 1
-		s.YRange.TicSetting.Mirror = 1
-
-		s.YRange.MinMode.Constrained = true
-		s.YRange.MinMode.Lower, s.YRange.MinMode.Upper = -2250, -2050
-		s.YRange.MaxMode.Constrained = true
-		s.YRange.MaxMode.Lower, s.YRange.MaxMode.Upper = -1950, -1700
-
-		s.XRange.MinMode.Constrained = true
-		s.XRange.MinMode.Lower, s.XRange.MinMode.Upper = -900, -800
-		s.XRange.MaxMode.Constrained = true
-		s.XRange.MaxMode.Lower, s.XRange.MaxMode.Upper = -850, -650
-
-		s.AddData("Data", points, chart.PlotStylePoints, chart.Style{Symbol: '0', SymbolColor: "#eecc"})
-		mysvg.Gtransform("translate(500 300)")
-		svggraphics := svgg.New(mysvg, 500, 300, "Arial", 11, Background)
-		s.Plot(svggraphics)
-		txtgraphics := txtg.New(100, 30)
-		s.Plot(txtgraphics)
-		fmt.Printf("%s\n", txtgraphics.String())
-		mysvg.Gend()
-	}
-
-	mysvg.End()
-	s2f.Close()
-}
-
-//
-// Box Charts
-//
-func boxChart() {
-	file, _ := os.Create("xbox1.svg")
-	thesvg := svg.New(file)
-	thesvg.Start(800, 600)
-	thesvg.Title("Srip Chart")
-	thesvg.Rect(0, 0, 800, 600, "fill: #ffffff")
-	svggraphics := svgg.New(thesvg, 400, 300, "Arial", 12, Background)
-	txtgraphics := txtg.New(120, 40)
-
-	p := chart.BoxChart{Title: "Box Chart"}
-	p.XRange.Label, p.YRange.Label = "Value", "Count"
-
-	for x := 10; x <= 50; x += 5 {
-		points := make([]float64, 70)
-		a := rand.Float64() * 10
-		v := rand.Float64()*5 + 2
-		for i := 0; i < len(points); i++ {
-			x := rand.NormFloat64()*v + a
-			points[i] = x
-		}
-		p.AddSet(float64(x), points, true)
-	}
-
-	p.NextDataSet("Sample B", chart.Style{Symbol: 'x', LineColor: "#00c000", LineWidth: 1, LineStyle: chart.SolidLine})
-	for x := 12; x <= 50; x += 10 {
-		points := make([]float64, 60)
-		a := rand.Float64()*15 + 30
-		v := rand.Float64()*5 + 2
-		for i := 0; i < len(points); i++ {
-			x := rand.NormFloat64()*v + a
-			points[i] = x
-		}
-		p.AddSet(float64(x), points, true)
-	}
-
-	p.Plot(svggraphics)
-	p.Plot(txtgraphics)
-	fmt.Printf("%s\n", txtgraphics.String())
-
-	thesvg.Gtransform("translate(400 0)")
-	p = chart.BoxChart{Title: "Categorical Box Chart"}
-	p.XRange.Label, p.YRange.Label = "Population", "Count"
-	p.XRange.Fixed(-1, 3, 1)
-	p.XRange.Category = []string{"Rural", "Urban", "Island"}
-
-	p.NextDataSet("", chart.Style{Symbol: '%', LineColor: "#0000cc", LineWidth: 1, LineStyle: chart.SolidLine})
-	p.AddSet(0, bigauss(100, 0, 5, 10, 0, 0, 0, 50), true)
-	p.AddSet(1, bigauss(100, 25, 5, 5, 2, 25, 0, 50), true)
-	p.AddSet(2, bigauss(50, 50, 4, 8, 4, 16, 0, 50), true)
-	p.Plot(svggraphics)
-	p.Plot(txtgraphics)
-	fmt.Printf("%s\n", txtgraphics.String())
-	thesvg.Gend()
-
-	thesvg.End()
-	file.Close()
-
-}
-
-// gaussian distribution with n samples, stddev of s, offset of a, forced to [l,u]
-func gauss(n int, s, a, l, u float64) []float64 {
-	points := make([]float64, n)
-	for i := 0; i < len(points); i++ {
-		x := rand.NormFloat64()*s + a
-		if x < l {
-			x = l
-		} else if x > u {
-			x = u
-		}
-		points[i] = x
-	}
-	return points
-}
-
-// bigaussian distribution with n samples, stddev of s, offset of a, clipped to [l,u]
-func bigauss(n1, n2 int, s1, a1, s2, a2, l, u float64) []float64 {
-	points := make([]float64, n1+n2)
-	for i := 0; i < n1; i++ {
-		x := rand.NormFloat64()*s1 + a1
-		for x < l || x > u {
-			x = rand.NormFloat64()*s1 + a1
-		}
-		points[i] = x
-	}
-	for i := n1; i < n1+n2; i++ {
-		x := rand.NormFloat64()*s2 + a2
-		for x < l || x > u {
-			x = rand.NormFloat64()*s2 + a2
-		}
-		points[i] = x
-	}
-	return points
-}
-
-func kernels() {
-	file, _ := os.Create("xkernels.svg")
-	thesvg := svg.New(file)
-	thesvg.Start(800, 600)
-	thesvg.Title("Kernels")
-	thesvg.Rect(0, 0, 800, 600, "fill: #ffffff")
-	svggraphics := svgg.New(thesvg, 800, 600, "Arial", 14, Background)
-
-	p := chart.ScatterChart{Title: "Kernels"}
-	p.XRange.Label, p.YRange.Label = "u", "K(u)"
-	p.XRange.MinMode.Fixed, p.XRange.MaxMode.Fixed = true, true
-	p.XRange.MinMode.Value, p.XRange.MaxMode.Value = -2, 2
-	p.YRange.MinMode.Fixed, p.YRange.MaxMode.Fixed = true, true
-	p.YRange.MinMode.Value, p.YRange.MaxMode.Value = -0.1, 1.1
-
-	p.XRange.TicSetting.Delta = 1
-	p.YRange.TicSetting.Delta = 0.2
-	p.XRange.TicSetting.Mirror = 1
-	p.YRange.TicSetting.Mirror = 1
-
-	p.AddFunc("Bisquare", chart.BisquareKernel,
-		chart.PlotStyleLines, chart.Style{Symbol: 'o', LineWidth: 1, LineColor: "#a00000", LineStyle: 1})
-	p.AddFunc("Epanechnikov", chart.EpanechnikovKernel,
-		chart.PlotStyleLines, chart.Style{Symbol: 'X', LineWidth: 1, LineColor: "#00a000", LineStyle: 1})
-	p.AddFunc("Rectangular", chart.RectangularKernel,
-		chart.PlotStyleLines, chart.Style{Symbol: '=', LineWidth: 1, LineColor: "#0000a0", LineStyle: 1})
-	p.AddFunc("Gauss", chart.GaussKernel,
-		chart.PlotStyleLines, chart.Style{Symbol: '*', LineWidth: 1, LineColor: "#a000a0", LineStyle: 1})
-
-	p.Plot(svggraphics)
-
-	thesvg.End()
-	file.Close()
-
-}
-
-//
-// Box Charts
-//
-func histChart(name, title string, stacked, counts, shifted bool) {
-	file, _ := os.Create(name)
-	thesvg := svg.New(file)
-	thesvg.Start(800, 600)
-	thesvg.Title(title)
-	thesvg.Rect(0, 0, 800, 600, "fill: #ffffff")
-	svggraphics := svgg.New(thesvg, 400, 300, "Arial", 12, Background)
-	txtgraphics := txtg.New(120, 30)
-
-	hc := chart.HistChart{Title: title, Stacked: stacked, Counts: counts, Shifted: shifted}
-	hc.XRange.Label = "Sample Value"
-	if counts {
-		hc.YRange.Label = "Total Count"
-	} else {
-		hc.YRange.Label = "Rel. Frequency [%]"
-	}
-	hc.Key.Hide = true
-	points := gauss(150, 10, 20, 0, 50)
-	hc.AddData("Sample 1", points,
-		chart.Style{ /*LineColor: "#ff0000", LineWidth: 1, LineStyle: 1, FillColor: "#ff8080"*/})
-	hc.Kernel = chart.BisquareKernel //  chart.GaussKernel // chart.EpanechnikovKernel // chart.RectangularKernel // chart.BisquareKernel
-	hc.Plot(svggraphics)
-	hc.Plot(txtgraphics)
-	fmt.Printf("%s\n", txtgraphics.String())
-
-	if true {
-		points2 := gauss(80, 4, 37, 0, 50)
-		// hc.Kernel = nil
-		hc.AddData("Sample 2", points2,
-			chart.Style{ /*LineColor: "#00ff00", LineWidth: 1, LineStyle: 1, FillColor: "#80ff80"*/})
-		thesvg.Gtransform("translate(400 0)")
-		hc.YRange.TicSetting.Delta = 0
-		hc.Plot(svggraphics)
-		hc.Plot(txtgraphics)
-		fmt.Printf("%s\n", txtgraphics.String())
-		thesvg.Gend()
-
-		thesvg.Gtransform("translate(0 300)")
-		points3 := gauss(60, 15, 0, 0, 50)
-		hc.AddData("Sample 3", points3,
-			chart.Style{ /*LineColor: "#0000ff", LineWidth: 1, LineStyle: 1, FillColor: "#8080ff"*/})
-		hc.YRange.TicSetting.Delta = 0
-		hc.Plot(svggraphics)
-		hc.Plot(txtgraphics)
-		fmt.Printf("%s\n", txtgraphics.String())
-		thesvg.Gend()
-
-		thesvg.Gtransform("translate(400 300)")
-		points4 := gauss(40, 30, 15, 0, 50)
-		hc.AddData("Sample 4", points4, chart.Style{ /*LineColor: "#000000", LineWidth: 1, LineStyle: 1*/})
-		hc.Kernel = nil
-		hc.YRange.TicSetting.Delta = 0
-		hc.Plot(svggraphics)
-		hc.Plot(txtgraphics)
-		fmt.Printf("%s\n", txtgraphics.String())
-		thesvg.Gend()
-	}
-	thesvg.End()
-	file.Close()
-}
-
-//
-// Bar Charts
-//
-func barChart() {
-	file, _ := os.Create("xbar1.svg")
-	thesvg := svg.New(file)
-	thesvg.Start(1200, 600)
-	thesvg.Title("Bar Chart")
-	thesvg.Rect(0, 0, 1200, 600, "fill: #ffffff")
-	red := chart.Style{Symbol: 'o', LineColor: "#cc0000", FillColor: "#ff8080", Alpha: 0, LineStyle: chart.SolidLine, LineWidth: 2}
-	green := chart.Style{Symbol: '#', LineColor: "#00cc00", FillColor: "#80ff80", Alpha: 0, LineStyle: chart.SolidLine, LineWidth: 2}
-	svggraphics := svgg.New(thesvg, 400, 300, "Arial", 12, Background)
-	// txtgraphics := txtg.New(120, 30)
-
-	barc := chart.BarChart{Title: "Simple Bar Chart"}
-	barc.Key.Hide = true
-	barc.XRange.ShowZero = true
-	barc.AddDataPair("Amount", []float64{-10, 10, 20, 30, 35, 40, 50}, []float64{90, 120, 180, 205, 230, 150, 190}, red)
-	barc.Plot(svggraphics)
-	//barc.Plot(txtgraphics)
-	//fmt.Printf("%s\n", txtgraphics.String())
-	barc.XRange.TicSetting.Delta = 0
-
-	thesvg.Gtransform("translate(400 0)")
-	barc = chart.BarChart{Title: "Simple Bar Chart"}
-	barc.Key.Hide = true
-	barc.XRange.ShowZero = true
-	barc.AddDataPair("Test", []float64{-5, 15, 25, 35, 45, 55}, []float64{110, 80, 95, 80, 120, 140}, green)
-	barc.Plot(svggraphics)
-	//barc.Plot(txtgraphics)
-	//fmt.Printf("%s\n", txtgraphics.String())
-	thesvg.Gend()
-	barc.XRange.TicSetting.Delta = 0
-
-	thesvg.Gtransform("translate(800 0)")
-	barc.YRange.TicSetting.Delta = 0
-	barc.Title = "Combined (ugly as bar positions do not match)"
-	barc.AddDataPair("Amount", []float64{-10, 10, 20, 30, 35, 40, 50}, []float64{90, 120, 180, 205, 230, 150, 190}, red)
-	barc.Plot(svggraphics)
-	//barc.Plot(txtgraphics)
-	//fmt.Printf("%s\n", txtgraphics.String())
-	thesvg.Gend()
-
-	thesvg.Gtransform("translate(0 300)")
-	barc.Title = "Stacked (still ugly)"
-	barc.Stacked = true
-	barc.Plot(svggraphics)
-	//barc.Plot(txtgraphics)
-	//fmt.Printf("%s\n", txtgraphics.String())
-	thesvg.Gend()
-
-	thesvg.Gtransform("translate(400 300)")
-	barc = chart.BarChart{Title: "Nicely Stacked"}
-	barc.Key.Hide = true
-	barc.XRange.Fixed(0, 60, 10)
-	barc.AddDataPair("A", []float64{10, 30, 40, 50}, []float64{110, 95, 60, 120}, red)
-	barc.AddDataPair("B", []float64{10, 30, 40, 50}, []float64{40, 130, 15, 100}, green)
-	barc.Plot(svggraphics)
-	//barc.Plot(txtgraphics)
-	//fmt.Printf("%s\n", txtgraphics.String())
-	thesvg.Gend()
-
-	thesvg.Gtransform("translate(800 300)")
-	barc.Stacked = true
-	barc.Plot(svggraphics)
-	//barc.Plot(txtgraphics)
-	//fmt.Printf("%s\n", txtgraphics.String())
-	thesvg.Gend()
-
-	thesvg.End()
-	file.Close()
-}
-
-//
-// Categorical Bar Charts
-//
-func categoricalBarChart() {
-	file, _ := os.Create("xbar2.svg")
-	thesvg := svg.New(file)
-	thesvg.Start(1200, 600)
-	thesvg.Title("Bar Chart")
-	thesvg.Rect(0, 0, 1200, 600, "fill: #ffffff")
-	svggraphics := svgg.New(thesvg, 400, 300, "Arial", 12, Background)
-	txtgraphics := txtg.New(120, 30)
-
-	x := []float64{0, 1, 2, 3}
-	europe := []float64{10, 15, 25, 20}
-	asia := []float64{15, 30, 10, 20}
-	africa := []float64{20, 5, 5, 5}
-	blue := chart.Style{Symbol: '#', LineColor: "#0000ff", LineWidth: 4, FillColor: "#4040ff"}
-	green := chart.Style{Symbol: 'x', LineColor: "#00aa00", LineWidth: 4, FillColor: "#40ff40"}
-	pink := chart.Style{Symbol: '0', LineColor: "#990099", LineWidth: 4, FillColor: "#aa60aa"}
-	red := chart.Style{Symbol: '%', LineColor: "#cc0000", LineWidth: 4, FillColor: "#ff4040"}
-
-	// Categorized Bar Chart
-	c := chart.BarChart{Title: "Income"}
-	c.XRange.Category = []string{"none", "low", "average", "high"}
-
-	// Unstacked, different labelings
-	c.ShowVal = 1
-	c.AddDataPair("Europe", x, europe, blue)
-	c.Plot(svggraphics)
-	c.Plot(txtgraphics)
-	fmt.Printf("%s\n", txtgraphics.String())
-
-	c.ShowVal = 2
-	c.AddDataPair("Asia", x, asia, pink)
-	thesvg.Gtransform("translate(400 0)")
-	c.Plot(svggraphics)
-	c.Plot(txtgraphics)
-	fmt.Printf("%s\n", txtgraphics.String())
-	thesvg.Gend()
-
-	c.ShowVal = 3
-	c.AddDataPair("Africa", x, africa, green)
-	thesvg.Gtransform("translate(800 0)")
-	c.Plot(svggraphics)
-	c.Plot(txtgraphics)
-	fmt.Printf("%s\n", txtgraphics.String())
-	thesvg.Gend()
-
-	// Stacked with different labelings
-	c.Stacked = true
-	c.ShowVal = 1
-	thesvg.Gtransform("translate(0 300)")
-	c.Plot(svggraphics)
-	c.Plot(txtgraphics)
-	fmt.Printf("%s\n", txtgraphics.String())
-	thesvg.Gend()
-
-	c.ShowVal = 2
-	thesvg.Gtransform("translate(400 300)")
-	c.Plot(svggraphics)
-	c.Plot(txtgraphics)
-	fmt.Printf("%s\n", txtgraphics.String())
-	thesvg.Gend()
-
-	c.ShowVal = 3
-	thesvg.Gtransform("translate(800 300)")
-	c.Plot(svggraphics)
-	c.Plot(txtgraphics)
-	fmt.Printf("%s\n", txtgraphics.String())
-	thesvg.Gend()
-
-	thesvg.End()
-	file.Close()
-
-	// Including negative ones
-
-	file, _ = os.Create("xbar3.svg")
-	thesvg = svg.New(file)
-	thesvg.Start(1200, 900)
-	thesvg.Title("Bar Chart")
-	thesvg.Rect(0, 0, 1200, 900, "fill: #ffffff")
-	svggraphics = svgg.New(thesvg, 400, 300, "Arial", 12, Background)
-	txtgraphics = txtg.New(120, 30)
-
-	c = chart.BarChart{Title: "Income"}
-	c.XRange.Category = []string{"none", "low", "average", "high"}
-	c.Key.Hide = true
-	c.YRange.ShowZero = true
-	c.ShowVal = 3
-
-	c.AddDataPair("Europe", x, []float64{-10, -15, -20, -5}, blue)
-	c.Plot(svggraphics)
-	c.Plot(txtgraphics)
-	fmt.Printf("%s\n", txtgraphics.String())
-
-	thesvg.Gtransform("translate(400 0)")
-	c.AddDataPair("Asia", x, []float64{-15, -10, -5, -20}, pink)
-	c.Plot(svggraphics)
-	c.Plot(txtgraphics)
-	fmt.Printf("%s\n", txtgraphics.String())
-	thesvg.Gend()
-
-	thesvg.Gtransform("translate(800 0)")
-	c.Stacked = true
-	c.Plot(svggraphics)
-	c.Plot(txtgraphics)
-	fmt.Printf("%s\n", txtgraphics.String())
-	thesvg.Gend()
-
-	// Mixed
-	c = chart.BarChart{Title: "Income"}
-	c.XRange.Category = []string{"none", "low", "average", "high"}
-	c.Key.Hide = true
-	c.YRange.ShowZero = true
-	c.ShowVal = 3
-
-	thesvg.Gtransform("translate(0 300)")
-	c.AddDataPair("Europe", x, []float64{-10, 15, -20, 5}, blue)
-	c.Plot(svggraphics)
-	c.Plot(txtgraphics)
-	fmt.Printf("%s\n", txtgraphics.String())
-	thesvg.Gend()
-
-	thesvg.Gtransform("translate(400 300)")
-	c.AddDataPair("Asia", x, []float64{-15, 10, -5, 20}, pink)
-	c.Plot(svggraphics)
-	c.Plot(txtgraphics)
-	fmt.Printf("%s\n", txtgraphics.String())
-	thesvg.Gend()
-
-	thesvg.Gtransform("translate(800 300)")
-	c.Stacked = true
-	c.Plot(svggraphics)
-	c.Plot(txtgraphics)
-	fmt.Printf("%s\n", txtgraphics.String())
-	thesvg.Gend()
-
-	// Very Mixed
-	c = chart.BarChart{Title: "Income"}
-	c.XRange.Category = []string{"none", "low", "average", "high"}
-	c.Key.Hide = true
-	c.YRange.ShowZero = true
-	c.ShowVal = 3
-
-	thesvg.Gtransform("translate(0 600)")
-	c.AddDataPair("Europe", x, []float64{-10, 15, -20, 5}, blue)
-	c.AddDataPair("Asia", x, []float64{-15, 10, 5, 20}, pink)
-	c.AddDataPair("Africa", x, []float64{10, -10, 15, -5}, green)
-	c.Plot(svggraphics)
-	c.Plot(txtgraphics)
-	fmt.Printf("%s\n", txtgraphics.String())
-	thesvg.Gend()
-
-	thesvg.Gtransform("translate(400 600)")
-	c.Stacked = true
-	c.Plot(svggraphics)
-	c.Plot(txtgraphics)
-	fmt.Printf("%s\n", txtgraphics.String())
-	thesvg.Gend()
-
-	thesvg.Gtransform("translate(800 600)")
-	c.AddDataPair("America", x, []float64{15, -5, -10, -20}, red)
-	c.YRange.TicSetting.Delta = 0
-	c.Plot(svggraphics)
-	c.Plot(txtgraphics)
-	fmt.Printf("%s\n", txtgraphics.String())
-	thesvg.Gend()
-
-	thesvg.End()
-	file.Close()
-}
-
-//
-// Logarithmic axes
-//
-func logAxis() {
-	file, _ := os.Create("xlog1.svg")
-	thesvg := svg.New(file)
-	thesvg.Start(800, 600)
-	thesvg.Title("Logarithmic axis")
-	thesvg.Rect(0, 0, 800, 600, "fill: #ffffff")
-	svggraphics := svgg.New(thesvg, 400, 300, "Arial", 12, Background)
-	txtgraphics := txtg.New(120, 30)
-
-	lc := chart.ScatterChart{}
-	lc.XRange.Label, lc.YRange.Label = "X-Value", "Y-Value"
-	lx := []float64{4e-2, 3e-1, 2e0, 1e1, 8e1, 7e2, 5e3}
-	ly := []float64{10, 30, 90, 270, 3 * 270, 9 * 270, 27 * 270}
-	lc.AddDataPair("Measurement", lx, ly, chart.PlotStylePoints,
-		chart.Style{Symbol: '#', SymbolColor: "#9966ff", SymbolSize: 1.5})
-	lc.Key.Hide = true
-	lc.XRange.MinMode.Expand, lc.XRange.MaxMode.Expand = chart.ExpandToTic, chart.ExpandToTic
-	lc.YRange.MinMode.Expand, lc.YRange.MaxMode.Expand = chart.ExpandToTic, chart.ExpandToTic
-	lc.Title = "Lin / Lin"
-	lc.XRange.Min, lc.XRange.Max = 0, 0
-	lc.YRange.Min, lc.YRange.Max = 0, 0
-	lc.Plot(svggraphics)
-	lc.Plot(txtgraphics)
-	fmt.Printf("%s\n", txtgraphics.String())
-
-	thesvg.Gtransform("translate(400 0)")
-	lc.Title = "Lin / Log"
-	lc.XRange.Log, lc.YRange.Log = false, true
-	lc.XRange.Min, lc.XRange.Max, lc.XRange.TicSetting.Delta = 0, 0, 0
-	lc.YRange.Min, lc.YRange.Max, lc.YRange.TicSetting.Delta = 0, 0, 0
-	lc.Plot(svggraphics)
-	lc.Plot(txtgraphics)
-	fmt.Printf("%s\n", txtgraphics.String())
-	thesvg.Gend()
-
-	thesvg.Gtransform("translate(0 300)")
-	lc.Title = "Log / Lin"
-	lc.XRange.Log, lc.YRange.Log = true, false
-	lc.XRange.Min, lc.XRange.Max, lc.XRange.TicSetting.Delta = 0, 0, 0
-	lc.YRange.Min, lc.YRange.Max, lc.YRange.TicSetting.Delta = 0, 0, 0
-	lc.Plot(svggraphics)
-	lc.Plot(txtgraphics)
-	fmt.Printf("%s\n", txtgraphics.String())
-	thesvg.Gend()
-
-	thesvg.Gtransform("translate(400 300)")
-	lc.Title = "Log / Log"
-	lc.XRange.Log, lc.YRange.Log = true, true
-	lc.XRange.Min, lc.XRange.Max, lc.XRange.TicSetting.Delta = 0, 0, 0
-	lc.YRange.Min, lc.YRange.Max, lc.YRange.TicSetting.Delta = 0, 0, 0
-	lc.Plot(svggraphics)
-	lc.Plot(txtgraphics)
-	fmt.Printf("%s\n", txtgraphics.String())
-	thesvg.Gend()
-
-	thesvg.End()
-	file.Close()
-}
-
+// Dumper helps saving plots of size WxH in a NxM grid layout
+// in several formats
 type Dumper struct {
-	N, M                      int
-	W, H                      int
-	Cnt                       int
+	N, M, W, H, Cnt           int 
 	S                         *svg.SVG
 	I                         *image.RGBA
 	svgFile, imgFile, txtFile *os.File
@@ -1025,7 +83,7 @@ func (d *Dumper) Close() {
 func (d *Dumper) Plot(c chart.Chart) {
 	row, col := d.Cnt/d.N, d.Cnt%d.N
 
-	igr := imgg.AddTo(d.I, col*d.W, row*d.H, d.W, d.H, color.RGBA{0xff, 0xff, 0xff, 0xff})
+	igr := imgg.AddTo(d.I, col*d.W, row*d.H, d.W, d.H, color.RGBA{0xff, 0xff, 0xff, 0xff}, nil, 12)
 	c.Plot(igr)
 
 	sgr := svgg.AddTo(d.S, col*d.W, row*d.H, d.W, d.H, "", 12, color.RGBA{0xff, 0xff, 0xff, 0xff})
@@ -1039,6 +97,658 @@ func (d *Dumper) Plot(c chart.Chart) {
 
 }
 
+// -------------------------------------------------------------------------
+// Individual Charts
+
+//
+// Some sample strip charts
+//
+func stripChart() {
+	dumper := NewDumper("xstrip1", 2, 2, 400, 300)
+	defer dumper.Close()
+
+	c := chart.StripChart{}
+
+	c.AddData("Sample A", data1, chart.Style{})
+	c.AddData("Sample B", data2, chart.Style{})
+	c.AddData("Sample C", data3, chart.Style{})
+	c.Title = "Sample Strip Chart (no Jitter)"
+	c.XRange.Label = "X - Axis"
+	c.Key.Pos = "icr"
+	dumper.Plot(&c)
+
+	c.Jitter = true
+	c.Title = "Sample Strip Chart (with Jitter)"
+	dumper.Plot(&c)
+
+	c.Key.Hide = true
+	dumper.Plot(&c)
+
+	c.Jitter = false
+	c.Title = "Sample Strip Chart (no Jitter)"
+	dumper.Plot(&c)
+}
+
+//
+// All different key styles
+// 
+func keyStyles() {
+	dumper := NewDumper("xkey", 6, 6, 400, 300)
+	defer dumper.Close()
+
+	p := chart.ScatterChart{Title: "Key Placement"}
+	p.XRange.TicSetting.Mirror, p.YRange.TicSetting.Mirror = 1, 1
+	p.XRange.MinMode.Fixed, p.XRange.MaxMode.Fixed = true, true
+	p.XRange.MinMode.Value, p.XRange.MaxMode.Value = -5, 5
+	p.XRange.Min, p.XRange.Max = -5, 5
+	p.XRange.TicSetting.Delta = 2
+
+	p.YRange.MinMode.Fixed, p.YRange.MaxMode.Fixed = true, true
+	p.YRange.MinMode.Value, p.YRange.MaxMode.Value = -5, 5
+	p.YRange.Min, p.YRange.Max = -5, 5
+	p.YRange.TicSetting.Delta = 3
+
+	p.AddFunc("Sin", func(x float64) float64 { return math.Sin(x) }, chart.PlotStyleLines,
+		chart.Style{LineColor: "#a00000", LineWidth: 1, LineStyle: 1})
+	p.AddFunc("Cos", func(x float64) float64 { return math.Cos(x) }, chart.PlotStyleLines,
+		chart.Style{LineColor: "#00a000", LineWidth: 1, LineStyle: 1})
+	p.AddFunc("Tan", func(x float64) float64 { return math.Tan(x) }, chart.PlotStyleLines,
+		chart.Style{LineColor: "#0000a0", LineWidth: 1, LineStyle: 1})
+
+	for _, pos := range []string{"itl", "itc", "itr", "icl", "icc", "icr", "ibl", "ibc", "ibr",
+		"otl", "otc", "otr", "olt", "olc", "olb", "obl", "obc", "obr", "ort", "orc", "orb"} {
+		p.Key.Pos = pos
+		p.Title = "Key Placement: " + pos
+		dumper.Plot(&p)
+	}
+
+	p.Key.Pos = "itl"
+	p.AddFunc("Log", func(x float64) float64 { return math.Log(x) }, chart.PlotStyleLines,
+		chart.Style{LineColor: "#ff6060", LineWidth: 1, LineStyle: 1})
+	p.AddFunc("Exp", func(x float64) float64 { return math.Exp(x) }, chart.PlotStyleLines,
+		chart.Style{LineColor: "#60ff60", LineWidth: 1, LineStyle: 1})
+	p.AddFunc("Atan", func(x float64) float64 { return math.Atan(x) }, chart.PlotStyleLines,
+		chart.Style{LineColor: "#6060ff", LineWidth: 1, LineStyle: 1})
+	p.AddFunc("Y1", func(x float64) float64 { return math.Y1(x) }, chart.PlotStyleLines,
+		chart.Style{LineColor: "#d0d000", LineWidth: 1, LineStyle: 1})
+
+	for _, cols := range []int{-4, -3, -2, -1, 0, 1, 2, 3, 4} {
+		p.Key.Cols = cols
+		p.Title = fmt.Sprintf("Key Cols: %d", cols)
+		dumper.Plot(&p)
+	}
+}
+
+//
+// Scatter plots with different tic/grid settings
+//
+func scatterTics() {
+	dumper := NewDumper("xstrip1", 3, 3, 400, 300)
+	defer dumper.Close()
+
+	p := chart.ScatterChart{Title: "Sample Scatter Chart"}
+	p.AddDataPair("Sample A", data10, data1, chart.PlotStylePoints, chart.Style{})
+	p.XRange.TicSetting.Delta = 5000
+	p.XRange.Label = "X - Value"
+	p.YRange.Label = "Y - Value"
+	dumper.Plot(&p)
+
+	p.XRange.TicSetting.Hide, p.YRange.TicSetting.Hide = true, true
+	dumper.Plot(&p)
+
+	p.YRange.TicSetting.Hide = false
+	p.XRange.TicSetting.Grid, p.YRange.TicSetting.Grid = chart.GridLines, chart.GridLines
+	dumper.Plot(&p)
+
+	p.XRange.TicSetting.Hide, p.YRange.TicSetting.Hide = false, false
+	p.XRange.TicSetting.Mirror, p.YRange.TicSetting.Mirror = 1, 2
+	dumper.Plot(&p)
+
+	c := chart.ScatterChart{Title: "Own tics"}
+	c.XRange.Fixed(0, 4*math.Pi, math.Pi)
+	c.YRange.Fixed(-1.25, 1.25, 0.5)
+	c.XRange.TicSetting.Format = func(f float64) string {
+		w := int(180*f/math.Pi + 0.5)
+		return fmt.Sprintf("%d°", w)
+	}
+	c.AddFunc("Sin(x)", func(x float64) float64 { return math.Sin(x) }, chart.PlotStyleLines,
+		chart.Style{Symbol: '@', LineWidth: 2, LineColor: "#0000cc", LineStyle: 0})
+	c.AddFunc("Cos(x)", func(x float64) float64 { return math.Cos(x) }, chart.PlotStyleLines,
+		chart.Style{Symbol: '%', LineWidth: 2, LineColor: "#00cc00", LineStyle: 0})
+	dumper.Plot(&c)
+
+	c.Title = "Tic Variants"
+	c.XRange.TicSetting.Tics = 1
+	c.YRange.TicSetting.Tics = 2
+	dumper.Plot(&c)
+
+	c.Title = "Blocked Grid"
+	c.XRange.TicSetting.Tics = 1
+	c.YRange.TicSetting.Tics = 1
+	c.XRange.TicSetting.Mirror, c.YRange.TicSetting.Mirror = 1, 1
+	c.XRange.TicSetting.Grid = chart.GridBlocks
+	c.YRange.TicSetting.Grid = chart.GridBlocks
+	dumper.Plot(&c)
+}
+
+//
+// Full fletched scatter plots
+//
+func scatterChart() {
+	dumper := NewDumper("xscatter2", 1, 1, 800, 600)
+	defer dumper.Close()
+
+	pl := chart.ScatterChart{Title: "Scatter + Lines"}
+	pl.XRange.Label, pl.YRange.Label = "X - Value", "Y - Value"
+	pl.Key.Pos = "itl"
+	// pl.XRange.TicSetting.Delta = 5
+	pl.XRange.TicSetting.Grid = 1
+	x := []float64{-4, -3.3, -1.8, -1, 0.2, 0.8, 1.8, 3.1, 4, 5.3, 6, 7, 8, 9}
+	y := []float64{22, 18, -3, 0, 0.5, 2, 45, 12, 16.5, 24, 30, 55, 60, 70}
+	pl.AddDataPair("Data", x, y, chart.PlotStyleLinesPoints,
+		chart.Style{Symbol: '#', SymbolColor: "#0000ff", LineStyle: chart.SolidLine})
+	last := len(pl.Data) - 1
+	pl.Data[last].Samples[6].DeltaX = 2.5
+	pl.Data[last].Samples[6].OffX = 0.5
+	pl.Data[last].Samples[6].DeltaY = 16
+	pl.Data[last].Samples[6].OffY = 2
+
+	pl.AddData("Points", []chart.EPoint{chart.EPoint{-4, 40, 0, 0, 0, 0}, chart.EPoint{-3, 45, 0, 0, 0, 0},
+		chart.EPoint{-2, 35, 0, 0, 0, 0}}, chart.PlotStylePoints,
+		chart.Style{Symbol: '0', SymbolColor: "#ff00ff"})
+	pl.AddFunc("Theory", func(x float64) float64 {
+		if x > 5.25 && x < 5.75 {
+			return 75
+		}
+		if x > 7.25 && x < 7.75 {
+			return 500
+		}
+		return x * x
+	}, chart.PlotStyleLines, 
+		chart.Style{Symbol: '%', LineWidth: 2, LineColor: "#a00000", LineStyle: chart.DashDotDotLine})
+	pl.AddFunc("30", func(x float64) float64 { return 30 }, chart.PlotStyleLines,
+		chart.Style{Symbol: '+', LineWidth: 1, LineColor: "#00a000", LineStyle: 1})
+	pl.AddFunc("", func(x float64) float64 { return 7 }, chart.PlotStyleLines,
+		chart.Style{Symbol: '@', LineWidth: 1, LineColor: "#0000a0", LineStyle: 1})
+
+	pl.XRange.ShowZero = true
+	pl.XRange.TicSetting.Mirror = 1
+	pl.YRange.TicSetting.Mirror = 1
+	pl.XRange.TicSetting.Grid = 1
+	pl.XRange.Label = "X-Range"
+	pl.YRange.Label = "Y-Range"
+	pl.Key.Cols = 2
+	pl.Key.Pos = "orb"
+
+	dumper.Plot(&pl)
+}
+
+//
+// Function plots with fancy clippings
+//
+func functionPlots() {
+	dumper := NewDumper("xscatter3", 2, 1, 500, 400)
+	defer dumper.Close()
+
+	p := chart.ScatterChart{Title: "Functions"}
+	p.XRange.Label, p.YRange.Label = "X - Value", "Y - Value"
+	p.Key.Pos = "ibl"
+	p.XRange.MinMode.Fixed, p.XRange.MaxMode.Fixed = true, true
+	p.XRange.MinMode.Value, p.XRange.MaxMode.Value = -10, 10
+	p.YRange.MinMode.Fixed, p.YRange.MaxMode.Fixed = true, true
+	p.YRange.MinMode.Value, p.YRange.MaxMode.Value = -10, 10
+
+	p.XRange.TicSetting.Delta = 2
+	p.YRange.TicSetting.Delta = 5
+	p.XRange.TicSetting.Mirror = 1
+	p.YRange.TicSetting.Mirror = 1
+
+	p.AddFunc("i+n", func(x float64) float64 {
+		if x > -7 && x < -5 {
+			return math.Inf(-1)
+		} else if x > -1.5 && x < 1.5 {
+			return math.NaN()
+		} else if x > 5 && x < 7 {
+			return math.Inf(1)
+		}
+		return -0.75 * x
+	},
+		chart.PlotStyleLines, chart.Style{Symbol: 'o', LineWidth: 2, LineColor: "#a00000", LineStyle: 1})
+	p.AddFunc("sin", func(x float64) float64 { return 13 * math.Sin(x) }, chart.PlotStyleLines,
+		chart.Style{Symbol: '#', LineWidth: 1, LineColor: "#0000a0", LineStyle: 1})
+	p.AddFunc("2x", func(x float64) float64 { return 2 * x }, chart.PlotStyleLines,
+		chart.Style{Symbol: 'X', LineWidth: 1, LineColor: "#00a000", LineStyle: 1})
+
+	dumper.Plot(&p)
+
+	p = chart.ScatterChart{Title: "Functions"}
+	p.Key.Hide = true
+	p.XRange.MinMode.Fixed, p.XRange.MaxMode.Fixed = true, true
+	p.XRange.MinMode.Value, p.XRange.MaxMode.Value = -2, 2
+	p.YRange.MinMode.Fixed, p.YRange.MaxMode.Fixed = true, true
+	p.YRange.MinMode.Value, p.YRange.MaxMode.Value = -2, 2
+	p.XRange.TicSetting.Delta = 1
+	p.YRange.TicSetting.Delta = 1
+	p.XRange.TicSetting.Mirror = 1
+	p.YRange.TicSetting.Mirror = 1
+	p.NSamples = 5
+	p.AddFunc("10x", func(x float64) float64 { return 10 * x }, chart.PlotStyleLines,
+		chart.Style{Symbol: 'o', LineWidth: 2, LineColor: "#00a000", LineStyle: 1})
+	dumper.Plot(&p)
+}
+
+//
+// Autoscaling
+//
+func autoscale() {
+	dumper := NewDumper("xautoscale", 2, 2, 600, 400)
+	defer dumper.Close()
+
+	N := 200
+	points := make([]chart.EPoint, N)
+	for i := 0; i < N-1; i++ {
+		points[i].X = rand.Float64()*10000 - 5000 // Full range is [-5000:5000]
+		points[i].Y = rand.Float64()*10000 - 5000 // Full range is [-5000:5000]
+		points[i].DeltaX = rand.Float64() * 400
+		points[i].DeltaY = rand.Float64() * 400
+	}
+	points[N-1].X = -650
+	points[N-1].Y = -2150
+	points[N-1].DeltaX = 400
+	points[N-1].DeltaY = 400
+	points[N-1].OffX = 100
+	points[N-1].OffY = -150
+
+	s := chart.ScatterChart{Title: "Full Autoscaling"}
+	s.Key.Hide = true
+	s.XRange.TicSetting.Mirror = 1
+	s.YRange.TicSetting.Mirror = 1
+	s.AddData("Data", points, chart.PlotStylePoints, chart.Style{Symbol: 'o', SymbolColor: "#00ee00"})
+	dumper.Plot(&s)
+
+	s = chart.ScatterChart{Title: "Xmin: -1850, Xmax clipped to [500:900]"}
+	s.Key.Hide = true
+	s.XRange.TicSetting.Mirror = 1
+	s.YRange.TicSetting.Mirror = 1
+	s.XRange.MinMode.Fixed, s.XRange.MinMode.Value = true, -1850
+	s.XRange.MaxMode.Constrained = true
+	s.XRange.MaxMode.Lower, s.XRange.MaxMode.Upper = 500, 900
+
+	s.AddData("Data", points, chart.PlotStylePoints, chart.Style{Symbol: '0', SymbolColor: "#ee0000"})
+	dumper.Plot(&s)
+
+	s = chart.ScatterChart{Title: "Xmin: -1850, Ymax clipped to [9000:11000]"}
+	s.Key.Hide = true
+	s.XRange.TicSetting.Mirror = 1
+	s.YRange.TicSetting.Mirror = 1
+	s.XRange.MinMode.Fixed, s.XRange.MinMode.Value = true, -1850
+	s.YRange.MaxMode.Constrained = true
+	s.YRange.MaxMode.Lower, s.YRange.MaxMode.Upper = 9000, 11000
+
+	s.AddData("Data", points, chart.PlotStylePoints, chart.Style{Symbol: '0', SymbolColor: "#0000ee"})
+	dumper.Plot(&s)
+
+	s = chart.ScatterChart{Title: "Tiny fraction"}
+	s.Key.Hide = true
+	s.XRange.TicSetting.Mirror = 1
+	s.YRange.TicSetting.Mirror = 1
+
+	s.YRange.MinMode.Constrained = true
+	s.YRange.MinMode.Lower, s.YRange.MinMode.Upper = -2250, -2050
+	s.YRange.MaxMode.Constrained = true
+	s.YRange.MaxMode.Lower, s.YRange.MaxMode.Upper = -1950, -1700
+
+	s.XRange.MinMode.Constrained = true
+	s.XRange.MinMode.Lower, s.XRange.MinMode.Upper = -900, -800
+	s.XRange.MaxMode.Constrained = true
+	s.XRange.MaxMode.Lower, s.XRange.MaxMode.Upper = -850, -650
+
+	s.AddData("Data", points, chart.PlotStylePoints, chart.Style{Symbol: '0', SymbolColor: "#eecc"})
+	dumper.Plot(&s)
+}
+
+//
+// Box Charts
+//
+func boxChart() {
+	dumper := NewDumper("xbox1", 2, 2, 400, 300)
+	defer dumper.Close()
+
+	p := chart.BoxChart{Title: "Box Chart"}
+	p.XRange.Label, p.YRange.Label = "Value", "Count"
+	for x := 10; x <= 50; x += 5 {
+		points := make([]float64, 70)
+		a := rand.Float64() * 10
+		v := rand.Float64()*5 + 2
+		for i := 0; i < len(points); i++ {
+			x := rand.NormFloat64()*v + a
+			points[i] = x
+		}
+		p.AddSet(float64(x), points, true)
+	}
+
+	p.NextDataSet("Sample B", chart.Style{Symbol: 'x', LineColor: "#00c000", LineWidth: 1, LineStyle: chart.SolidLine})
+	for x := 12; x <= 50; x += 10 {
+		points := make([]float64, 60)
+		a := rand.Float64()*15 + 30
+		v := rand.Float64()*5 + 2
+		for i := 0; i < len(points); i++ {
+			x := rand.NormFloat64()*v + a
+			points[i] = x
+		}
+		p.AddSet(float64(x), points, true)
+	}
+	dumper.Plot(&p)
+
+	p = chart.BoxChart{Title: "Categorical Box Chart"}
+	p.XRange.Label, p.YRange.Label = "Population", "Count"
+	p.XRange.Fixed(-1, 3, 1)
+	p.XRange.Category = []string{"Rural", "Urban", "Island"}
+
+	p.NextDataSet("", chart.Style{Symbol: '%', LineColor: "#0000cc", LineWidth: 1, LineStyle: chart.SolidLine})
+	p.AddSet(0, bigauss(100, 0, 5, 10, 0, 0, 0, 50), true)
+	p.AddSet(1, bigauss(100, 25, 5, 5, 2, 25, 0, 50), true)
+	p.AddSet(2, bigauss(50, 50, 4, 8, 4, 16, 0, 50), true)
+	dumper.Plot(&p)
+
+}
+
+// gaussian distribution with n samples, stddev of s, offset of a, forced to [l,u]
+func gauss(n int, s, a, l, u float64) []float64 {
+	points := make([]float64, n)
+	for i := 0; i < len(points); i++ {
+		x := rand.NormFloat64()*s + a
+		if x < l {
+			x = l
+		} else if x > u {
+			x = u
+		}
+		points[i] = x
+	}
+	return points
+}
+
+// bigaussian distribution with n samples, stddev of s, offset of a, clipped to [l,u]
+func bigauss(n1, n2 int, s1, a1, s2, a2, l, u float64) []float64 {
+	points := make([]float64, n1+n2)
+	for i := 0; i < n1; i++ {
+		x := rand.NormFloat64()*s1 + a1
+		for x < l || x > u {
+			x = rand.NormFloat64()*s1 + a1
+		}
+		points[i] = x
+	}
+	for i := n1; i < n1+n2; i++ {
+		x := rand.NormFloat64()*s2 + a2
+		for x < l || x > u {
+			x = rand.NormFloat64()*s2 + a2
+		}
+		points[i] = x
+	}
+	return points
+}
+
+func kernels() {
+	dumper := NewDumper("xkernels", 1, 1, 600, 400)
+	defer dumper.Close()
+
+	p := chart.ScatterChart{Title: "Kernels"}
+	p.XRange.Label, p.YRange.Label = "u", "K(u)"
+	p.XRange.MinMode.Fixed, p.XRange.MaxMode.Fixed = true, true
+	p.XRange.MinMode.Value, p.XRange.MaxMode.Value = -2, 2
+	p.YRange.MinMode.Fixed, p.YRange.MaxMode.Fixed = true, true
+	p.YRange.MinMode.Value, p.YRange.MaxMode.Value = -0.1, 1.1
+
+	p.XRange.TicSetting.Delta = 1
+	p.YRange.TicSetting.Delta = 0.2
+	p.XRange.TicSetting.Mirror = 1
+	p.YRange.TicSetting.Mirror = 1
+
+	p.AddFunc("Bisquare", chart.BisquareKernel,
+		chart.PlotStyleLines, chart.Style{Symbol: 'o', LineWidth: 1, LineColor: "#a00000", LineStyle: 1})
+	p.AddFunc("Epanechnikov", chart.EpanechnikovKernel,
+		chart.PlotStyleLines, chart.Style{Symbol: 'X', LineWidth: 1, LineColor: "#00a000", LineStyle: 1})
+	p.AddFunc("Rectangular", chart.RectangularKernel,
+		chart.PlotStyleLines, chart.Style{Symbol: '=', LineWidth: 1, LineColor: "#0000a0", LineStyle: 1})
+	p.AddFunc("Gauss", chart.GaussKernel,
+		chart.PlotStyleLines, chart.Style{Symbol: '*', LineWidth: 1, LineColor: "#a000a0", LineStyle: 1})
+
+	dumper.Plot(&p)
+}
+
+//
+// Histograms Charts
+//
+func histChart(name, title string, stacked, counts, shifted bool) {
+	dumper := NewDumper("xhist", 2, 2, 400, 300)
+	defer dumper.Close()
+
+	hc := chart.HistChart{Title: title, Stacked: stacked, Counts: counts, Shifted: shifted}
+	hc.XRange.Label = "Sample Value"
+	if counts {
+		hc.YRange.Label = "Total Count"
+	} else {
+		hc.YRange.Label = "Rel. Frequency [%]"
+	}
+	hc.Key.Hide = true
+	points := gauss(150, 10, 20, 0, 50)
+	hc.AddData("Sample 1", points,
+		chart.Style{ /*LineColor: "#ff0000", LineWidth: 1, LineStyle: 1, FillColor: "#ff8080"*/})
+	hc.Kernel = chart.BisquareKernel //  chart.GaussKernel // chart.EpanechnikovKernel // chart.RectangularKernel // chart.BisquareKernel
+	dumper.Plot(&hc)
+
+	points2 := gauss(80, 4, 37, 0, 50)
+	// hc.Kernel = nil
+	hc.AddData("Sample 2", points2,
+		chart.Style{ /*LineColor: "#00ff00", LineWidth: 1, LineStyle: 1, FillColor: "#80ff80"*/})
+	hc.YRange.TicSetting.Delta = 0
+	dumper.Plot(&hc)
+
+	points3 := gauss(60, 15, 0, 0, 50)
+	hc.AddData("Sample 3", points3,
+		chart.Style{ /*LineColor: "#0000ff", LineWidth: 1, LineStyle: 1, FillColor: "#8080ff"*/})
+	hc.YRange.TicSetting.Delta = 0
+	dumper.Plot(&hc)
+
+	points4 := gauss(40, 30, 15, 0, 50)
+	hc.AddData("Sample 4", points4, chart.Style{ /*LineColor: "#000000", LineWidth: 1, LineStyle: 1*/})
+	hc.Kernel = nil
+	hc.YRange.TicSetting.Delta = 0
+	dumper.Plot(&hc)
+}
+
+//
+// Bar Charts
+//
+func barChart() {
+	dumper := NewDumper("xbar1", 3, 2, 400, 300)
+	defer dumper.Close()
+
+	red := chart.Style{Symbol: 'o', LineColor: "#cc0000", FillColor: "#ff8080", 
+	Alpha: 0, LineStyle: chart.SolidLine, LineWidth: 2}
+	green := chart.Style{Symbol: '#', LineColor: "#00cc00", FillColor: "#80ff80", 
+	Alpha: 0, LineStyle: chart.SolidLine, LineWidth: 2}
+
+	barc := chart.BarChart{Title: "Simple Bar Chart"}
+	barc.Key.Hide = true
+	barc.XRange.ShowZero = true
+	barc.AddDataPair("Amount", 
+		[]float64{-10, 10, 20, 30, 35, 40, 50}, 
+		[]float64{90, 120, 180, 205, 230, 150, 190}, red)
+	dumper.Plot(&barc)
+	barc.XRange.TicSetting.Delta = 0
+
+	barc = chart.BarChart{Title: "Simple Bar Chart"}
+	barc.Key.Hide = true
+	barc.XRange.ShowZero = true
+	barc.AddDataPair("Test", []float64{-5, 15, 25, 35, 45, 55}, []float64{110, 80, 95, 80, 120, 140}, green)
+	dumper.Plot(&barc)
+	barc.XRange.TicSetting.Delta = 0
+
+	barc.YRange.TicSetting.Delta = 0
+	barc.Title = "Combined (ugly as bar positions do not match)"
+	barc.AddDataPair("Amount", []float64{-10, 10, 20, 30, 35, 40, 50}, []float64{90, 120, 180, 205, 230, 150, 190}, red)
+	dumper.Plot(&barc)
+
+	barc.Title = "Stacked (still ugly)"
+	barc.Stacked = true
+	dumper.Plot(&barc)
+
+	barc = chart.BarChart{Title: "Nicely Stacked"}
+	barc.Key.Hide = true
+	barc.XRange.Fixed(0, 60, 10)
+	barc.AddDataPair("A", []float64{10, 30, 40, 50}, []float64{110, 95, 60, 120}, red)
+	barc.AddDataPair("B", []float64{10, 30, 40, 50}, []float64{40, 130, 15, 100}, green)
+	dumper.Plot(&barc)
+
+	barc.Stacked = true
+	dumper.Plot(&barc)
+}
+
+//
+// Categorical Bar Charts
+//
+func categoricalBarChart() {
+	dumper := NewDumper("xbar2", 3, 2, 400, 300)
+	defer dumper.Close()
+
+	x := []float64{0, 1, 2, 3}
+	europe := []float64{10, 15, 25, 20}
+	asia := []float64{15, 30, 10, 20}
+	africa := []float64{20, 5, 5, 5}
+	blue := chart.Style{Symbol: '#', LineColor: "#0000ff", LineWidth: 4, FillColor: "#4040ff"}
+	green := chart.Style{Symbol: 'x', LineColor: "#00aa00", LineWidth: 4, FillColor: "#40ff40"}
+	pink := chart.Style{Symbol: '0', LineColor: "#990099", LineWidth: 4, FillColor: "#aa60aa"}
+	red := chart.Style{Symbol: '%', LineColor: "#cc0000", LineWidth: 4, FillColor: "#ff4040"}
+
+	// Categorized Bar Chart
+	c := chart.BarChart{Title: "Income"}
+	c.XRange.Category = []string{"none", "low", "average", "high"}
+
+	// Unstacked, different labelings
+	c.ShowVal = 1
+	c.AddDataPair("Europe", x, europe, blue)
+	dumper.Plot(&c)
+
+	c.ShowVal = 2
+	c.AddDataPair("Asia", x, asia, pink)
+	dumper.Plot(&c)
+
+	c.ShowVal = 3
+	c.AddDataPair("Africa", x, africa, green)
+	dumper.Plot(&c)
+
+	// Stacked with different labelings
+	c.Stacked = true
+	c.ShowVal = 1
+	dumper.Plot(&c)
+
+	c.ShowVal = 2
+	dumper.Plot(&c)
+
+	c.ShowVal = 3
+	dumper.Plot(&c)
+
+	// Including negative ones
+	dumper2 := NewDumper("xbar3", 3, 2, 400, 300)
+	defer dumper2.Close()
+
+	c = chart.BarChart{Title: "Income"}
+	c.XRange.Category = []string{"none", "low", "average", "high"}
+	c.Key.Hide = true
+	c.YRange.ShowZero = true
+	c.ShowVal = 3
+
+	c.AddDataPair("Europe", x, []float64{-10, -15, -20, -5}, blue)
+	dumper2.Plot(&c)
+
+	c.AddDataPair("Asia", x, []float64{-15, -10, -5, -20}, pink)
+	dumper2.Plot(&c)
+
+	c.Stacked = true
+	dumper2.Plot(&c)
+
+	// Mixed
+	c = chart.BarChart{Title: "Income"}
+	c.XRange.Category = []string{"none", "low", "average", "high"}
+	c.Key.Hide = true
+	c.YRange.ShowZero = true
+	c.ShowVal = 3
+
+	c.AddDataPair("Europe", x, []float64{-10, 15, -20, 5}, blue)
+	dumper2.Plot(&c)
+
+	c.AddDataPair("Asia", x, []float64{-15, 10, -5, 20}, pink)
+	dumper2.Plot(&c)
+
+	c.Stacked = true
+	dumper2.Plot(&c)
+
+	// Very Mixed
+	c = chart.BarChart{Title: "Income"}
+	c.XRange.Category = []string{"none", "low", "average", "high"}
+	c.Key.Hide = true
+	c.YRange.ShowZero = true
+	c.ShowVal = 3
+
+	c.AddDataPair("Europe", x, []float64{-10, 15, -20, 5}, blue)
+	c.AddDataPair("Asia", x, []float64{-15, 10, 5, 20}, pink)
+	c.AddDataPair("Africa", x, []float64{10, -10, 15, -5}, green)
+	dumper2.Plot(&c)
+
+	c.Stacked = true
+	dumper2.Plot(&c)
+
+	c.AddDataPair("America", x, []float64{15, -5, -10, -20}, red)
+	c.YRange.TicSetting.Delta = 0
+	dumper2.Plot(&c)
+}
+
+//
+// Logarithmic axes
+//
+func logAxis() {
+	dumper := NewDumper("xlog1", 2, 2, 400, 300)
+	defer dumper.Close()
+
+
+	lc := chart.ScatterChart{}
+	lc.XRange.Label, lc.YRange.Label = "X-Value", "Y-Value"
+	lx := []float64{4e-2, 3e-1, 2e0, 1e1, 8e1, 7e2, 5e3}
+	ly := []float64{10, 30, 90, 270, 3 * 270, 9 * 270, 27 * 270}
+	lc.AddDataPair("Measurement", lx, ly, chart.PlotStylePoints,
+		chart.Style{Symbol: '#', SymbolColor: "#9966ff", SymbolSize: 1.5})
+	lc.Key.Hide = true
+	lc.XRange.MinMode.Expand, lc.XRange.MaxMode.Expand = chart.ExpandToTic, chart.ExpandToTic
+	lc.YRange.MinMode.Expand, lc.YRange.MaxMode.Expand = chart.ExpandToTic, chart.ExpandToTic
+	lc.Title = "Lin / Lin"
+	lc.XRange.Min, lc.XRange.Max = 0, 0
+	lc.YRange.Min, lc.YRange.Max = 0, 0
+	dumper.Plot(&lc)
+
+	lc.Title = "Lin / Log"
+	lc.XRange.Log, lc.YRange.Log = false, true
+	lc.XRange.Min, lc.XRange.Max, lc.XRange.TicSetting.Delta = 0, 0, 0
+	lc.YRange.Min, lc.YRange.Max, lc.YRange.TicSetting.Delta = 0, 0, 0
+	dumper.Plot(&lc)
+
+	lc.Title = "Log / Lin"
+	lc.XRange.Log, lc.YRange.Log = true, false
+	lc.XRange.Min, lc.XRange.Max, lc.XRange.TicSetting.Delta = 0, 0, 0
+	lc.YRange.Min, lc.YRange.Max, lc.YRange.TicSetting.Delta = 0, 0, 0
+	dumper.Plot(&lc)
+
+	lc.Title = "Log / Log"
+	lc.XRange.Log, lc.YRange.Log = true, true
+	lc.XRange.Min, lc.XRange.Max, lc.XRange.TicSetting.Delta = 0, 0, 0
+	lc.YRange.Min, lc.YRange.Max, lc.YRange.TicSetting.Delta = 0, 0, 0
+	dumper.Plot(&lc)
+}
+
+
+//
+// Pie Charts
+//
 func pieChart() {
 	dumper := NewDumper("xpie1", 2, 2, 500, 250)
 
@@ -1308,19 +1018,10 @@ func bestOf() {
 
 	for i, c := range charts {
 		row, col := i/N, i%N
-		gr := imgg.AddTo(canvas, col*width, row*height, width, height, white)
+		gr := imgg.AddTo(canvas, col*width, row*height, width, height, white, nil, 14)
 		c.Plot(gr)
 		c.Reset()
 	}
-
-	// save as jpg
-	cf, err := os.Create("xbestof.jpg")
-	if err != nil {
-		fmt.Printf("Cannot create xbestof.jpg: %s", err.Error())
-		os.Exit(1)
-	}
-	jpeg.Encode(cf, canvas, &jpeg.Options{98})
-	cf.Close()
 
 	// save as png
 	cf, err = os.Create("xbestof.png")
@@ -1399,7 +1100,8 @@ func timeRange() {
 }
 
 func main() {
-	var all *bool = flag.Bool("all", false, "show all chart types")
+	var All *bool = flag.Bool("All", false, "show everything")
+	var all *bool = flag.Bool("all", false, "show all basic chart types")
 	var catBar *bool = flag.Bool("cat", false, "show categorical bar charts")
 	var bar *bool = flag.Bool("bar", false, "show bar charts")
 	var box *bool = flag.Bool("box", false, "show box charts")
@@ -1420,9 +1122,14 @@ func main() {
 	var zeit *bool = flag.Bool("time", false, "show time plots")
 
 	flag.Parse()
+	if *All {
+		*all = true
+		*special = true
+		*best = true
+		*zeit = true
+	}
 
 	// Basic chart types
-
 	if *all || *catBar {
 		categoricalBarChart()
 	}
