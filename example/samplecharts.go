@@ -1017,7 +1017,7 @@ func bestOf() {
 
 func timeRange() {
 	factors := []int64{1, 2, 3, 5, 7, 9, 11, 15}
-	magnitudes := []int64{1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8}
+	magnitudes := []int64{1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9}
 	steps := make([]float64, 0, len(factors)*len(magnitudes))
 	for _, f := range factors {
 		for _, m := range magnitudes {
@@ -1027,14 +1027,15 @@ func timeRange() {
 	sort.Float64s(steps)
 
 	now := float64(time.Now().Unix())
-	steps = []float64{1100000}
 	for _, step := range steps {
-		fmt.Printf("\nStep %d seconds\n", int64(step))
+		fmt.Printf("\nStep %d seconds (approx %d hours or %d weeks or %d years)\n",
+			int64(step), int64(step/3600+0.5), int64(step/(3600*24*7)+0.5),
+			int(step/(3600*24*365.25)+0.5))
 		rng := chart.Range{Time: true}
 		rng.Init()
 		rng.DataMin, rng.DataMax = now, now+step
 		rng.Setup(7, 9, 90, 5, false)
-		tg := txtg.New(100, 4)
+		tg := txtg.New(120, 4)
 		tg.XAxis(rng, 1, 0)
 		fmt.Printf("%s\n", tg.String())
 	}

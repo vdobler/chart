@@ -779,7 +779,7 @@ func (d debugging) Printf(fmt string, args ...interface{}) {
 
 type tracing bool
 
-const trace tracing = true
+const trace tracing = false
 
 func (t tracing) Printf(fmt string, args ...interface{}) {
 	if t {

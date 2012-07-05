@@ -83,12 +83,16 @@ func (w Week) RoundDown(t time.Time) time.Time {
 
 	_, week2 := t.ISOWeek()
 	for week2 < week {
+		trace.Printf("B  %s", t)
 		t = t.Add(time.Second * 60 * 60 * 36)
 		t = time.Date(t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute(), t.Second(), 0, t.Location())
+		_, week2 = t.ISOWeek()
 	}
 	for week2 > week {
+		trace.Printf("C  %s", t)
 		t = t.Add(-time.Second * 60 * 60 * 36)
 		t = time.Date(t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute(), t.Second(), 0, t.Location())
+		_, week2 = t.ISOWeek()
 	}
 	trace.Printf("Week.Roundown(%s) --> %s", org, t.Format("Mon 2006-01-02"))
 	return t
@@ -129,13 +133,26 @@ type Year struct {
 
 func (y Year) Seconds() int64 { return 60 * 60 * 24 * 365.25 * int64(y.Num) }
 func (y Year) RoundDown(t time.Time) time.Time {
-	t = time.Date(y.Num*t.Year()/y.Num, 1, 0, 0, 0, 0, 0, t.Location())
+	orig := t.Year()
+	rd := y.Num * (orig / y.Num)
+	t = time.Date(rd, 1, 1, 0, 0, 0, 0, t.Location())
 	// TODO handle shifts in DLS and that
+	debug.Printf("Year.RoundDown from %d to %d", orig, rd)
 	return t
 }
-func (y Year) String() string            { return fmt.Sprintf("%d year(s)", y.Num) }
-func (y Year) Format(t time.Time) string { return fmt.Sprintf("%d", t.Year()) }
-func (y Year) Period() bool              { return true }
+func (y Year) String() string { return fmt.Sprintf("%d year(s)", y.Num) }
+func (y Year) Format(t time.Time) string {
+	if y.Num == 10 {
+		y := t.Year() / 10
+		d := y % 10
+		return fmt.Sprintf("%d0-%d9", y, d)
+	} else if y.Num == 100 {
+		y := t.Year() / 100
+		return fmt.Sprintf("%d cen.", y)
+	}
+	return fmt.Sprintf("%d", t.Year())
+}
+func (y Year) Period() bool { return true }
 
 // Delta is a list of increasing time deltas used to construct tic spacings
 // for date/time axis.
@@ -146,7 +163,7 @@ var Delta []TimeDelta = []TimeDelta{
 	Hour{1}, Hour{6},
 	Day{1}, Week{1},
 	Month{1}, Month{3}, Month{6},
-	Year{1}, Year{10},
+	Year{1}, Year{10}, Year{100},
 }
 
 // RoundUp will round tp up to next "full" d.
