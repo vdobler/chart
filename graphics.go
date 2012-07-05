@@ -714,11 +714,10 @@ func GenericSymbol(bg BasicGraphics, x, y int, style Style) {
 	if f == 0 {
 		f = 1
 	}
-	lw := 1
-	if style.LineWidth > 1 {
-		lw = style.LineWidth
+	if style.LineWidth <=0 {
+		style.LineWidth = 1
 	}
-	lw += 0
+
 	if style.SymbolColor == "" {
 		style.SymbolColor = style.LineColor
 		if style.SymbolColor == "" {
