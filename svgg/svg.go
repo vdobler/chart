@@ -46,7 +46,7 @@ func (sg *SvgGraphics) Begin() {
 	if fs == 0 {
 		fs = 12
 	}
-	sg.svg.Gstyle(fmt.Sprintf("stroke:#000000; stroke-width:1; font-family: %s; font-size: %d; opacity: 1; fill-opacity: 1",
+	sg.svg.Gstyle(fmt.Sprintf("font-family: %s; font-size: %d",
 		font, fs))
 	if sg.tx != 0 || sg.ty != 0 {
 		sg.svg.Gtransform(fmt.Sprintf("translate(%d %d)", sg.tx, sg.ty))
