@@ -6,7 +6,6 @@ import (
 	"code.google.com/p/freetype-go/freetype/raster"
 	"code.google.com/p/freetype-go/freetype/truetype"
 	"code.google.com/p/graphics-go/graphics"
-	// "fmt"
 	"github.com/vdobler/chart"
 	"image"
 	"image/color"
@@ -36,13 +35,13 @@ type ImageGraphics struct {
 	bg     color.RGBA
 	gc     draw2d.GraphicContext
 	font   *truetype.Font
-	fs     int
+	fs     map[chart.FontSize]float64
 }
 
 // New creates a new ImageGraphics including an image.RGBA of dimension w x h 
-// with background bgcol. It uses font in the given fontsize for text.
-// If font is nil it will use a builtin font.
-func New(width, height int, bgcol color.RGBA, font *truetype.Font, fontsize int) *ImageGraphics {
+// with background bgcol. If font is nil it will use a builtin font.
+// If fontsize is empty useful default are used.
+func New(width, height int, bgcol color.RGBA, font *truetype.Font, fontsize map[chart.FontSize]float64) *ImageGraphics {
 	img := image.NewRGBA(image.Rect(0, 0, width, height))
 	gc := draw2d.NewGraphicContext(img)
 	gc.SetLineJoin(draw2d.BevelJoin)
@@ -54,7 +53,9 @@ func New(width, height int, bgcol color.RGBA, font *truetype.Font, fontsize int)
 	if font == nil {
 		font = defaultFont
 	}
-
+	if len(fontsize) == 0 {
+		fontsize = ConstructFontSizes(13)
+	}
 	return &ImageGraphics{Image: img, x0: 0, y0: 0, w: width, h: height,
 		bg: bgcol, gc: gc, font: font, fs: fontsize}
 }
@@ -62,7 +63,7 @@ func New(width, height int, bgcol color.RGBA, font *truetype.Font, fontsize int)
 // AddTo returns a new ImageGraphics which will write to (width x height) sized
 // area starting at (x,y) on the provided image img. The rest of the parameters
 // are the same as in New().
-func AddTo(img *image.RGBA, x, y, width, height int, bgcol color.RGBA, font *truetype.Font, fontsize int) *ImageGraphics {
+func AddTo(img *image.RGBA, x, y, width, height int, bgcol color.RGBA, font *truetype.Font, fontsize map[chart.FontSize]float64) *ImageGraphics {
 	gc := draw2d.NewGraphicContext(img)
 	gc.SetLineJoin(draw2d.BevelJoin)
 	gc.SetLineCap(draw2d.SquareCap)
@@ -73,32 +74,33 @@ func AddTo(img *image.RGBA, x, y, width, height int, bgcol color.RGBA, font *tru
 	if font == nil {
 		font = defaultFont
 	}
+	if len(fontsize) == 0 {
+		fontsize = ConstructFontSizes(13)
+	}
 
 	return &ImageGraphics{Image: img, x0: x, y0: y, w: width, h: height, bg: bgcol, gc: gc, font: font, fs: fontsize}
 }
 
-func (ig *ImageGraphics) Options() chart.PlotOptions                  {return nil}
+func (ig *ImageGraphics) Options() chart.PlotOptions { return nil }
 
-
-func (ig *ImageGraphics) Begin()                         {}
-func (ig *ImageGraphics) End()                           {}
+func (ig *ImageGraphics) Begin() {}
+func (ig *ImageGraphics) End()   {}
 
 func (ig *ImageGraphics) Background() (r, g, b, a uint8) { return ig.bg.R, ig.bg.G, ig.bg.B, ig.bg.A }
 func (ig *ImageGraphics) Dimensions() (int, int)         { return ig.w, ig.h }
 func (ig *ImageGraphics) FontMetrics(font chart.Font) (fw float32, fh int, mono bool) {
-	fh = ig.relFontsizeToPixel(font.Size)
+	h := ig.relFontsizeToPixel(font.Size)
 	// typical width is 0.6 * height
-	fw = 0.6 * float32(fh)
+	fw = float32(0.6 * h)
+	fh = int(h + 0.5)
 	mono = true
 	return
 }
 func (ig *ImageGraphics) TextLen(s string, font chart.Font) int {
-	size := ig.relFontsizeToPixel(font.Size)
-
 	c := freetype.NewContext()
 	c.SetDPI(dpi)
 	c.SetFont(ig.font)
-	c.SetFontSize(float64(size))
+	c.SetFontSize(ig.relFontsizeToPixel(font.Size))
 
 	var p raster.Point
 	prev, hasPrev := truetype.Index(0), false
@@ -110,13 +112,19 @@ func (ig *ImageGraphics) TextLen(s string, font chart.Font) int {
 		p.X += c.FUnitToFix32(int(ig.font.HMetric(index).AdvanceWidth))
 		prev, hasPrev = index, true
 	}
-	return int(p.X / 256)
+	return int((p.X + 127) / 256)
 }
 
 func (ig *ImageGraphics) setStyle(style chart.Style) {
 	ig.gc.SetStrokeColor(chart.Color2RGBA(style.LineColor, 0xff))
 	ig.gc.SetLineWidth(float64(style.LineWidth))
-	ig.gc.SetLineDash(dashPattern[style.LineStyle], 0)
+	orig := dashPattern[style.LineStyle]
+	pattern := make([]float64, len(orig))
+	copy(pattern, orig)
+	for i := range pattern {
+		pattern[i] *= math.Sqrt(float64(style.LineWidth))
+	}
+	ig.gc.SetLineDash(pattern, 0)
 }
 
 func (ig *ImageGraphics) Line(x0, y0, x1, y1 int, style chart.Style) {
@@ -131,11 +139,11 @@ func (ig *ImageGraphics) Line(x0, y0, x1, y1 int, style chart.Style) {
 
 var dashPattern map[chart.LineStyle][]float64 = map[chart.LineStyle][]float64{
 	chart.SolidLine:      nil, // []float64{10},
-	chart.DashedLine:     []float64{50, 20},
-	chart.DottedLine:     []float64{20, 20},
-	chart.DashDotDotLine: []float64{50, 20, 20, 20, 20, 20},
-	chart.LongDashLine:   []float64{50, 50},
-	chart.LongDotLine:    []float64{20, 50},
+	chart.DashedLine:     []float64{10, 4},
+	chart.DottedLine:     []float64{4, 3},
+	chart.DashDotDotLine: []float64{10, 3, 3, 3, 3, 3},
+	chart.LongDashLine:   []float64{10, 8},
+	chart.LongDotLine:    []float64{4, 8},
 }
 
 func (ig *ImageGraphics) Path(x, y []int, style chart.Style) {
@@ -147,38 +155,27 @@ func (ig *ImageGraphics) Path(x, y []int, style chart.Style) {
 	ig.gc.Stroke()
 }
 
-func (ig *ImageGraphics) relFontsizeToPixel(rel int) int {
-	if rel == 0 {
-		return ig.fs
+func (ig *ImageGraphics) relFontsizeToPixel(rel chart.FontSize) float64 {
+	if s, ok := ig.fs[rel]; ok {
+		return s
 	}
+	return 12
+}
 
-	fs := float64(ig.fs)
-	factor := 1.2
-	if rel < 0 {
-		factor = 1 / factor
-		rel = -rel
+func ConstructFontSizes(basesize float64) map[chart.FontSize]float64 {
+	size := make(map[chart.FontSize]float64)
+	for rs := int(chart.TinyFontSize); rs <= int(chart.HugeFontSize); rs++ {
+		size[chart.FontSize(rs)] = basesize * math.Pow(1.2, float64(rs))
 	}
-	for rel > 0 {
-		fs *= factor
-		rel--
-	}
-
-	if factor < 1 {
-		return int(fs) // round down
-	}
-	return int(fs + 0.5) // round up
+	return size
 }
 
 func (ig *ImageGraphics) Text(x, y int, t string, align string, rot int, f chart.Font) {
 	if len(align) == 1 {
 		align = "c" + align
 	}
-	// fw, fh, _ := ig.FontMetrics(f)
-	//fmt.Printf("Text '%s' at (%d,%d) %s\n", t, x,y, align)
-	// TODO: handle rot
 
-	size := ig.relFontsizeToPixel(f.Size)
-	textImage := ig.textBox(t, size)
+	textImage := ig.textBox(t, f)
 	bounds := textImage.Bounds()
 	w, h := bounds.Dx(), bounds.Dy()
 	var centerX, centerY int
@@ -249,17 +246,19 @@ func (ig *ImageGraphics) Text(x, y int, t string, align string, rot int, f chart
 }
 
 // textBox renders t into a tight fitting image
-func (ig *ImageGraphics) textBox(t string, size int) image.Image {
+func (ig *ImageGraphics) textBox(t string, font chart.Font) image.Image {
 	// Initialize the context.
 	fg := image.NewUniform(color.Alpha{0xff})
 	bg := image.NewUniform(color.Alpha{0x00})
-	canvas := image.NewAlpha(image.Rect(0, 0, 400, 2*size))
+	width := ig.TextLen(t, font)
+	size := ig.relFontsizeToPixel(font.Size)
+	canvas := image.NewAlpha(image.Rect(0, 0, width, int(1.5*size+0.5)))
 	draw.Draw(canvas, canvas.Bounds(), bg, image.ZP, draw.Src)
 
 	c := freetype.NewContext()
 	c.SetDPI(dpi)
 	c.SetFont(ig.font)
-	c.SetFontSize(float64(size))
+	c.SetFontSize(size)
 	c.SetClip(canvas.Bounds())
 	c.SetDst(canvas)
 	c.SetSrc(fg)
@@ -273,7 +272,7 @@ func (ig *ImageGraphics) textBox(t string, size int) image.Image {
 		return nil
 	}
 	// log.Printf("text %q, extent: %v", t, extent)
-	return canvas.SubImage(image.Rect(0, 0, int(extent.X/256), h*5/4))
+	return canvas.SubImage(image.Rect(0, 0, int((extent.X+127)/256), h*5/4))
 }
 
 func (ig *ImageGraphics) paint(x, y int, R, G, B uint32, alpha uint32) {
@@ -354,17 +353,10 @@ func (ig *ImageGraphics) Wedge(ix, iy, iro, iri int, phi, psi float64, style cha
 	stroke()
 }
 
-func (ig *ImageGraphics) Title(text string) {
-	font := chart.DefaultFont["title"]
-	_, fh, _ := ig.FontMetrics(font)
-	x, y := ig.w/2, fh/2
-	ig.Text(x, y, text, "tc", 0, font)
-}
-
 func (ig *ImageGraphics) XAxis(xr chart.Range, ys, yms int, options chart.PlotOptions) {
 	chart.GenericXAxis(ig, xr, ys, yms, options)
 }
-func (ig *ImageGraphics) YAxis(yr chart.Range, xs, xms int,options chart.PlotOptions ) {
+func (ig *ImageGraphics) YAxis(yr chart.Range, xs, xms int, options chart.PlotOptions) {
 	chart.GenericYAxis(ig, yr, xs, xms, options)
 }
 

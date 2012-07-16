@@ -27,8 +27,8 @@ type HistChart struct {
 	TBinWidth      TimeDelta // BinWidth for time XRange
 	Gap            float64   // gap between bins in (bin-width units): 0<=Gap<1,
 	Sep            float64   // separation of bars in one bin (in bar width units) -1<Sep<1
-	Options PlotOptions
-	Kernel Kernel // Smoothing kernel (usable only for non-stacked histograms)
+	Options        PlotOptions
+	Kernel         Kernel // Smoothing kernel (usable only for non-stacked histograms)
 }
 
 type Kernel func(x float64) float64
@@ -270,7 +270,7 @@ func (c *HistChart) Reset() {
 func (c *HistChart) Plot(g Graphics) {
 	layout := layout(g, c.Title, c.XRange.Label, c.YRange.Label,
 		c.XRange.TicSetting.Hide, c.YRange.TicSetting.Hide, &c.Key)
-	fw, fh, _ := g.FontMetrics(DefaultFont["label"])
+	fw, fh, _ := g.FontMetrics(elementStyle(c.Options, MajorAxisElement).Font)
 	fw += 0
 
 	width, height := layout.Width, layout.Height
@@ -318,7 +318,7 @@ func (c *HistChart) Plot(g Graphics) {
 	g.Begin()
 
 	if c.Title != "" {
-		g.Title(c.Title)
+		drawTitle(g, c.Title, elementStyle(c.Options, TitleElement))
 	}
 
 	g.XAxis(c.XRange, topm+height+fh, topm, c.Options)

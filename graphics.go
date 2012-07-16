@@ -25,7 +25,7 @@ type BasicGraphics interface {
 	Rect(x, y, w, h int, style Style)                      // Draw (w x h) rectangle at (x,y)
 	Wedge(x, y, ro, ri int, phi, psi float64, style Style) // Wedge
 	Path(x, y []int, style Style)                          // Path of straight lines
-	Options() PlotOptions  // access to current PlotOptions
+	Options() PlotOptions                                  // access to current PlotOptions
 }
 
 // Graphics is the interface all chart drivers have to implement
@@ -41,7 +41,6 @@ type Graphics interface {
 	// screen coordinates,
 	XAxis(xr Range, ys, yms int, options PlotOptions) // Draw x axis xr at screen position ys (and yms if mirrored)
 	YAxis(yr Range, xs, xms int, options PlotOptions) // Same for y axis.
-	Title(text string)           // Draw title onto chart
 
 	Scatter(points []EPoint, plotstyle PlotStyle, style Style) // Points, Lines and Line+Points
 	Boxes(boxes []Box, width int, style Style)                 // Boxplots
@@ -156,7 +155,7 @@ func drawXTics(bg BasicGraphics, rng Range, y, ym, ticLen int, options PlotOptio
 
 	// Tics on top
 	ticstyle := elementStyle(options, MajorTicElement)
-	ticfont := DefaultFont["tic"]
+	ticfont := ticstyle.Font
 	for _, tic := range rng.Tics {
 		x := rng.Data2Screen(tic.Pos)
 		lx := rng.Data2Screen(tic.LabelPos)
@@ -197,7 +196,7 @@ func drawXTics(bg BasicGraphics, rng Range, y, ym, ticLen int, options PlotOptio
 
 // GenericAxis draws the axis r solely by graphic primitives of bg.
 func GenericXAxis(bg BasicGraphics, rng Range, y, ym int, options PlotOptions) {
-	_, fontheight, _ := bg.FontMetrics(DefaultFont["label"])
+	_, fontheight, _ := bg.FontMetrics(elementStyle(options, MajorTicElement).Font)
 	var ticLen int = 0
 	if !rng.TicSetting.Hide {
 		ticLen = imin(12, imax(4, fontheight/2))
@@ -210,17 +209,18 @@ func GenericXAxis(bg BasicGraphics, rng Range, y, ym int, options PlotOptions) {
 		aly += (3 * fontheight) / 2
 	}
 	if rng.ShowLimits {
-		f := DefaultFont["rangelimit"]
+		font := elementStyle(options, RangeLimitElement).Font
 		if rng.Time {
-			bg.Text(xa, aly, rng.TMin.Format("2006-01-02 15:04:05"), "tl", 0, f)
-			bg.Text(xe, aly, rng.TMax.Format("2006-01-02 15:04:05"), "tr", 0, f)
+			bg.Text(xa, aly, rng.TMin.Format("2006-01-02 15:04:05"), "tl", 0, font)
+			bg.Text(xe, aly, rng.TMax.Format("2006-01-02 15:04:05"), "tr", 0, font)
 		} else {
-			bg.Text(xa, aly, fmt.Sprintf("%g", rng.Min), "tl", 0, f)
-			bg.Text(xe, aly, fmt.Sprintf("%g", rng.Max), "tr", 0, f)
+			bg.Text(xa, aly, fmt.Sprintf("%g", rng.Min), "tl", 0, font)
+			bg.Text(xe, aly, fmt.Sprintf("%g", rng.Max), "tr", 0, font)
 		}
 	}
 	if rng.Label != "" { // draw label _after_ (=over) range limits
-		bg.Text((xa+xe)/2, aly, "  "+rng.Label+"  ", "tc", 0, DefaultFont["label"])
+		font := elementStyle(options, MajorAxisElement).Font
+		bg.Text((xa+xe)/2, aly, "  "+rng.Label+"  ", "tc", 0, font)
 	}
 
 	// Tics and Grid
@@ -266,7 +266,7 @@ func drawYTics(bg BasicGraphics, rng Range, x, xm, ticLen int) {
 
 	// Tics on top
 	ticstyle := elementStyle(options, MajorTicElement)
-	ticfont := DefaultFont["tic"]
+	ticfont := ticstyle.Font
 	for _, tic := range rng.Tics {
 		y := rng.Data2Screen(tic.Pos)
 		ly := rng.Data2Screen(tic.LabelPos)
@@ -308,7 +308,8 @@ func drawYTics(bg BasicGraphics, rng Range, x, xm, ticLen int) {
 
 // GenericAxis draws the axis r solely by graphic primitives of bg.
 func GenericYAxis(bg BasicGraphics, rng Range, x, xm int, options PlotOptions) {
-	_, fontheight, _ := bg.FontMetrics(DefaultFont["label"])
+	font := elementStyle(options, MajorAxisElement).Font
+	_, fontheight, _ := bg.FontMetrics(font)
 	var ticLen int = 0
 	if !rng.TicSetting.Hide {
 		ticLen = imin(10, imax(4, fontheight/2))
@@ -331,7 +332,7 @@ func GenericYAxis(bg BasicGraphics, rng Range, x, xm int, options PlotOptions) {
 	}
 	if rng.Label != "" {
 		y := (ya + ye) / 2
-		bg.Text(alx, y, rng.Label, "bc", 90, DefaultFont["label"])
+		bg.Text(alx, y, rng.Label, "bc", 90, font)
 	}
 
 	if !rng.TicSetting.Hide {
@@ -651,7 +652,6 @@ func fillWedge(mg MinimalGraphics, xi, yi, ro, ri int, phi, psi, epsilon float64
 		}
 	}
 }
- 
 
 func GenericRings(bg BasicGraphics, wedges []Wedgeinfo, x, y, ro, ri int, eccentricity float64) {
 	// debug.Printf("GenericRings with %d wedges center %d,%d, radii %d/%d,  ecc=%.3f)", len(wedges), x, y, ro, ri, eccentricity)
@@ -659,22 +659,22 @@ func GenericRings(bg BasicGraphics, wedges []Wedgeinfo, x, y, ro, ri int, eccent
 	for _, w := range wedges {
 
 		// Correct center
-		d := float64(w.Style.LineWidth)/2
+		d := float64(w.Style.LineWidth) / 2
 
 		// cphi, sphi := math.Cos(w.Phi), math.Sin(w.Phi)
 		// cpsi, spsi := math.Cos(w.Psi), math.Sin(w.Psi)
-		delta := (w.Psi - w.Phi)/2
+		delta := (w.Psi - w.Phi) / 2
 		SinDelta := math.Sin(delta)
-		gamma := (w.Phi+w.Psi)/2
-		k := d/SinDelta
+		gamma := (w.Phi + w.Psi) / 2
+		k := d / SinDelta
 		shift := float64(w.Shift)
 		kx, ky := (k+shift)*math.Cos(gamma), (k+shift)*math.Sin(gamma)
 
-		debug.Printf("Center adjustment (lw=%d, d=%.2f), for wedge %d°-%d° of (%.1f,%.1f), k=%.1f", 
-		w.Style.LineWidth, d, int(180*w.Phi/math.Pi), int(180*w.Psi/math.Pi), kx, ky, k)
+		debug.Printf("Center adjustment (lw=%d, d=%.2f), for wedge %d°-%d° of (%.1f,%.1f), k=%.1f",
+			w.Style.LineWidth, d, int(180*w.Phi/math.Pi), int(180*w.Psi/math.Pi), kx, ky, k)
 
 		xi, yi := x+int(kx+0.5), y+int(ky+0.5)
-		roc, ric := ro -int(d+k), ri-int(d+k)
+		roc, ric := ro-int(d+k), ri-int(d+k)
 		bg.Wedge(xi, yi, roc, ric, w.Phi, w.Psi, w.Style)
 
 		if w.Text != "" {
@@ -815,4 +815,11 @@ func GenericSymbol(bg BasicGraphics, x, y int, style Style) {
 		bg.Text(x, y, "?", "cc", 0, Font{})
 	}
 
+}
+
+func drawTitle(g Graphics, text string, style Style) {
+	w, _ := g.Dimensions()
+	_, fh, _ := g.FontMetrics(style.Font)
+	x, y := w/2, fh/3
+	g.Text(x, y, text, "tc", 0, style.Font)
 }

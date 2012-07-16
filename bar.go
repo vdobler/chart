@@ -13,14 +13,14 @@ import (
 // Stacking is on a "both bars have _identical_ x values" basis.
 type BarChart struct {
 	XRange, YRange Range
-	Title          string  // Title of the chart
-	Key            Key     // Key/Legend
-	Horizontal     bool    // Display as horizontal bars (unimplemented)
-	Stacked        bool    // Display different data sets ontop of each other (default is side by side)
-	ShowVal        int     // Display values: 0: don't show; 1: above bar, 2: centerd in bar; 3: at top of bar
-	SameBarWidth   bool    // all data sets use the same (smalest of all data sets) bar width
-	BarWidthFac    float64 // if nonzero: scale determined bar width with this factor
-	Options        PlotOptions
+	Title          string      // Title of the chart
+	Key            Key         // Key/Legend
+	Horizontal     bool        // Display as horizontal bars (unimplemented)
+	Stacked        bool        // Display different data sets ontop of each other (default is side by side)
+	ShowVal        int         // Display values: 0: don't show; 1: above bar, 2: centerd in bar; 3: at top of bar
+	SameBarWidth   bool        // all data sets use the same (smalest of all data sets) bar width
+	BarWidthFac    float64     // if nonzero: scale determined bar width with this factor
+	Options        PlotOptions // visual apperance, nil to use DefaultOptions
 	Data           []BarChartData
 }
 
@@ -127,7 +127,8 @@ func (c *BarChart) Plot(g Graphics) {
 	width, height := layout.Width, layout.Height
 	topm, leftm := layout.Top, layout.Left
 	numxtics, numytics := layout.NumXtics, layout.NumYtics
-	fw, fh, _ := g.FontMetrics(DefaultFont["label"])
+	font := elementStyle(c.Options, MajorAxisElement).Font
+	fw, fh, _ := g.FontMetrics(font)
 	fw += 0
 	fh += 0
 
@@ -142,7 +143,7 @@ func (c *BarChart) Plot(g Graphics) {
 	// Start of drawing
 	g.Begin()
 	if c.Title != "" {
-		g.Title(c.Title)
+		drawTitle(g, c.Title, elementStyle(c.Options, TitleElement))
 	}
 
 	g.XAxis(c.XRange, topm+height+fh, topm, c.Options)

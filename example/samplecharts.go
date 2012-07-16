@@ -82,7 +82,7 @@ func (d *Dumper) Close() {
 func (d *Dumper) Plot(c chart.Chart) {
 	row, col := d.Cnt/d.N, d.Cnt%d.N
 
-	igr := imgg.AddTo(d.I, col*d.W, row*d.H, d.W, d.H, color.RGBA{0xff, 0xff, 0xff, 0xff}, nil, 12)
+	igr := imgg.AddTo(d.I, col*d.W, row*d.H, d.W, d.H, color.RGBA{0xff, 0xff, 0xff, 0xff}, nil, nil)
 	c.Plot(igr)
 
 	sgr := svgg.AddTo(d.S, col*d.W, row*d.H, d.W, d.H, "", 12, color.RGBA{0xff, 0xff, 0xff, 0xff})
@@ -775,16 +775,16 @@ func pieChart() {
 	dumper2 := NewDumper("xpie2", 2, 1, 500, 400)
 	defer dumper2.Close()
 	pie := chart.PieChart{Title: "Some Pies"}
-	data := []chart.CatValue{{"D",10,false}, {"GB",20,true}, {"CH",30,false}, {"F",60,false}}
+	data := []chart.CatValue{{"D", 10, false}, {"GB", 20, true}, {"CH", 30, false}, {"F", 60, false}}
 	lw := 4
 	red := chart.Style{LineColor: "#cc0000", FillColor: "#ff8080",
 		Alpha: 0, LineStyle: chart.SolidLine, LineWidth: lw}
 	green := chart.Style{LineColor: "#00cc00", FillColor: "#80ff80",
 		Alpha: 0, LineStyle: chart.SolidLine, LineWidth: lw}
 	blue := chart.Style{LineColor: "#0000cc", LineWidth: lw, LineStyle: chart.SolidLine, FillColor: "#8080ff"}
-	pink := chart.Style{LineColor: "#990099", LineWidth: lw,  LineStyle: chart.SolidLine, FillColor: "#aa60aa"}
+	pink := chart.Style{LineColor: "#990099", LineWidth: lw, LineStyle: chart.SolidLine, FillColor: "#aa60aa"}
 
-	styles := []chart.Style{red,green,blue,pink}
+	styles := []chart.Style{red, green, blue, pink}
 	pie.FmtKey = chart.IntegerValue
 	pie.AddData("Data1", data, styles)
 	pie.Inner = 0
@@ -793,18 +793,18 @@ func pieChart() {
 	dumper2.Plot(&pie)
 
 	pie = chart.PieChart{Title: "Some Rings"}
-	data2 := []chart.CatValue{{"D",15,false}, {"GB",25,false}, {"CH",30,false}, {"F",50,false}}
+	data2 := []chart.CatValue{{"D", 15, false}, {"GB", 25, false}, {"CH", 30, false}, {"F", 50, false}}
 	data[1].Flag = false
 	lw = 2
 	lightred := chart.Style{LineColor: "#cc4040", FillColor: "#ffc0c0",
 		LineStyle: chart.SolidLine, LineWidth: lw}
 	lightgreen := chart.Style{LineColor: "#40cc40", FillColor: "#c0ffc0",
 		LineStyle: chart.SolidLine, LineWidth: lw}
-	lightblue := chart.Style{LineColor: "#4040cc", FillColor: "#c0c0ff", 
-		LineWidth: lw, LineStyle: chart.SolidLine }
+	lightblue := chart.Style{LineColor: "#4040cc", FillColor: "#c0c0ff",
+		LineWidth: lw, LineStyle: chart.SolidLine}
 	lightpink := chart.Style{LineColor: "#aa00aa", FillColor: "#ff80ff",
-		LineWidth: lw,  LineStyle: chart.SolidLine, }
-	lightstyles := []chart.Style{lightred,lightgreen,lightblue,lightpink}
+		LineWidth: lw, LineStyle: chart.SolidLine}
+	lightstyles := []chart.Style{lightred, lightgreen, lightblue, lightpink}
 
 	pie.Inner = 0.3
 	pie.Key.Cols = 2
@@ -829,7 +829,7 @@ func textlen() {
 
 	texts := []string{"ill", "WWW", "Some normal text.", "Illi, is. illigalli: ill!", "OO WORKSHOOPS OMWWW BMWWMB"}
 	fonts := []string{"Arial", "Helvetica", "Times", "Courier" /* "Calibri", "Palatino" */}
-	sizes := []int{-3, -2, -1, 0, 1, 2, 3}
+	sizes := []chart.FontSize{chart.TinyFontSize, chart.SmallFontSize, chart.NormalFontSize, chart.LargeFontSize, chart.HugeFontSize}
 	font := chart.Font{Color: "#000000"}
 
 	df := chart.Font{Name: "Arial", Color: "#2020ff", Size: -3}
@@ -856,6 +856,119 @@ func textlen() {
 	mysvg.End()
 	s2f.Close()
 
+}
+
+//
+// Test of graphic primitives
+//
+func testGraphics() {
+	dumper := NewDumper("xgraphics", 1, 1, 1200, 800)
+	defer dumper.Close()
+
+	igr := imgg.AddTo(dumper.I, 0, 0, 1200, 800, color.RGBA{0xff, 0xff, 0xff, 0xff}, nil, nil)
+	sgr := svgg.AddTo(dumper.S, 0, 0, 1200, 800, "", 14, color.RGBA{0xff, 0xff, 0xff, 0xff})
+
+	style := chart.Style{LineWidth: 0, LineColor: "#000000", LineStyle: chart.SolidLine}
+
+	// Line Width
+	x0, y0 := 10, 10
+	for w := 1; w <= 10; w++ {
+		style.LineWidth = w
+		igr.Line(x0, y0, x0+50, y0, style)
+		sgr.Line(x0, y0, x0+50, y0, style)
+		y0 += w + 5
+	}
+
+	// Line Color
+	style.LineWidth = 4
+	for _, col := range []string{
+		"#000000", "#ff0000", "#00ff00", "#0000ff", "#ffff00", "#ff00ff", "#00ffff",
+		"#3f3f3f", "#7f7f7f", "#bfbfbf", "#ffffff",
+		"#cc0000", "#00bb00", "#0000dd", "#996600", "#bb00bb", "#00aaaa", "#aaaa00",
+	} {
+		style.LineColor = col
+		igr.Line(x0, y0, x0+50, y0, style)
+		sgr.Line(x0, y0, x0+50, y0, style)
+		y0 += 10
+	}
+
+	// Line Style
+	style.LineColor = "#000000"
+	style.LineWidth = 1
+	for _, st := range []chart.LineStyle{
+		chart.SolidLine, chart.DashedLine, chart.DottedLine, chart.DashDotDotLine,
+		chart.LongDashLine, chart.LongDotLine,
+	} {
+		style.LineStyle = st
+		igr.Line(x0, y0, x0+150, y0, style)
+		sgr.Line(x0, y0, x0+150, y0, style)
+		y0 += 5
+
+	}
+	style.LineWidth = 9
+	y0 += 10
+	for _, st := range []chart.LineStyle{
+		chart.SolidLine, chart.DashedLine, chart.DottedLine, chart.DashDotDotLine,
+		chart.LongDashLine, chart.LongDotLine,
+	} {
+		style.LineStyle = st
+		igr.Line(x0, y0, x0+150, y0, style)
+		sgr.Line(x0, y0, x0+150, y0, style)
+		y0 += 12
+
+	}
+
+	// Text Alignment
+	font := chart.Font{}
+	rx, ry := 100, 10
+	px, py := 400, 90
+	text := "(JgbXÄj)"
+	alignedText(igr, text, font, rx, ry, px, py)
+	alignedText(sgr, text, font, rx, ry, px, py)
+
+	font.Size = chart.HugeFontSize
+	rx, ry = 100, 100
+	px, py = 400, 180
+	alignedText(igr, text, font, rx, ry, px, py)
+	alignedText(sgr, text, font, rx, ry, px, py)
+
+	font.Size = chart.TinyFontSize
+	rx, ry = 100, 190
+	px, py = 400, 270
+	alignedText(igr, text, font, rx, ry, px, py)
+	alignedText(sgr, text, font, rx, ry, px, py)
+
+}
+
+func alignedText(g chart.Graphics, text string, font chart.Font, rx, ry, px, py int) {
+	mx, my := (rx+px)/2, (ry+py)/2
+	var style chart.Style
+	style.LineWidth, style.LineColor, style.LineStyle = 1, "#ff0000", chart.SolidLine
+	g.Line(rx, ry, px, ry, style)
+	g.Line(px, ry, px, py, style)
+	g.Line(px, py, rx, py, style)
+	g.Line(rx, py, rx, ry, style)
+	g.Line(mx, ry, mx, py, style)
+	g.Line(rx, my, px, my, style)
+
+	font.Color = "#000000"
+	g.Text(rx, ry, text, "tl", 0, font)
+	font.Color = "#ff0000"
+	g.Text(mx, ry, text, "tc", 0, font)
+	font.Color = "#00ff00"
+	g.Text(px, ry, text, "tr", 0, font)
+	font.Color = "#0000ff"
+	g.Text(rx, my, text, "cl", 0, font)
+	font.Color = "#bbbb00"
+	g.Text(mx, my, text, "cc", 0, font)
+	font.Color = "#ff00ff"
+	g.Text(px, my, text, "cr", 0, font)
+	font.Color = "#00ffff"
+	g.Text(rx, py, text, "bl", 0, font)
+	font.Color = "#606060"
+	g.Text(mx, py, text, "bc", 0, font)
+	font.Color = "#000000"
+	g.Text(px, py, text, "br", 0, font)
 }
 
 func bestOf() {
@@ -1107,6 +1220,7 @@ func main() {
 	var funcs *bool = flag.Bool("func", false, "show function plots")
 	var best *bool = flag.Bool("best", false, "show best of plots")
 	var zeit *bool = flag.Bool("time", false, "show time plots")
+	var test *bool = flag.Bool("test", false, "produce graphic test")
 
 	flag.Parse()
 	if *All {
@@ -1166,6 +1280,9 @@ func main() {
 	}
 	if *special || *funcs {
 		functionPlots()
+	}
+	if *special || *test {
+		testGraphics()
 	}
 
 	if *best {

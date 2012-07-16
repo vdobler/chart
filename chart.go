@@ -14,14 +14,16 @@ type Chart interface {
 	Reset()          // Reset any setting made during last plot
 }
 
+// Expansion determines the way an axis range is expanded to align 
+// nicely with the tics on the axis.
 type Expansion int
 
 // Suitable values for Expand in RangeMode.
 const (
-	ExpandNextTic Expansion = 0 // Set min/max to next tic really below/above min/max of data
-	ExpandToTic   Expansion = 1 // Set to next tic below/above or equal to min/max of data
-	ExpandTight   Expansion = 2 // Use data min/max as limit 
-	ExpandABit    Expansion = 3 // Like ExpandToTic and add/subtract ExpandABitFraction of tic distance.
+	ExpandNextTic Expansion = iota // Set min/max to next tic really below/above min/max of data
+	ExpandToTic                    // Set to next tic below/above or equal to min/max of data
+	ExpandTight                    // Use data min/max as limit 
+	ExpandABit                     // Like ExpandToTic and add/subtract ExpandABitFraction of tic distance.
 )
 
 var ExpandABitFraction = 0.5 // Fraction of tic spacing added in ExpandABit Range.Expand mode.
@@ -45,29 +47,32 @@ type RangeMode struct {
 	TLower, TUpper time.Time // Same s Lower/Upper, but used for Date/Time axis
 }
 
+// GridMode describes the way a grid on the major tics is drawn
 type GridMode int
 
 const (
-	GridOff    GridMode = 0 // No grid lines
-	GridLines  GridMode = 1 // Grid lines
-	GridBlocks GridMode = 2 // Zebra style background
+	GridOff    GridMode = iota // No grid lines
+	GridLines                  // Grid lines
+	GridBlocks                 // Zebra style background
 )
 
+// MirrorAxis describes if and how an axis is drawn on the oposite side of
+// a chart,
 type MirrorAxis int
 
 const (
-	MirrorAxisAndTics MirrorAxis = 0
-	MirrorNothing     MirrorAxis = -1
-	MirrorAxisOnly    MirrorAxis = 1
+	MirrorAxisAndTics MirrorAxis = 0  // draw a full mirrored axis including tics
+	MirrorNothing     MirrorAxis = -1 // do not draw a mirrored axis
+	MirrorAxisOnly    MirrorAxis = 1  // just draw a mirrord axis, but omit tics
 )
 
 // TicSettings describes how (if at all) tics are shown on an axis.
 type TicSetting struct {
-	Hide   bool       // Dont show tics if true
-	Tics   int        // 0: across axis, 1: inside, 2: outside, other: off
-	Minor  int        // 0: off, 1: auto, >1: number of intervalls (not number of tics!)
-	Delta  float64    // Wanted step between major tics. 0 means auto 
-	TDelta TimeDelta  // Same as Delta, used for Date/Time axis
+	Hide   bool       // dont show tics if true
+	Tics   int        // 0: across axis,  1: inside,  2: outside,  other: off
+	Minor  int        // 0: off,  1: auto,  >1: number of intervalls (not number of tics!)
+	Delta  float64    // wanted step between major tics.  0 means auto 
+	TDelta TimeDelta  // same as Delta, but used for Date/Time axis
 	Grid   GridMode   // GridOff, GridLines, GridBlocks
 	Mirror MirrorAxis // 0: mirror axis and tics, -1: don't mirror anything, 1: mirror axis only (no tics)
 
@@ -79,9 +84,10 @@ type TicSetting struct {
 
 // Tic describs a single tic on an axis.
 type Tic struct {
-	Pos, LabelPos float64 // Position if the tic and its label on the axis (data coordinates).
-	Label         string  // The Label of the tic
-	Align         int     // Alignment of the label: -1: left/top, 0 center, 1 right/bottom (unused)
+	Pos      float64 // position of the tic on the axis (in data coordinates).
+	LabelPos float64 // position of the label on the axis (in data coordinates).
+	Label    string  // the Label of the tic
+	Align    int     // alignment of the label:  -1: left/top,  0 center,  1 right/bottom (unused)
 }
 
 // Range encapsulates all information about an axis.
@@ -684,7 +690,7 @@ func layout(g Graphics, title, xlabel, ylabel string, hidextics, hideytics bool,
 
 	if key != nil && !key.Hide && len(key.Place()) > 0 {
 		m := key.Place()
-		kw, kh, _, _ := key.Layout(g, m)
+		kw, kh, _, _ := key.Layout(g, m, Font{}) // TODO: use real font
 		sepx, sepy := int(fw)+fh, int(fw)+fh
 		switch key.Pos[:2] {
 		case "ol":
@@ -768,7 +774,7 @@ func layout(g Graphics, title, xlabel, ylabel string, hidextics, hideytics bool,
 // Debugging and tracing
 type debugging bool
 
-const debug debugging = true
+const debug debugging = false
 
 func (d debugging) Printf(fmt string, args ...interface{}) {
 	if d {

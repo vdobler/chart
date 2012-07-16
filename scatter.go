@@ -6,10 +6,10 @@ import (
 
 // ScatterChart represents scatter charts, line charts and function plots.
 type ScatterChart struct {
-	XRange, YRange Range              // X and Y axis
-	Title          string             // Title of the chart
-	Key            Key                // Key/Legend
-	Options PlotOptions
+	XRange, YRange Range  // X and Y axis
+	Title          string // Title of the chart
+	Key            Key    // Key/Legend
+	Options        PlotOptions
 	Data           []ScatterChartData // The actual data (filled with Add...-methods)
 	NSamples       int                // number of samples for function plots
 }
@@ -142,7 +142,7 @@ func (c *ScatterChart) Plot(g Graphics) {
 	g.Begin()
 
 	if c.Title != "" {
-		g.Title(c.Title)
+		drawTitle(g, c.Title, elementStyle(c.Options, TitleElement))
 	}
 
 	g.XAxis(c.XRange, topm+height, topm, c.Options)

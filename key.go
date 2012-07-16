@@ -133,8 +133,8 @@ var (
 	KeyRowSep      float32 = 0.75 // Vertical spacing between individual rows.
 )
 
-func (key Key) Layout(bg BasicGraphics, m [][]*KeyEntry) (w, h int, colwidth, rowheight []int) {
-	fontwidth, fontheight, _ := bg.FontMetrics(DefaultFont["key"])
+func (key Key) Layout(bg BasicGraphics, m [][]*KeyEntry, font Font) (w, h int, colwidth, rowheight []int) {
+	fontwidth, fontheight, _ := bg.FontMetrics(font)
 	cols, rows := len(m), len(m[0])
 
 	// Find total width and height
@@ -215,9 +215,9 @@ func GenericKey(bg BasicGraphics, x, y int, key Key, options PlotOptions) {
 	if len(m) == 0 {
 		return
 	}
-	keyfont := DefaultFont["key"]
+	keyfont := elementStyle(options, KeyElement).Font
 	fw, fh, _ := bg.FontMetrics(keyfont)
-	tw, th, cw, rh := key.Layout(bg, m)
+	tw, th, cw, rh := key.Layout(bg, m, keyfont)
 	style := elementStyle(options, KeyElement)
 	if key.Border >= 0 {
 		bg.Rect(x, y, tw, th, style)

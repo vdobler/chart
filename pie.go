@@ -14,11 +14,11 @@ import (
 // on the pie segments (FmtVal) and on the legend/key entries if non
 // nil. The FmtKey must be set before adding data via the AddXY methods.
 type PieChart struct {
-	Title string              // The title
-	Key   Key                 // The Key/Legend
-	Inner float64             // relative radius of inner white are (set to 0.7 to produce ring chart)
+	Title   string  // The title
+	Key     Key     // The Key/Legend
+	Inner   float64 // relative radius of inner white are (set to 0.7 to produce ring chart)
 	Options PlotOptions
-	Data  []CategoryChartData // The data
+	Data    []CategoryChartData // The data
 
 	FmtVal func(value, sume float64) string // add value labels to pie segments
 	FmtKey func(value, sume float64) string // add value labels to key entries
@@ -144,7 +144,7 @@ func (c *PieChart) Plot(g Graphics) {
 	g.Begin()
 
 	if c.Title != "" {
-		g.Title(c.Title)
+		drawTitle(g, c.Title, elementStyle(c.Options, TitleElement))
 	}
 
 	for _, data := range c.Data {

@@ -13,10 +13,10 @@ import (
 // calculate the various elents of a box (e.g. med, q3, outliers, ...) from raw
 // data.
 type BoxChart struct {
-	XRange, YRange Range          // x and y axis
-	Title          string         // Title of the chart
-	Key            Key            // Key/legend
-	Options  PlotOptions
+	XRange, YRange Range  // x and y axis
+	Title          string // Title of the chart
+	Key            Key    // Key/legend
+	Options        PlotOptions
 	Data           []BoxChartData // the data sets to draw
 }
 
@@ -116,7 +116,7 @@ func (c *BoxChart) Plot(g Graphics) {
 	c.YRange.Setup(numytics, numytics+1, height, topm, true)
 
 	if c.Title != "" {
-		g.Title(c.Title)
+		drawTitle(g, c.Title, elementStyle(c.Options, TitleElement))
 	}
 
 	g.XAxis(c.XRange, topm+height, topm, c.Options)

@@ -79,11 +79,11 @@ func (sg *SvgGraphics) Dimensions() (int, int) {
 
 func (sg *SvgGraphics) fontheight(font chart.Font) (fh int) {
 	if sg.fs <= 14 {
-		fh = sg.fs + font.Size
+		fh = sg.fs + int(font.Size)
 	} else if sg.fs <= 20 {
-		fh = sg.fs + 2*font.Size
+		fh = sg.fs + 2*int(font.Size)
 	} else {
-		fh = sg.fs + 3*font.Size
+		fh = sg.fs + 3*int(font.Size)
 	}
 
 	if fh == 0 {
@@ -156,7 +156,7 @@ func (sg *SvgGraphics) Text(x, y int, t string, align string, rot int, f chart.F
 		s += "middle"
 	}
 	if f.Color != "" {
-		s += "; stroke:" + f.Color
+		s += "; fill:" + f.Color
 	}
 	if f.Name != "" {
 		s += "; font-family:" + f.Name
@@ -271,13 +271,6 @@ func (sg *SvgGraphics) Path(x, y []int, style chart.Style) {
 
 func (sg *SvgGraphics) Wedge(x, y, ro, ri int, phi, psi float64, style chart.Style) {
 	panic("No Wedge() for SvgGraphics.")
-}
-
-func (sg *SvgGraphics) Title(text string) {
-	font := chart.DefaultFont["title"]
-	_, fh, _ := sg.FontMetrics(font)
-	x, y := sg.w/2, fh/2
-	sg.Text(x, y, text, "tc", 0, font)
 }
 
 func (sg *SvgGraphics) XAxis(xr chart.Range, ys, yms int, options chart.PlotOptions) {
@@ -441,4 +434,4 @@ func (sg *SvgGraphics) Rings(wedges []chart.Wedgeinfo, x, y, ro, ri int) {
 	}
 }
 
-var  _ chart.Graphics = &SvgGraphics{}
+var _ chart.Graphics = &SvgGraphics{}

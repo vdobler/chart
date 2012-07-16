@@ -7,7 +7,8 @@ import (
 )
 
 // Symbol is the list of different symbols. 
-var Symbol = []int{'o', // empty circle
+var Symbol = []int{
+	'o', // empty circle
 	'=', // empty square
 	'%', // empty triangle up
 	'&', // empty diamond
@@ -65,17 +66,18 @@ func init() {
 	averageCharacterWidth = 15
 }
 
-
 // Style contains all information about all graphic elements in a chart. 
 // All colors are in the form "#rrggbb" with rr/gg/bb hexvalues.
+// Not all elements of a plot use all fields in this struct.
 type Style struct {
-	Symbol      int     // 0: no symbol; any codepoint: this symbol
-	SymbolColor string  // Color of symbol
-	SymbolSize  float64 // Scaling factor of symbol
-	LineStyle   LineStyle     // SolidLine, DashedLine, DottedLine, .... see below
-	LineColor   string  // 
-	LineWidth   int     // 0: no line
-	FillColor   string  // "": no fill
+	Symbol      int       // 0: no symbol; any codepoint: this symbol
+	SymbolColor string    // color of symbol
+	SymbolSize  float64   // ccaling factor of symbol
+	LineStyle   LineStyle // SolidLine, DashedLine, DottedLine, .... see below
+	LineColor   string    // color of line
+	LineWidth   int       // 0: no line,  >=1 width of line in pixel
+	Font        Font      // the font to use
+	FillColor   string
 	Alpha       float64 // Alpha of whole stuff.
 }
 
@@ -84,35 +86,46 @@ type Style struct {
 type PlotStyle int
 
 const (
-	PlotStylePoints PlotStyle     = iota + 1
-	PlotStyleLines       
-	PlotStyleLinesPoints 
-	PlotStyleBox         
+	PlotStylePoints      PlotStyle = iota + 1 // draw symbol at data point
+	PlotStyleLines                            // connect data points by straight lines
+	PlotStyleLinesPoints                      // symbols and lines
+	PlotStyleBox                              // produce boxplot
 )
 
 func (ps PlotStyle) undefined() bool {
 	return int(ps) < 1 || int(ps) > 3
 }
 
+// LineStyle describes the different types of lines.
 type LineStyle int
 
 // The supported line styles
 const (
-	SolidLine LineStyle = iota
-	DashedLine
-	DottedLine
-	DashDotDotLine
-	LongDashLine
+	SolidLine      LineStyle = iota //  ----------------------
+	DashedLine                      //  ----  ----  ----  ----
+	DottedLine                      //  - - - - - - - - - - - 
+	DashDotDotLine                  //  ----  -  -  ----  -  -
+	LongDashLine                    // 
 	LongDotLine
 )
 
 // Font describes a font
 type Font struct {
-	Name string // "": default
-	Size int    // Relative size of font to default in output graphics: 
-	// -2: tiny, -1: small, 0: normal, 1: large, 2: huge
-	Color string // "": default, other: use this
+	Name  string   // "": default
+	Size  FontSize // relative size of font to default in output graphics
+	Color string   // "": default, other: use this
 }
+
+// RelFontSize is the reletive font size used in chart. Five sizes seem enough.
+type FontSize int
+
+const (
+	TinyFontSize FontSize = iota - 2
+	SmallFontSize
+	NormalFontSize
+	LargeFontSize
+	HugeFontSize
+)
 
 func (d *Style) empty() bool {
 	return d.Symbol == 0 && d.SymbolColor == "" && d.LineStyle == 0 && d.LineColor == "" && d.FillColor == "" && d.SymbolSize == 0
@@ -175,8 +188,9 @@ const (
 	GridBlockElement
 	KeyElement
 	TitleElement
+	RangeLimitElement
 )
-	
+
 // PlotOptions contains a Style for each PlotElement. If a PlotOption does not
 // contain a certainPlotElement the value in DefaultStyle is used.
 type PlotOptions map[PlotElement]Style
@@ -194,27 +208,20 @@ func ElementStyle(options PlotOptions, element PlotElement) Style {
 	return elementStyle(options, element)
 }
 
-
 // DefaultStyle maps chart elements to styles.
 var DefaultOptions = map[PlotElement]Style{
-	MajorAxisElement:  Style{LineColor: "#000000", LineWidth: 2, LineStyle: SolidLine}, // axis
+	MajorAxisElement: Style{LineColor: "#000000", LineWidth: 2, LineStyle: SolidLine}, // axis
 	MinorAxisElement: Style{LineColor: "#000000", LineWidth: 2, LineStyle: SolidLine}, // mirrored axis
-	MajorTicElement:   Style{LineColor: "#000000", LineWidth: 1, LineStyle: SolidLine},
+	MajorTicElement:  Style{LineColor: "#000000", LineWidth: 1, LineStyle: SolidLine},
 	MinorTicElement:  Style{LineColor: "#000000", LineWidth: 1, LineStyle: SolidLine},
 	ZeroAxisElement:  Style{LineColor: "#404040", LineWidth: 1, LineStyle: SolidLine},
-	GridLineElement: Style{LineColor: "#808080", LineWidth: 1, LineStyle: SolidLine},
+	GridLineElement:  Style{LineColor: "#808080", LineWidth: 1, LineStyle: SolidLine},
 	GridBlockElement: Style{LineColor: "#e6fcfc", LineWidth: 0, FillColor: "#e6fcfc"},
-	KeyElement:   Style{LineColor: "#202020", LineWidth: 1, LineStyle: SolidLine, FillColor: "#f0f0f0", Alpha: 0.5},
-	TitleElement: Style{LineColor: "#000000", LineWidth: 1, LineStyle: SolidLine, FillColor: "#ecc750", Alpha: 0},
-}
-
-// DefaultFont maps chart elements to fonts.
-var DefaultFont = map[string]Font{
-	"title":      Font{Size: +1},
-	"label":      Font{},
-	"key":        Font{Size: -1},
-	"tic":        Font{},
-	"rangelimit": Font{Size: -1},
+	KeyElement: Style{LineColor: "#202020", LineWidth: 1, LineStyle: SolidLine,
+		FillColor: "#f0f0f0", Alpha: 0.75, Font: Font{Size: SmallFontSize}},
+	TitleElement: Style{LineColor: "#000000", LineWidth: 1, LineStyle: SolidLine,
+		FillColor: "#ecc750", Alpha: 0, Font: Font{Size: LargeFontSize}},
+	RangeLimitElement: Style{Font: Font{Size: SmallFontSize}},
 }
 
 func hsv2rgb(h, s, v int) (r, g, b int) {

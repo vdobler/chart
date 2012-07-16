@@ -128,10 +128,6 @@ func (g *TextGraphics) String() string {
 func (g *TextGraphics) Symbol(x, y int, style chart.Style) {
 	g.tb.Put(x, y, rune(style.Symbol))
 }
-func (g *TextGraphics) Title(text string) {
-	x, y := g.w/2, 1
-	g.Text(x, y, text, "tc", 0, chart.Font{})
-}
 
 func (g *TextGraphics) XAxis(xrange chart.Range, y, y1 int, options chart.PlotOptions) {
 	mirror := xrange.TicSetting.Mirror
@@ -326,7 +322,7 @@ func (g *TextGraphics) Key(x, y int, key chart.Key, options chart.PlotOptions) {
 	if len(m) == 0 {
 		return
 	}
-	tw, th, cw, rh := key.Layout(g, m)
+	tw, th, cw, rh := key.Layout(g, m, chart.ElementStyle(options, chart.KeyElement).Font)
 	// fmt.Printf("Text-Key:  %d x %d\n", tw,th)
 	style := chart.ElementStyle(options, chart.KeyElement)
 	if style.LineWidth > 0 || style.FillColor != "" {
