@@ -1,10 +1,7 @@
 package chart
 
 import (
-	"fmt"
 	"math"
-	//	"os"
-	//	"strings"
 )
 
 type HistChartData struct {
@@ -13,22 +10,26 @@ type HistChartData struct {
 	Samples []float64
 }
 
-// HistChart represents histogram charts. (Not to be mixed up with BarChart!)
+// HistChart represents histogram charts. 
+//
+// Histograms should not be mixed up with bar charts produced by BarChart:
+// Histograms are computed (binified) automatically from the raw
+// data.
 type HistChart struct {
-	XRange, YRange Range  // Lower limit of YRange is fixed to 0 and not available for input
-	Title          string // Title of chart
-	Key            Key    // Key/Legend
-	Counts         bool   // Display counts instead of frequencies
-	Stacked        bool   // Display different data sets ontop of each other
-	Shifted        bool   // Shift non-stacked bars sideways (and make them smaler)
+	XRange, YRange Range       // Lower limit of YRange is fixed to 0 and not available for input
+	Title          string      // Title of chart
+	Key            Key         // Key/Legend
+	Counts         bool        // Display counts instead of frequencies
+	Stacked        bool        // Display different data sets ontop of each other
+	Shifted        bool        // Shift non-stacked bars sideways (and make them smaler)
+	FirstBin       float64     // center of the first (lowest bin)
+	BinWidth       float64     // Width of bins (0: auto)
+	TBinWidth      TimeDelta   // BinWidth for time XRange
+	Gap            float64     // gap between bins in (bin-width units): 0<=Gap<1,
+	Sep            float64     // separation of bars in one bin (in bar width units) -1<Sep<1
+	Kernel         Kernel      // Smoothing kernel (usable only for non-stacked histograms)
+	Options        PlotOptions // general stylistic optins
 	Data           []HistChartData
-	FirstBin       float64   // center of the first (lowest bin)
-	BinWidth       float64   // Width of bins (0: auto)
-	TBinWidth      TimeDelta // BinWidth for time XRange
-	Gap            float64   // gap between bins in (bin-width units): 0<=Gap<1,
-	Sep            float64   // separation of bars in one bin (in bar width units) -1<Sep<1
-	Options        PlotOptions
-	Kernel         Kernel // Smoothing kernel (usable only for non-stacked histograms)
 }
 
 type Kernel func(x float64) float64
@@ -448,7 +449,6 @@ func (c *HistChart) smoothed(i, binCnt int) (points []EPoint, max float64) {
 	K := c.Kernel
 	n := float64(len(c.Data[i].Samples))
 
-	ff := 0.0
 	for x := c.XRange.Min; x <= c.XRange.Max; x += step {
 		f := 0.0
 		for _, xi := range c.Data[i].Samples {
@@ -470,7 +470,7 @@ func (c *HistChart) smoothed(i, binCnt int) (points []EPoint, max float64) {
 		// fmt.Printf("Consructed %.3f, %.4f\n", x, f)
 		points = append(points, EPoint{X: xx, Y: f, DeltaX: nan, DeltaY: nan})
 	}
-	fmt.Printf("Dataset %d: ff=%.4f\n", i, ff)
+	// fmt.Printf("Dataset %d: ff=%.4f\n", i, ff)
 
 	return
 }
