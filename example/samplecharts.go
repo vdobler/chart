@@ -1165,7 +1165,7 @@ func bestOf() {
 		chart.Style{Symbol: 'O', LineColor: "#e04444", LineWidth: 2, FillColor: "#f6b5cc"})
 	charts = append(charts, &ebit)
 
-	dumper := NewDumper("xbestof", N, M, width, height)
+	dumper := NewDumper("bestof", N, M, width, height)
 	defer dumper.Close()
 	for _, c := range charts {
 		dumper.Plot(c)
