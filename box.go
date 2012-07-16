@@ -16,6 +16,7 @@ type BoxChart struct {
 	XRange, YRange Range          // x and y axis
 	Title          string         // Title of the chart
 	Key            Key            // Key/legend
+	Options  PlotOptions
 	Data           []BoxChartData // the data sets to draw
 }
 
@@ -118,8 +119,8 @@ func (c *BoxChart) Plot(g Graphics) {
 		g.Title(c.Title)
 	}
 
-	g.XAxis(c.XRange, topm+height, topm)
-	g.YAxis(c.YRange, leftm, leftm+width)
+	g.XAxis(c.XRange, topm+height, topm, c.Options)
+	g.YAxis(c.YRange, leftm, leftm+width, c.Options)
 
 	yf := c.YRange.Data2Screen
 	nan := math.NaN()
@@ -165,7 +166,7 @@ func (c *BoxChart) Plot(g Graphics) {
 	}
 
 	if !c.Key.Hide {
-		g.Key(layout.KeyX, layout.KeyY, c.Key)
+		g.Key(layout.KeyX, layout.KeyY, c.Key, c.Options)
 	}
 
 	g.End()

@@ -22,6 +22,10 @@ func New(w, h int) *TextGraphics {
 	return &tg
 }
 
+func (g *TextGraphics) Options() chart.PlotOptions {
+	return nil
+}
+
 func (g *TextGraphics) Begin() {
 	g.tb = NewTextBuf(g.w, g.h)
 }
@@ -129,7 +133,7 @@ func (g *TextGraphics) Title(text string) {
 	g.Text(x, y, text, "tc", 0, chart.Font{})
 }
 
-func (g *TextGraphics) XAxis(xrange chart.Range, y, y1 int) {
+func (g *TextGraphics) XAxis(xrange chart.Range, y, y1 int, options chart.PlotOptions) {
 	mirror := xrange.TicSetting.Mirror
 	xa, xe := xrange.Data2Screen(xrange.Min), xrange.Data2Screen(xrange.Max)
 	for sx := xa; sx <= xe; sx++ {
@@ -195,7 +199,7 @@ func (g *TextGraphics) XAxis(xrange chart.Range, y, y1 int) {
 	}
 }
 
-func (g *TextGraphics) YAxis(yrange chart.Range, x, x1 int) {
+func (g *TextGraphics) YAxis(yrange chart.Range, x, x1 int, options chart.PlotOptions) {
 	label := yrange.Label
 	mirror := yrange.TicSetting.Mirror
 	ya, ye := yrange.Data2Screen(yrange.Min), yrange.Data2Screen(yrange.Max)
@@ -317,14 +321,14 @@ func (g *TextGraphics) Boxes(boxes []chart.Box, width int, style chart.Style) {
 	}
 }
 
-func (g *TextGraphics) Key(x, y int, key chart.Key) {
+func (g *TextGraphics) Key(x, y int, key chart.Key, options chart.PlotOptions) {
 	m := key.Place()
 	if len(m) == 0 {
 		return
 	}
 	tw, th, cw, rh := key.Layout(g, m)
 	// fmt.Printf("Text-Key:  %d x %d\n", tw,th)
-	style := chart.DefaultStyle["key"]
+	style := chart.ElementStyle(options, chart.KeyElement)
 	if style.LineWidth > 0 || style.FillColor != "" {
 		g.tb.Rect(x, y, tw, th-1, 1, ' ')
 	}
@@ -383,3 +387,5 @@ func (g *TextGraphics) Rings(wedges []chart.Wedgeinfo, x, y, ro, ri int) {
 	}
 	chart.GenericRings(g, wedges, x+g.xoff, y, ro, ri, 1.8)
 }
+
+var _ chart.Graphics = &TextGraphics{}

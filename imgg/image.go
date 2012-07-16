@@ -45,7 +45,7 @@ type ImageGraphics struct {
 func New(width, height int, bgcol color.RGBA, font *truetype.Font, fontsize int) *ImageGraphics {
 	img := image.NewRGBA(image.Rect(0, 0, width, height))
 	gc := draw2d.NewGraphicContext(img)
-	gc.SetLineJoin(draw2d.MiterJoin)
+	gc.SetLineJoin(draw2d.BevelJoin)
 	gc.SetLineCap(draw2d.SquareCap)
 	gc.SetStrokeColor(image.Black)
 	gc.SetFillColor(bgcol)
@@ -64,6 +64,8 @@ func New(width, height int, bgcol color.RGBA, font *truetype.Font, fontsize int)
 // are the same as in New().
 func AddTo(img *image.RGBA, x, y, width, height int, bgcol color.RGBA, font *truetype.Font, fontsize int) *ImageGraphics {
 	gc := draw2d.NewGraphicContext(img)
+	gc.SetLineJoin(draw2d.BevelJoin)
+	gc.SetLineCap(draw2d.SquareCap)
 	gc.SetStrokeColor(image.Black)
 	gc.SetFillColor(bgcol)
 	gc.Translate(float64(x)+0.5, float64(y)+0.5)
@@ -75,8 +77,12 @@ func AddTo(img *image.RGBA, x, y, width, height int, bgcol color.RGBA, font *tru
 	return &ImageGraphics{Image: img, x0: x, y0: y, w: width, h: height, bg: bgcol, gc: gc, font: font, fs: fontsize}
 }
 
+func (ig *ImageGraphics) Options() chart.PlotOptions                  {return nil}
+
+
 func (ig *ImageGraphics) Begin()                         {}
 func (ig *ImageGraphics) End()                           {}
+
 func (ig *ImageGraphics) Background() (r, g, b, a uint8) { return ig.bg.R, ig.bg.G, ig.bg.B, ig.bg.A }
 func (ig *ImageGraphics) Dimensions() (int, int)         { return ig.w, ig.h }
 func (ig *ImageGraphics) FontMetrics(font chart.Font) (fw float32, fh int, mono bool) {
@@ -123,7 +129,7 @@ func (ig *ImageGraphics) Line(x0, y0, x1, y1 int, style chart.Style) {
 	ig.gc.Stroke()
 }
 
-var dashPattern map[int][]float64 = map[int][]float64{
+var dashPattern map[chart.LineStyle][]float64 = map[chart.LineStyle][]float64{
 	chart.SolidLine:      nil, // []float64{10},
 	chart.DashedLine:     []float64{50, 20},
 	chart.DottedLine:     []float64{20, 20},
@@ -317,7 +323,6 @@ func (ig *ImageGraphics) Wedge(ix, iy, iro, iri int, phi, psi float64, style cha
 		stroke = func() { ig.gc.FillStroke() }
 	}
 
-	iri = 0
 	ecc := 1.0                           // eccentricity
 	x, y := float64(ix), float64(iy)     // center as float
 	ro, ri := float64(iro), float64(iri) // radius outer and inner as float
@@ -356,11 +361,11 @@ func (ig *ImageGraphics) Title(text string) {
 	ig.Text(x, y, text, "tc", 0, font)
 }
 
-func (ig *ImageGraphics) XAxis(xr chart.Range, ys, yms int) {
-	chart.GenericXAxis(ig, xr, ys, yms)
+func (ig *ImageGraphics) XAxis(xr chart.Range, ys, yms int, options chart.PlotOptions) {
+	chart.GenericXAxis(ig, xr, ys, yms, options)
 }
-func (ig *ImageGraphics) YAxis(yr chart.Range, xs, xms int) {
-	chart.GenericYAxis(ig, yr, xs, xms)
+func (ig *ImageGraphics) YAxis(yr chart.Range, xs, xms int,options chart.PlotOptions ) {
+	chart.GenericYAxis(ig, yr, xs, xms, options)
 }
 
 func (ig *ImageGraphics) Scatter(points []chart.EPoint, plotstyle chart.PlotStyle, style chart.Style) {
@@ -371,8 +376,8 @@ func (ig *ImageGraphics) Boxes(boxes []chart.Box, width int, style chart.Style) 
 	chart.GenericBoxes(ig, boxes, width, style)
 }
 
-func (ig *ImageGraphics) Key(x, y int, key chart.Key) {
-	chart.GenericKey(ig, x, y, key)
+func (ig *ImageGraphics) Key(x, y int, key chart.Key, options chart.PlotOptions) {
+	chart.GenericKey(ig, x, y, key, options)
 }
 
 func (ig *ImageGraphics) Bars(bars []chart.Barinfo, style chart.Style) {
@@ -413,3 +418,5 @@ func sign(a int) int {
 	}
 	return 1
 }
+
+var _ chart.Graphics = &ImageGraphics{}

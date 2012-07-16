@@ -38,6 +38,10 @@ func AddTo(sp *svg.SVG, x, y, width, height int, font string, fontsize int, back
 	return s
 }
 
+func (sg *SvgGraphics) Options() chart.PlotOptions {
+	return nil
+}
+
 func (sg *SvgGraphics) Begin() {
 	font, fs := sg.font, sg.fs
 	if font == "" {
@@ -276,11 +280,11 @@ func (sg *SvgGraphics) Title(text string) {
 	sg.Text(x, y, text, "tc", 0, font)
 }
 
-func (sg *SvgGraphics) XAxis(xr chart.Range, ys, yms int) {
-	chart.GenericXAxis(sg, xr, ys, yms)
+func (sg *SvgGraphics) XAxis(xr chart.Range, ys, yms int, options chart.PlotOptions) {
+	chart.GenericXAxis(sg, xr, ys, yms, options)
 }
-func (sg *SvgGraphics) YAxis(yr chart.Range, xs, xms int) {
-	chart.GenericYAxis(sg, yr, xs, xms)
+func (sg *SvgGraphics) YAxis(yr chart.Range, xs, xms int, options chart.PlotOptions) {
+	chart.GenericYAxis(sg, yr, xs, xms, options)
 }
 
 func linestyle(style chart.Style) (s string) {
@@ -347,8 +351,8 @@ func (sg *SvgGraphics) Boxes(boxes []chart.Box, width int, style chart.Style) {
 	chart.GenericBoxes(sg, boxes, width, style)
 }
 
-func (sg *SvgGraphics) Key(x, y int, key chart.Key) {
-	chart.GenericKey(sg, x, y, key)
+func (sg *SvgGraphics) Key(x, y int, key chart.Key, options chart.PlotOptions) {
+	chart.GenericKey(sg, x, y, key, options)
 }
 
 func (sg *SvgGraphics) Bars(bars []chart.Barinfo, style chart.Style) {
@@ -436,3 +440,5 @@ func (sg *SvgGraphics) Rings(wedges []chart.Wedgeinfo, x, y, ro, ri int) {
 		}
 	}
 }
+
+var  _ chart.Graphics = &SvgGraphics{}

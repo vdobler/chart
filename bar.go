@@ -20,6 +20,7 @@ type BarChart struct {
 	ShowVal        int     // Display values: 0: don't show; 1: above bar, 2: centerd in bar; 3: at top of bar
 	SameBarWidth   bool    // all data sets use the same (smalest of all data sets) bar width
 	BarWidthFac    float64 // if nonzero: scale determined bar width with this factor
+	Options        PlotOptions
 	Data           []BarChartData
 }
 
@@ -144,8 +145,8 @@ func (c *BarChart) Plot(g Graphics) {
 		g.Title(c.Title)
 	}
 
-	g.XAxis(c.XRange, topm+height+fh, topm)
-	g.YAxis(c.YRange, leftm-int(2*fw), leftm+width)
+	g.XAxis(c.XRange, topm+height+fh, topm, c.Options)
+	g.YAxis(c.YRange, leftm-int(2*fw), leftm+width, c.Options)
 
 	xf := c.XRange.Data2Screen
 	yf := c.YRange.Data2Screen
@@ -236,7 +237,7 @@ func (c *BarChart) Plot(g Graphics) {
 	}
 
 	if !c.Key.Hide {
-		g.Key(layout.KeyX, layout.KeyY, c.Key)
+		g.Key(layout.KeyX, layout.KeyY, c.Key, c.Options)
 	}
 
 	g.End()

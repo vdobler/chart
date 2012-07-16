@@ -756,9 +756,9 @@ func pieChart() {
 	dumper.Plot(&pc)
 
 	piec := chart.PieChart{Title: "Some Pies"}
-	piec.AddDataPair("Europe",
+	piec.AddIntDataPair("Europe",
 		[]string{"D", "AT", "CH", "F", "E", "I"},
-		[]float64{10, 20, 30, 35, 15, 25})
+		[]int{10, 20, 30, 35, 15, 25})
 	piec.Data[0].Samples[3].Flag = true
 	dumper.Plot(&piec)
 
@@ -771,6 +771,51 @@ func pieChart() {
 	piec.FmtVal = chart.PercentValue
 	chart.PieChartShrinkage = 0.45
 	dumper.Plot(&piec)
+
+	dumper2 := NewDumper("xpie2", 2, 1, 500, 400)
+	defer dumper2.Close()
+	pie := chart.PieChart{Title: "Some Pies"}
+	data := []chart.CatValue{{"D",10,false}, {"GB",20,true}, {"CH",30,false}, {"F",60,false}}
+	lw := 4
+	red := chart.Style{LineColor: "#cc0000", FillColor: "#ff8080",
+		Alpha: 0, LineStyle: chart.SolidLine, LineWidth: lw}
+	green := chart.Style{LineColor: "#00cc00", FillColor: "#80ff80",
+		Alpha: 0, LineStyle: chart.SolidLine, LineWidth: lw}
+	blue := chart.Style{LineColor: "#0000cc", LineWidth: lw, LineStyle: chart.SolidLine, FillColor: "#8080ff"}
+	pink := chart.Style{LineColor: "#990099", LineWidth: lw,  LineStyle: chart.SolidLine, FillColor: "#aa60aa"}
+
+	styles := []chart.Style{red,green,blue,pink}
+	pie.FmtKey = chart.IntegerValue
+	pie.AddData("Data1", data, styles)
+	pie.Inner = 0
+	pie.Key.Cols = 2
+	pie.Key.Pos = "ibr"
+	dumper2.Plot(&pie)
+
+	pie = chart.PieChart{Title: "Some Rings"}
+	data2 := []chart.CatValue{{"D",15,false}, {"GB",25,false}, {"CH",30,false}, {"F",50,false}}
+	data[1].Flag = false
+	lw = 2
+	lightred := chart.Style{LineColor: "#cc4040", FillColor: "#ffc0c0",
+		LineStyle: chart.SolidLine, LineWidth: lw}
+	lightgreen := chart.Style{LineColor: "#40cc40", FillColor: "#c0ffc0",
+		LineStyle: chart.SolidLine, LineWidth: lw}
+	lightblue := chart.Style{LineColor: "#4040cc", FillColor: "#c0c0ff", 
+		LineWidth: lw, LineStyle: chart.SolidLine }
+	lightpink := chart.Style{LineColor: "#aa00aa", FillColor: "#ff80ff",
+		LineWidth: lw,  LineStyle: chart.SolidLine, }
+	lightstyles := []chart.Style{lightred,lightgreen,lightblue,lightpink}
+
+	pie.Inner = 0.3
+	pie.Key.Cols = 2
+	pie.Key.Pos = "ibr"
+	pie.FmtVal = chart.PercentValue
+	chart.PieChartShrinkage = 0.55
+	pie.FmtKey = chart.IntegerValue
+
+	pie.AddData("1980", data, styles)
+	pie.AddData("2010", data2, lightstyles)
+	dumper2.Plot(&pie)
 }
 
 func textlen() {
@@ -1036,7 +1081,7 @@ func timeRange() {
 		rng.DataMin, rng.DataMax = now, now+step
 		rng.Setup(7, 9, 90, 5, false)
 		tg := txtg.New(120, 4)
-		tg.XAxis(rng, 1, 0)
+		tg.XAxis(rng, 1, 0, nil)
 		fmt.Printf("%s\n", tg.String())
 	}
 }

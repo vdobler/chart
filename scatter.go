@@ -9,6 +9,7 @@ type ScatterChart struct {
 	XRange, YRange Range              // X and Y axis
 	Title          string             // Title of the chart
 	Key            Key                // Key/Legend
+	Options PlotOptions
 	Data           []ScatterChartData // The actual data (filled with Add...-methods)
 	NSamples       int                // number of samples for function plots
 }
@@ -144,8 +145,8 @@ func (c *ScatterChart) Plot(g Graphics) {
 		g.Title(c.Title)
 	}
 
-	g.XAxis(c.XRange, topm+height, topm)
-	g.YAxis(c.YRange, leftm, leftm+width)
+	g.XAxis(c.XRange, topm+height, topm, c.Options)
+	g.YAxis(c.YRange, leftm, leftm+width, c.Options)
 
 	// Plot Data
 	xf, yf := c.XRange.Data2Screen, c.YRange.Data2Screen
@@ -172,7 +173,7 @@ func (c *ScatterChart) Plot(g Graphics) {
 	}
 
 	if !c.Key.Hide {
-		g.Key(layout.KeyX, layout.KeyY, c.Key)
+		g.Key(layout.KeyX, layout.KeyY, c.Key, c.Options)
 	}
 
 	g.End()

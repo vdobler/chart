@@ -65,10 +65,6 @@ func init() {
 	averageCharacterWidth = 15
 }
 
-// Unsude?
-var Palette = map[string]string{"title": "#aa9933", "label": "#000000", "axis": "#000000",
-	"ticlabel": "#000000", "grid": "#c0c0c0", "keyborder": "#000000", "errorbar": "*0.3",
-}
 
 // Style contains all information about all graphic elements in a chart. 
 // All colors are in the form "#rrggbb" with rr/gg/bb hexvalues.
@@ -76,7 +72,7 @@ type Style struct {
 	Symbol      int     // 0: no symbol; any codepoint: this symbol
 	SymbolColor string  // Color of symbol
 	SymbolSize  float64 // Scaling factor of symbol
-	LineStyle   int     // SolidLine, DashedLine, DottedLine, .... see below
+	LineStyle   LineStyle     // SolidLine, DashedLine, DottedLine, .... see below
 	LineColor   string  // 
 	LineWidth   int     // 0: no line
 	FillColor   string  // "": no fill
@@ -88,19 +84,21 @@ type Style struct {
 type PlotStyle int
 
 const (
-	PlotStylePoints      = 1
-	PlotStyleLines       = 2
-	PlotStyleLinesPoints = 3
-	PlotStyleBox         = 4
+	PlotStylePoints PlotStyle     = iota + 1
+	PlotStyleLines       
+	PlotStyleLinesPoints 
+	PlotStyleBox         
 )
 
 func (ps PlotStyle) undefined() bool {
 	return int(ps) < 1 || int(ps) > 3
 }
 
+type LineStyle int
+
 // The supported line styles
 const (
-	SolidLine = iota
+	SolidLine LineStyle = iota
 	DashedLine
 	DottedLine
 	DashDotDotLine
@@ -124,7 +122,7 @@ func (d *Style) empty() bool {
 var StandardColors = []string{"#cc0000", "#00bb00", "#0000dd", "#996600", "#bb00bb", "#00aaaa", "#aaaa00"}
 
 // Standard line styles used by AutoStyle (fill=false)
-var StandardLineStyles = []int{SolidLine, DashedLine, DottedLine, LongDashLine, LongDotLine}
+var StandardLineStyles = []LineStyle{SolidLine, DashedLine, DottedLine, LongDashLine, LongDotLine}
 
 // Standard symbols used by AutoStyle
 var StandardSymbols = []int{'o', '=', '%', '&', '+', 'X', '*', '@', '#', 'A', 'Z'}
@@ -164,17 +162,50 @@ func AutoStyle(i int, fill bool) (style Style) {
 	return
 }
 
+// PlotElement identifies one element in a plot/chart
+type PlotElement int
+
+const (
+	MajorAxisElement PlotElement = iota
+	MinorAxisElement
+	MajorTicElement
+	MinorTicElement
+	ZeroAxisElement
+	GridLineElement
+	GridBlockElement
+	KeyElement
+	TitleElement
+)
+	
+// PlotOptions contains a Style for each PlotElement. If a PlotOption does not
+// contain a certainPlotElement the value in DefaultStyle is used.
+type PlotOptions map[PlotElement]Style
+
+func elementStyle(options PlotOptions, element PlotElement) Style {
+	if style, ok := options[element]; ok {
+		return style
+	}
+	if style, ok := DefaultOptions[element]; ok {
+		return style
+	}
+	return Style{LineColor: "#808080", LineWidth: 1, LineStyle: SolidLine}
+}
+func ElementStyle(options PlotOptions, element PlotElement) Style {
+	return elementStyle(options, element)
+}
+
+
 // DefaultStyle maps chart elements to styles.
-var DefaultStyle = map[string]Style{
-	"axis":  Style{LineColor: "#000000", LineWidth: 2, LineStyle: SolidLine}, // axis
-	"maxis": Style{LineColor: "#000000", LineWidth: 2, LineStyle: SolidLine}, // mirrored axis
-	"tic":   Style{LineColor: "#000000", LineWidth: 1, LineStyle: SolidLine},
-	"mtic":  Style{LineColor: "#000000", LineWidth: 1, LineStyle: SolidLine},
-	"zero":  Style{LineColor: "#404040", LineWidth: 1, LineStyle: SolidLine},
-	"gridl": Style{LineColor: "#808080", LineWidth: 1, LineStyle: SolidLine},
-	"gridb": Style{LineColor: "#e6fcfc", LineWidth: 0, FillColor: "#e6fcfc"},
-	"key":   Style{LineColor: "#202020", LineWidth: 1, LineStyle: SolidLine, FillColor: "#f0f0f0", Alpha: 0.5},
-	"title": Style{LineColor: "#000000", LineWidth: 1, LineStyle: SolidLine, FillColor: "#ecc750", Alpha: 0},
+var DefaultOptions = map[PlotElement]Style{
+	MajorAxisElement:  Style{LineColor: "#000000", LineWidth: 2, LineStyle: SolidLine}, // axis
+	MinorAxisElement: Style{LineColor: "#000000", LineWidth: 2, LineStyle: SolidLine}, // mirrored axis
+	MajorTicElement:   Style{LineColor: "#000000", LineWidth: 1, LineStyle: SolidLine},
+	MinorTicElement:  Style{LineColor: "#000000", LineWidth: 1, LineStyle: SolidLine},
+	ZeroAxisElement:  Style{LineColor: "#404040", LineWidth: 1, LineStyle: SolidLine},
+	GridLineElement: Style{LineColor: "#808080", LineWidth: 1, LineStyle: SolidLine},
+	GridBlockElement: Style{LineColor: "#e6fcfc", LineWidth: 0, FillColor: "#e6fcfc"},
+	KeyElement:   Style{LineColor: "#202020", LineWidth: 1, LineStyle: SolidLine, FillColor: "#f0f0f0", Alpha: 0.5},
+	TitleElement: Style{LineColor: "#000000", LineWidth: 1, LineStyle: SolidLine, FillColor: "#ecc750", Alpha: 0},
 }
 
 // DefaultFont maps chart elements to fonts.

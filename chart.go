@@ -769,7 +769,7 @@ func layout(g Graphics, title, xlabel, ylabel string, hidextics, hideytics bool,
 // Debugging and tracing
 type debugging bool
 
-const debug debugging = false
+const debug debugging = true
 
 func (d debugging) Printf(fmt string, args ...interface{}) {
 	if d {

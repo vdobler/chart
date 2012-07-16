@@ -25,6 +25,7 @@ type BasicGraphics interface {
 	Rect(x, y, w, h int, style Style)                      // Draw (w x h) rectangle at (x,y)
 	Wedge(x, y, ro, ri int, phi, psi float64, style Style) // Wedge
 	Path(x, y []int, style Style)                          // Path of straight lines
+	Options() PlotOptions  // access to current PlotOptions
 }
 
 // Graphics is the interface all chart drivers have to implement
@@ -38,8 +39,8 @@ type Graphics interface {
 
 	// All stuff is preprocessed: sanitized, clipped, strings formated, integer coords,
 	// screen coordinates,
-	XAxis(xr Range, ys, yms int) // Draw x axis xr at screen position ys (and yms if mirrored)
-	YAxis(yr Range, xs, xms int) // Same for y axis.
+	XAxis(xr Range, ys, yms int, options PlotOptions) // Draw x axis xr at screen position ys (and yms if mirrored)
+	YAxis(yr Range, xs, xms int, options PlotOptions) // Same for y axis.
 	Title(text string)           // Draw title onto chart
 
 	Scatter(points []EPoint, plotstyle PlotStyle, style Style) // Points, Lines and Line+Points
@@ -47,7 +48,7 @@ type Graphics interface {
 	Bars(bars []Barinfo, style Style)                          // any type of histogram/bars
 	Rings(wedeges []Wedgeinfo, x, y, ro, ri int)               // Pie/ring diagram elements
 
-	Key(x, y int, key Key) // place key at x,y
+	Key(x, y int, key Key, options PlotOptions) // place key at x,y
 }
 
 type Barinfo struct {
@@ -132,7 +133,7 @@ func GenericPath(mg MinimalGraphics, x, y []int, style Style) {
 	}
 }
 
-func drawXTics(bg BasicGraphics, rng Range, y, ym, ticLen int) {
+func drawXTics(bg BasicGraphics, rng Range, y, ym, ticLen int, options PlotOptions) {
 	xe := rng.Data2Screen(rng.Max)
 
 	// Grid below tics
@@ -141,20 +142,20 @@ func drawXTics(bg BasicGraphics, rng Range, y, ym, ticLen int) {
 			x := rng.Data2Screen(tic.Pos)
 			if ticcnt > 0 && ticcnt < len(rng.Tics)-1 && rng.TicSetting.Grid == GridLines {
 				// fmt.Printf("Gridline at x=%d\n", x)
-				bg.Line(x, y-1, x, ym+1, DefaultStyle["gridl"])
+				bg.Line(x, y-1, x, ym+1, elementStyle(options, GridLineElement))
 			} else if rng.TicSetting.Grid == GridBlocks {
 				if ticcnt%2 == 1 {
 					x0 := rng.Data2Screen(rng.Tics[ticcnt-1].Pos)
-					bg.Rect(x0, ym, x-x0, y-ym, DefaultStyle["gridb"])
+					bg.Rect(x0, ym, x-x0, y-ym, elementStyle(options, GridBlockElement))
 				} else if ticcnt == len(rng.Tics)-1 && x < xe-1 {
-					bg.Rect(x, ym, xe-x, y-ym, DefaultStyle["gridb"])
+					bg.Rect(x, ym, xe-x, y-ym, elementStyle(options, GridBlockElement))
 				}
 			}
 		}
 	}
 
 	// Tics on top
-	ticstyle := DefaultStyle["tic"]
+	ticstyle := elementStyle(options, MajorTicElement)
 	ticfont := DefaultFont["tic"]
 	for _, tic := range rng.Tics {
 		x := rng.Data2Screen(tic.Pos)
@@ -195,7 +196,7 @@ func drawXTics(bg BasicGraphics, rng Range, y, ym, ticLen int) {
 }
 
 // GenericAxis draws the axis r solely by graphic primitives of bg.
-func GenericXAxis(bg BasicGraphics, rng Range, y, ym int) {
+func GenericXAxis(bg BasicGraphics, rng Range, y, ym int, options PlotOptions) {
 	_, fontheight, _ := bg.FontMetrics(DefaultFont["label"])
 	var ticLen int = 0
 	if !rng.TicSetting.Hide {
@@ -224,22 +225,23 @@ func GenericXAxis(bg BasicGraphics, rng Range, y, ym int) {
 
 	// Tics and Grid
 	if !rng.TicSetting.Hide {
-		drawXTics(bg, rng, y, ym, ticLen)
+		drawXTics(bg, rng, y, ym, ticLen, options)
 	}
 
 	// Axis itself, mirrord axis and zero
-	bg.Line(xa, y, xe, y, DefaultStyle["axis"])
+	bg.Line(xa, y, xe, y, elementStyle(options, MajorAxisElement))
 	if rng.TicSetting.Mirror >= 1 {
-		bg.Line(xa, ym, xe, ym, DefaultStyle["maxis"])
+		bg.Line(xa, ym, xe, ym, elementStyle(options, MinorAxisElement))
 	}
 	if rng.ShowZero && rng.Min < 0 && rng.Max > 0 {
 		z := rng.Data2Screen(0)
-		bg.Line(z, y, z, ym, DefaultStyle["zero"])
+		bg.Line(z, y, z, ym, elementStyle(options, ZeroAxisElement))
 	}
 
 }
 
 func drawYTics(bg BasicGraphics, rng Range, x, xm, ticLen int) {
+	options := bg.Options()
 	ye := rng.Data2Screen(rng.Max)
 
 	// Grid below tics
@@ -249,21 +251,21 @@ func drawYTics(bg BasicGraphics, rng Range, x, xm, ticLen int) {
 			if rng.TicSetting.Grid == GridLines {
 				if ticcnt > 0 && ticcnt < len(rng.Tics)-1 {
 					// fmt.Printf("Gridline at x=%d\n", x)
-					bg.Line(x+1, y, xm-1, y, DefaultStyle["gridl"])
+					bg.Line(x+1, y, xm-1, y, elementStyle(options, GridLineElement))
 				}
 			} else if rng.TicSetting.Grid == GridBlocks {
 				if ticcnt%2 == 1 {
 					y0 := rng.Data2Screen(rng.Tics[ticcnt-1].Pos)
-					bg.Rect(x, y0, xm-x, y-y0, DefaultStyle["gridb"])
+					bg.Rect(x, y0, xm-x, y-y0, elementStyle(options, GridBlockElement))
 				} else if ticcnt == len(rng.Tics)-1 && y > ye+1 {
-					bg.Rect(x, ye, xm-x, y-ye, DefaultStyle["gridb"])
+					bg.Rect(x, ye, xm-x, y-ye, elementStyle(options, GridBlockElement))
 				}
 			}
 		}
 	}
 
 	// Tics on top
-	ticstyle := DefaultStyle["tic"]
+	ticstyle := elementStyle(options, MajorTicElement)
 	ticfont := DefaultFont["tic"]
 	for _, tic := range rng.Tics {
 		y := rng.Data2Screen(tic.Pos)
@@ -305,7 +307,7 @@ func drawYTics(bg BasicGraphics, rng Range, x, xm, ticLen int) {
 }
 
 // GenericAxis draws the axis r solely by graphic primitives of bg.
-func GenericYAxis(bg BasicGraphics, rng Range, x, xm int) {
+func GenericYAxis(bg BasicGraphics, rng Range, x, xm int, options PlotOptions) {
 	_, fontheight, _ := bg.FontMetrics(DefaultFont["label"])
 	var ticLen int = 0
 	if !rng.TicSetting.Hide {
@@ -337,13 +339,13 @@ func GenericYAxis(bg BasicGraphics, rng Range, x, xm int) {
 	}
 
 	// Axis itself, mirrord axis and zero
-	bg.Line(x, ya, x, ye, DefaultStyle["axis"])
+	bg.Line(x, ya, x, ye, elementStyle(options, MajorAxisElement))
 	if rng.TicSetting.Mirror >= 1 {
-		bg.Line(xm, ya, xm, ye, DefaultStyle["maxis"])
+		bg.Line(xm, ya, xm, ye, elementStyle(options, MinorAxisElement))
 	}
 	if rng.ShowZero && rng.Min < 0 && rng.Max > 0 {
 		z := rng.Data2Screen(0)
-		bg.Line(x, z, xm, z, DefaultStyle["zero"])
+		bg.Line(x, z, xm, z, elementStyle(options, ZeroAxisElement))
 	}
 
 }
@@ -649,6 +651,7 @@ func fillWedge(mg MinimalGraphics, xi, yi, ro, ri int, phi, psi, epsilon float64
 		}
 	}
 }
+ 
 
 func GenericRings(bg BasicGraphics, wedges []Wedgeinfo, x, y, ro, ri int, eccentricity float64) {
 	// debug.Printf("GenericRings with %d wedges center %d,%d, radii %d/%d,  ecc=%.3f)", len(wedges), x, y, ro, ri, eccentricity)
@@ -656,15 +659,23 @@ func GenericRings(bg BasicGraphics, wedges []Wedgeinfo, x, y, ro, ri int, eccent
 	for _, w := range wedges {
 
 		// Correct center
-		p := 0.4 * float64(w.Style.LineWidth+w.Shift)
+		d := float64(w.Style.LineWidth)/2
 
 		// cphi, sphi := math.Cos(w.Phi), math.Sin(w.Phi)
 		// cpsi, spsi := math.Cos(w.Psi), math.Sin(w.Psi)
-		a := math.Sin((w.Psi - w.Phi) / 2)
-		dx, dy := p*math.Cos((w.Phi+w.Psi)/2)/a, p*math.Sin((w.Phi+w.Psi)/2)/a
-		// debug.Printf("Center adjustment (lw=%d, p=%.2f), for wedge %d°-%d° of (%.1f,%.1f)", w.Style.LineWidth, p, int(180*w.Phi/math.Pi), int(180*w.Psi/math.Pi), dx, dy)
-		xi, yi := x+int(dx+0.5), y+int(dy+0.5)
-		bg.Wedge(xi, yi, ro, ri, w.Phi, w.Psi, w.Style)
+		delta := (w.Psi - w.Phi)/2
+		SinDelta := math.Sin(delta)
+		gamma := (w.Phi+w.Psi)/2
+		k := d/SinDelta
+		shift := float64(w.Shift)
+		kx, ky := (k+shift)*math.Cos(gamma), (k+shift)*math.Sin(gamma)
+
+		debug.Printf("Center adjustment (lw=%d, d=%.2f), for wedge %d°-%d° of (%.1f,%.1f), k=%.1f", 
+		w.Style.LineWidth, d, int(180*w.Phi/math.Pi), int(180*w.Psi/math.Pi), kx, ky, k)
+
+		xi, yi := x+int(kx+0.5), y+int(ky+0.5)
+		roc, ric := ro -int(d+k), ri-int(d+k)
+		bg.Wedge(xi, yi, roc, ric, w.Phi, w.Psi, w.Style)
 
 		if w.Text != "" {
 			_, fh, _ := bg.FontMetrics(w.Font)

@@ -210,7 +210,7 @@ func (key Key) Layout(bg BasicGraphics, m [][]*KeyEntry) (w, h int, colwidth, ro
 	return totalw, totalh, colwidth, rowheight
 }
 
-func GenericKey(bg BasicGraphics, x, y int, key Key) {
+func GenericKey(bg BasicGraphics, x, y int, key Key, options PlotOptions) {
 	m := key.Place()
 	if len(m) == 0 {
 		return
@@ -218,7 +218,7 @@ func GenericKey(bg BasicGraphics, x, y int, key Key) {
 	keyfont := DefaultFont["key"]
 	fw, fh, _ := bg.FontMetrics(keyfont)
 	tw, th, cw, rh := key.Layout(bg, m)
-	style := DefaultStyle["key"]
+	style := elementStyle(options, KeyElement)
 	if key.Border >= 0 {
 		bg.Rect(x, y, tw, th, style)
 	}

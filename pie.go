@@ -8,17 +8,32 @@ import (
 )
 
 // PieChart represents pie and ring charts.
+// Data is exported but it you should use the AddData, AddDataPair and
+// AddIntDataPair methods to populate this field.
+// The FmtVal and FmtKey function are used to format optional labels
+// on the pie segments (FmtVal) and on the legend/key entries if non
+// nil. The FmtKey must be set before adding data via the AddXY methods.
 type PieChart struct {
 	Title string              // The title
 	Key   Key                 // The Key/Legend
 	Inner float64             // relative radius of inner white are (set to 0.7 to produce ring chart)
+	Options PlotOptions
 	Data  []CategoryChartData // The data
 
-	FmtVal func(value, sume float64) string // Produce labels
+	FmtVal func(value, sume float64) string // add value labels to pie segments
+	FmtKey func(value, sume float64) string // add value labels to key entries
 }
 
-// AbsoluteValue will format value (ignoring sum).  It is a convenience function which
-// can be assigned to PieChart.FmtVal.
+// IntegerValue will format value (ignoring sum) as an integer.
+// It is a convenience function which can be assigned to the 
+// PieChart.FmtVal or PieChart.FmtKey field.
+func IntegerValue(value, sum float64) (s string) {
+	return fmt.Sprintf("%d", int64(value+0.5))
+}
+
+// AbsoluteValue will format value (ignoring sum).  
+// It is a convenience function which can be assigned to the 
+// PieChart.FmtVal or PieChart.FmtKey field.
 func AbsoluteValue(value, sum float64) (s string) {
 	fv := math.Abs(value)
 	switch {
@@ -36,8 +51,9 @@ func AbsoluteValue(value, sum float64) (s string) {
 	return
 }
 
-// PercentValue formats value as percentage of sum.   It is a convenience function which
-// can be assigned to PieChart.FmtVal.
+// PercentValue formats value as percentage of sum.
+// It is a convenience function which can be assigned to the 
+// PieChart.FmtVal or PieChart.FmtKey field.
 func PercentValue(value, sum float64) (s string) {
 	value *= 100 / sum
 	s = AbsoluteValue(value, sum) + "% "
@@ -61,8 +77,19 @@ func (c *PieChart) AddData(name string, data []CatValue, style []Style) {
 	}
 	c.Data = append(c.Data, CategoryChartData{name, style, data})
 	c.Key.Entries = append(c.Key.Entries, KeyEntry{PlotStyle: -1, Text: name})
+	var sum float64
+	for _, d := range data {
+		sum += d.Val
+	}
 	for s, cv := range data {
-		c.Key.Entries = append(c.Key.Entries, KeyEntry{PlotStyle: PlotStyleBox, Style: style[s], Text: cv.Cat})
+		text := cv.Cat
+		if c.FmtKey != nil {
+			if text != "" {
+				text += " "
+			}
+			text += c.FmtKey(cv.Val, sum)
+		}
+		c.Key.Entries = append(c.Key.Entries, KeyEntry{PlotStyle: PlotStyleBox, Style: style[s], Text: text})
 	}
 }
 
@@ -71,6 +98,15 @@ func (c *PieChart) AddDataPair(name string, cat []string, val []float64) {
 	data := make([]CatValue, n)
 	for i := 0; i < n; i++ {
 		data[i].Cat, data[i].Val = cat[i], val[i]
+	}
+	c.AddData(name, data, nil)
+}
+
+func (c *PieChart) AddIntDataPair(name string, cat []string, val []int) {
+	n := imin(len(cat), len(val))
+	data := make([]CatValue, n)
+	for i := 0; i < n; i++ {
+		data[i].Cat, data[i].Val = cat[i], float64(val[i])
 	}
 	c.AddData(name, data, nil)
 }
@@ -112,7 +148,6 @@ func (c *PieChart) Plot(g Graphics) {
 	}
 
 	for _, data := range c.Data {
-
 		var sum float64
 		for _, d := range data.Samples {
 			sum += d.Val
@@ -149,7 +184,7 @@ func (c *PieChart) Plot(g Graphics) {
 	}
 
 	if !c.Key.Hide {
-		g.Key(layout.KeyX, layout.KeyY, c.Key)
+		g.Key(layout.KeyX, layout.KeyY, c.Key, c.Options)
 	}
 
 	g.End()
