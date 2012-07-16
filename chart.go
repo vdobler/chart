@@ -529,7 +529,6 @@ func (r *Range) fSetup(desiredNumberOfTics, maxNumberOfTics int, delta, mindelta
 
 	debug.Printf("DataRange:  %.6g  TO  %.6g", r.DataMin, r.DataMax)
 	debug.Printf("AxisRange:  %.6g  TO  %.6g", r.Min, r.Max)
-	debug.Printf("TicsRange:  %.6g  TO  %.6g  Step  %.6g")
 
 	formater := FmtFloat
 	if r.TicSetting.Format != nil {
@@ -583,14 +582,14 @@ func (r *Range) fSetup(desiredNumberOfTics, maxNumberOfTics int, delta, mindelta
 
 // SetUp sets up several fields of Range r according to RangeModes and TicSettings.
 // DataMin and DataMax of r must be present and should indicate lowest and highest
-// value present in the data set. The following field if r are filled:
+// value present in the data set. The following fields of r are filled:
 //   (T)Min and (T)Max    lower and upper limit of axis, (T)-version for date/time axis
 //   Tics                 slice of tics to draw
 //   TicSetting.(T)Delta  actual tic delta
 //   Norm and InvNorm     mapping of [lower,upper]_data --> [0:1] and inverse
 //   Data2Screen          mapping of data to screen coordinates
 //   Screen2Data          inverse of Data2Screen
-// The parameters desired- and maxNumberOfTics are what the say.
+// The parameters desiredNumberOfTics and maxNumberOfTics are what the say.
 // sWidth and sOffset are screen-width and -offset and are used to set up the
 // Data-Screen conversion functions. If revert is true, than screen coordinates
 // are asumed to be the other way around than mathematical coordinates.

@@ -3,13 +3,13 @@ Package chart implements common chart/plot types.
 
 The following chart types are available:
 
-    StripChart		Visualize set of numeric values
-    ScatterChart   	Plot (x,y) data (with optional error bars) 
-                        and/or functions
-    HistChart		Produce histograms from data
-    BarChart		Show (x,y) data as bars
-    BoxChart            Box charts to visualize distributions
-    PieChart            Pie and Ring charts
+    StripChart       Visualize set of numeric values
+    ScatterChart     Plot (x,y) data (with optional error bars) 
+                     and/or functions
+    HistChart        Produce histograms from data
+    BarChart         Show (x,y) data as bars
+    BoxChart         Box charts to visualize distributions
+    PieChart         Pie and Ring charts
 
 Chart tries to provides useful defaults and produce nice charts without 
 sacrificing accuracy.  The generated charts look good and are higly 
@@ -17,33 +17,33 @@ customizable but will not match the visual quality of handmade photoshop
 charts or the statistical features of charts produced by S or R.
 
 Creating charts consists of the following steps:
-	1. Create chart object
-	2. Configure chart, axis, autoscaling etc.
-	3. Add one ore more data sets
-	4. Render chart to one or more graphic outputs
+    1. Create chart object
+    2. Configure chart, axis, autoscaling etc.
+    3. Add one ore more data sets
+    4. Render chart to one or more graphic outputs
 You may change the configuration at any step or render to different outputs.
 
-The different chart types and their members are all simple value types where
-the null value provides suitable defaults.  All members are exposed, even if
-you are not supposed to manipulate them directy or are 'output members'. 
-E.g. the common Data member of all chart types will store the sample data 
-added with one or more Add... methods.  Some members are mere output channels 
+The different chart types and their fields are all simple struct types where
+the zero value provides suitable defaults.  All fields are exported, even if
+you are not supposed to manipulate them directy or are 'output fields'. 
+E.g. the common Data field of all chart types will store the sample data 
+added with one or more Add... methods.  Some fields are mere output  
 which expose internal stuff for your use like the Data2Screen and Screen2Data
-functions of the Ranges.  Some members are even input/output members: 
+functions of the Ranges.  Some fields are even input/output fields: 
 E.g. you may set the Range.TicSetting.Delta to some positive value which will
 be used as the spacing between tics on that axis;  on the other hand if you 
 leave Range.TicSetting.Delta at its default 0 you indicate to the plotting 
 routine to automatically determine the tic delta which is then reported
-back in this member.
+back in this fields.
 
-All (except pie/ring charts) contain at least one axis represented by a 
-member of type Range.  Axis can be differented into following categories:
+All charts (except pie/ring charts) contain at least one axis represented by 
+a field of type Range.  Axis can be differented into following categories:
 
   o  Date/Time axis (Time=true): The values on this axis are interpreted as
      seconds since the Unix epoc, tics are labeld in date and time units.
-     (The Log and Category members are simply ignored for Date/Time axis.)
+     (The Log and Category fields are simply ignored for Date/Time axis.)
 
-  o  Real valued axis (Time=false).  The come in different flavours:
+  o  Real valued axis (Time=false).  Those come in different flavours:
        -  Simple linear real valued axis (Log=false, Category=nil).
        -  Logrithmic axis (Log=True).  Such an axis may cover only a 
           range of ]0,inf[
@@ -61,10 +61,6 @@ the chart to a Graphics output.  This process will set several internal
 fields of the chart.  If you reuse the chart, add additional data and
 output it again these fields might no longer indicate 'automatical/default'
 but contain the value calculated in the first output round.
-
-The Graphic outputs are individual packages currently only text/ascii-art
-and svg graphic outputs are realized (cairo and Go image are to follow).
-
 
 */
 package chart
