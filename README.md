@@ -1,15 +1,17 @@
-![Some nice charts](https://github.com/vdobler/chart/tree/master/example/bestof.png)
-
 
 Charts for Go
 =============
 
 Basic charts in go.
 
-
 This package focuses more on autoscaling, error bars,
 and logarithmic plots than on beautifull or marketing
 ready charts.
+
+## Examples
+
+![Some nice charts](https://github.com/vdobler/chart/raw/master/example/bestof.png)
+
 
 ## Chart Types
 

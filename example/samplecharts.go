@@ -973,8 +973,8 @@ func alignedText(g chart.Graphics, text string, font chart.Font, rx, ry, px, py 
 
 func bestOf() {
 	const (
-		width  = 600
-		height = 400
+		width  = 500
+		height = 300
 		N      = 3
 		M      = 3
 	)
@@ -1058,7 +1058,7 @@ func bestOf() {
 	box.Key.Pos = "orc"
 	box.NextDataSet("Male",
 		chart.Style{Symbol: '#', LineColor: "#0000cc", LineWidth: 1, LineStyle: chart.SolidLine})
-	for x := 10; x <= 50; x += 5 {
+	for x := 10; x < 50; x += 5 {
 		points := make([]float64, 70)
 		a := rand.Float64() * 10
 		v := rand.Float64()*5 + 2
