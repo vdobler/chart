@@ -210,18 +210,18 @@ func ElementStyle(options PlotOptions, element PlotElement) Style {
 
 // DefaultStyle maps chart elements to styles.
 var DefaultOptions = map[PlotElement]Style{
-	MajorAxisElement: Style{LineColor: "#000000", LineWidth: 2, LineStyle: SolidLine}, // axis
-	MinorAxisElement: Style{LineColor: "#000000", LineWidth: 2, LineStyle: SolidLine}, // mirrored axis
-	MajorTicElement:  Style{LineColor: "#000000", LineWidth: 1, LineStyle: SolidLine},
-	MinorTicElement:  Style{LineColor: "#000000", LineWidth: 1, LineStyle: SolidLine},
-	ZeroAxisElement:  Style{LineColor: "#404040", LineWidth: 1, LineStyle: SolidLine},
-	GridLineElement:  Style{LineColor: "#808080", LineWidth: 1, LineStyle: SolidLine},
-	GridBlockElement: Style{LineColor: "#e6fcfc", LineWidth: 0, FillColor: "#e6fcfc"},
+	MajorAxisElement: Style{LineColor: "#000000", LineWidth: 2, LineStyle: SolidLine, Alpha: 1}, // axis
+	MinorAxisElement: Style{LineColor: "#000000", LineWidth: 2, LineStyle: SolidLine, Alpha: 1}, // mirrored axis
+	MajorTicElement:  Style{LineColor: "#000000", LineWidth: 1, LineStyle: SolidLine, Alpha: 1},
+	MinorTicElement:  Style{LineColor: "#000000", LineWidth: 1, LineStyle: SolidLine, Alpha: 1},
+	ZeroAxisElement:  Style{LineColor: "#404040", LineWidth: 1, LineStyle: SolidLine, Alpha: 1},
+	GridLineElement:  Style{LineColor: "#808080", LineWidth: 1, LineStyle: SolidLine, Alpha: 1},
+	GridBlockElement: Style{LineColor: "#e6fcfc", LineWidth: 0, FillColor: "#e6fcfc", Alpha: 1},
 	KeyElement: Style{LineColor: "#202020", LineWidth: 1, LineStyle: SolidLine,
 		FillColor: "#f0f0f0", Alpha: 0.75, Font: Font{Size: SmallFontSize}},
 	TitleElement: Style{LineColor: "#000000", LineWidth: 1, LineStyle: SolidLine,
 		FillColor: "#ecc750", Alpha: 0, Font: Font{Size: LargeFontSize}},
-	RangeLimitElement: Style{Font: Font{Size: SmallFontSize}},
+	RangeLimitElement: Style{Font: Font{Size: SmallFontSize}, Alpha: 1},
 }
 
 func hsv2rgb(h, s, v int) (r, g, b int) {
