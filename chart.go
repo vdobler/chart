@@ -1,6 +1,7 @@
 package chart
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"math"
@@ -774,10 +775,10 @@ func layout(g Graphics, title, xlabel, ylabel string, hidextics, hideytics bool,
 // Debugging and tracing
 type debugging bool
 
-const debug debugging = false
+var debug *debugging = (*debugging)(flag.Bool("chart.debug", false, "enable chart debugging"))
 
-func (d debugging) Printf(fmt string, args ...interface{}) {
-	if d {
+func (d *debugging) Printf(fmt string, args ...interface{}) {
+	if *d {
 		log.Printf(fmt, args...)
 	}
 }
