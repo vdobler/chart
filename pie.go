@@ -135,7 +135,7 @@ func (c *PieChart) Plot(g Graphics) {
 	}
 	for _, d := range c.Data[0].Samples {
 		if d.Flag {
-			// debug.Printf("Reduced %d by %d", r, rshift)
+			// DebugLogger.Printf("Reduced %d by %d", r, rshift)
 			r -= rshift / 3
 			break
 		}

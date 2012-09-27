@@ -83,18 +83,18 @@ func (w Week) RoundDown(t time.Time) time.Time {
 
 	_, week2 := t.ISOWeek()
 	for week2 < week {
-		trace.Printf("B  %s", t)
+		DebugLogger.Printf("B  %s", t)
 		t = t.Add(time.Second * 60 * 60 * 36)
 		t = time.Date(t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute(), t.Second(), 0, t.Location())
 		_, week2 = t.ISOWeek()
 	}
 	for week2 > week {
-		trace.Printf("C  %s", t)
+		DebugLogger.Printf("C  %s", t)
 		t = t.Add(-time.Second * 60 * 60 * 36)
 		t = time.Date(t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute(), t.Second(), 0, t.Location())
 		_, week2 = t.ISOWeek()
 	}
-	trace.Printf("Week.Roundown(%s) --> %s", org, t.Format("Mon 2006-01-02"))
+	DebugLogger.Printf("Week.Roundown(%s) --> %s", org, t.Format("Mon 2006-01-02"))
 	return t
 }
 func (w Week) String() string { return fmt.Sprintf("%d week(s)", w.Num) }
@@ -137,7 +137,7 @@ func (y Year) RoundDown(t time.Time) time.Time {
 	rd := y.Num * (orig / y.Num)
 	t = time.Date(rd, 1, 1, 0, 0, 0, 0, t.Location())
 	// TODO handle shifts in DLS and that
-	debug.Printf("Year.RoundDown from %d to %d", orig, rd)
+	DebugLogger.Printf("Year.RoundDown from %d to %d", orig, rd)
 	return t
 }
 func (y Year) String() string { return fmt.Sprintf("%d year(s)", y.Num) }
@@ -174,14 +174,14 @@ func RoundUp(t time.Time, d TimeDelta) time.Time {
 	t = d.RoundDown(t)
 	t = t.Add(time.Duration(shift) * time.Second)
 	t = d.RoundDown(t)
-	trace.Printf("RoundUp( %s, %s ) --> %s ", t.Format("2006-01-02 15:04:05 (Mon)"), d.String(),
+	DebugLogger.Printf("RoundUp( %s, %s ) --> %s ", t.Format("2006-01-02 15:04:05 (Mon)"), d.String(),
 		t.Format("2006-01-02 15:04:05 (Mon)"))
 	return t
 }
 
 // RoundNext will round t to nearest full d.
 func RoundNext(t time.Time, d TimeDelta) time.Time {
-	trace.Printf("RoundNext( %s, %s )", t.Format("2006-01-02 15:04:05 (Mon)"), d.String())
+	DebugLogger.Printf("RoundNext( %s, %s )", t.Format("2006-01-02 15:04:05 (Mon)"), d.String())
 	os := t.Unix()
 	lt := d.RoundDown(t)
 	shift := d.Seconds()
@@ -199,7 +199,7 @@ func RoundNext(t time.Time, d TimeDelta) time.Time {
 // RoundDown will round tp down to next "full" d.
 func RoundDown(t time.Time, d TimeDelta) time.Time {
 	td := d.RoundDown(t)
-	trace.Printf("RoundDown( %s, %s ) --> %s", t.Format("2006-01-02 15:04:05 (Mon)"), d.String(),
+	DebugLogger.Printf("RoundDown( %s, %s ) --> %s", t.Format("2006-01-02 15:04:05 (Mon)"), d.String(),
 		td.Format("2006-01-02 15:04:05 (Mon)"))
 	return td
 }
@@ -221,7 +221,7 @@ func MatchingTimeDelta(delta float64, fac float64) TimeDelta {
 	for i+1 < len(Delta) && delta > fac*float64(Delta[i+1].Seconds()) {
 		i++
 	}
-	trace.Printf("MatchingTimeDelta(%g): i=%d, %s...%s  ==  %d...%d\n  %t\n",
+	DebugLogger.Printf("MatchingTimeDelta(%g): i=%d, %s...%s  ==  %d...%d\n  %t\n",
 		delta, i, Delta[i], Delta[i+1], Delta[i].Seconds(), Delta[i+1].Seconds(),
 		i+1 < len(Delta) && delta > fac*float64(Delta[i+1].Seconds()))
 	if i+1 < len(Delta) {

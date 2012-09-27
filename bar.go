@@ -173,7 +173,7 @@ func (c *BarChart) Plot(g Graphics) {
 	}
 	for dn, data := range c.Data {
 		mindeltax := c.minimumSampleSep(dn)
-		// debug.Printf("Minimum x-distance for set %d: %.3f\n", dn, mindeltax)
+		// DebugLogger.Printf("Minimum x-distance for set %d: %.3f\n", dn, mindeltax)
 		if c.Stacked {
 			sbw = (xf(2*mindeltax) - xf(0)) / 4
 			fbw = sbw
@@ -184,7 +184,7 @@ func (c *BarChart) Plot(g Graphics) {
 			sbw = (xf(mindeltax)-xf(0))/(len(c.Data)+1) - 1
 			fbw = len(c.Data)*sbw + len(c.Data) - 1
 		}
-		// debug.Printf("sbw = %d ,  fbw = %d\n", sbw, fbw)
+		// DebugLogger.Printf("sbw = %d ,  fbw = %d\n", sbw, fbw)
 
 		bars := make([]Barinfo, 0, len(data.Samples))
 		if c.Stacked {

@@ -195,7 +195,7 @@ func (c *HistChart) binify(binStart, binWidth float64, binCnt int) (freqs [][]fl
 		}
 		// scale if requested and determine max
 		n := float64(len(data.Samples) - drops)
-		// debug.Printf("Dataset %d has %d samples (by %d drops).\n", i, int(n), drops)
+		// DebugLogger.Printf("Dataset %d has %d samples (by %d drops).\n", i, int(n), drops)
 		ff := 0.0
 		for bin := 0; bin < binCnt; bin++ {
 			if !c.Counts {
@@ -208,7 +208,7 @@ func (c *HistChart) binify(binStart, binWidth float64, binCnt int) (freqs [][]fl
 		}
 		freqs[i] = freq
 	}
-	// debug.Printf("Maximum : %.2f\n", max)
+	// DebugLogger.Printf("Maximum : %.2f\n", max)
 	if c.Stacked { // recalculate max
 		max = 0
 		for bin := 0; bin < binCnt; bin++ {
@@ -221,7 +221,7 @@ func (c *HistChart) binify(binStart, binWidth float64, binCnt int) (freqs [][]fl
 				max = sum
 			}
 		}
-		// debug.Printf("Re-Maxed (stacked) to: %.2f\n", max)
+		// DebugLogger.Printf("Re-Maxed (stacked) to: %.2f\n", max)
 	}
 	return
 }
@@ -244,18 +244,18 @@ func (c *HistChart) findBinWidth() {
 	}
 	n /= len(c.Data)
 	obc := math.Sqrt(float64(n))
-	// debug.Printf("Average size of %d data sets: %d (obc=%d)\n", len(c.Data), n, int(obc+0.5))
+	// DebugLogger.Printf("Average size of %d data sets: %d (obc=%d)\n", len(c.Data), n, int(obc+0.5))
 
 	// Increase/decrease bin width if tic delta yields massively bad choice
 	binCnt := int((c.XRange.Max-c.XRange.Min)/bw + 0.5)
 	if binCnt >= int(2*obc) {
 		bw *= 2 // TODO: not so nice if bw is of form 2*10^n (use 2.5 in this case to match tics)
-		//debug.Printf("Increased bin width to %.3f (optimum bin cnt = %d,  was %d).\n", bw, int(obc+0.5), binCnt)
+		//DebugLogger.Printf("Increased bin width to %.3f (optimum bin cnt = %d,  was %d).\n", bw, int(obc+0.5), binCnt)
 	} else if binCnt < int(3*obc) {
 		bw /= 2
-		// debug.Printf("Reduced bin width to %.3f (optimum bin cnt = %d,  was %d).\n", bw, int(obc+0.5), binCnt)
+		// DebugLogger.Printf("Reduced bin width to %.3f (optimum bin cnt = %d,  was %d).\n", bw, int(obc+0.5), binCnt)
 	} else {
-		// debug.Printf("Bin width of %.3f is ok (optimum bin cnt = %d,  was %d).\n", bw, int(obc+0.5), binCnt)
+		// DebugLogger.Printf("Bin width of %.3f is ok (optimum bin cnt = %d,  was %d).\n", bw, int(obc+0.5), binCnt)
 	}
 
 	c.BinWidth = bw
@@ -293,7 +293,7 @@ func (c *HistChart) Plot(g Graphics) {
 	binStart := c.BinWidth * math.Ceil(xmin/c.BinWidth)
 	c.FirstBin = binStart + c.BinWidth/2
 	binCnt := int(math.Floor(c.XRange.Max-binStart) / c.BinWidth)
-	// debug.Printf("Using %d bins from %.3f to %.3f width %.3f  (xrange: %.3f--%.3f)\n", binCnt, binStart, binStart+c.BinWidth*float64(binCnt), c.BinWidth, xmin, xmax)
+	// DebugLogger.Printf("Using %d bins from %.3f to %.3f width %.3f  (xrange: %.3f--%.3f)\n", binCnt, binStart, binStart+c.BinWidth*float64(binCnt), c.BinWidth, xmin, xmax)
 	counts, max := c.binify(binStart, c.BinWidth, binCnt)
 
 	// Calculate smoothed density plots and re-max y.
@@ -342,7 +342,7 @@ func (c *HistChart) Plot(g Graphics) {
 		s = -ww
 	}
 
-	// debug.Printf("gf=%.3f, sf=%.3f, bw=%.3f   ===>  ww=%.2f,   w=%.2f,  s=%.2f\n", gf, sf, c.BinWidth, ww, w, s)
+	// DebugLogger.Printf("gf=%.3f, sf=%.3f, bw=%.3f   ===>  ww=%.2f,   w=%.2f,  s=%.2f\n", gf, sf, c.BinWidth, ww, w, s)
 
 	if c.Shifted || c.Stacked {
 		for d := numSets - 1; d >= 0; d-- {

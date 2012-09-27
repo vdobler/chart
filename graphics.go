@@ -408,7 +408,7 @@ func GenericBoxes(bg BasicGraphics, boxes []Box, width int, style Style) {
 	for _, d := range boxes {
 		x := int(d.X)
 		q1, q3 := int(d.Q1), int(d.Q3)
-		// debug.Printf("q1=%d  q3=%d  q3-q1=%d", q1,q3,q3-q1)
+		// DebugLogger.Printf("q1=%d  q3=%d  q3-q1=%d", q1,q3,q3-q1)
 		bg.Rect(x-hbw, q1, width, q3-q1, style)
 		if !math.IsNaN(d.Med) {
 			med := int(d.Med)
@@ -487,7 +487,7 @@ func GenericWedge(mg MinimalGraphics, x, y, ro, ri int, phi, psi, ecc float64, s
 	for psi >= 2*math.Pi {
 		psi -= 2 * math.Pi
 	}
-	// debug.Printf("GenericWedge centered at (%d,%d) from %.1f° to %.1f°, radius %d/%d (e=%.2f)", 	x, y, 180*phi/math.Pi, 180*psi/math.Pi, ro, ri, ecc)
+	// DebugLogger.Printf("GenericWedge centered at (%d,%d) from %.1f° to %.1f°, radius %d/%d (e=%.2f)", 	x, y, 180*phi/math.Pi, 180*psi/math.Pi, ro, ri, ecc)
 
 	if ri > ro {
 		panic("ri > ro is not possible")
@@ -549,10 +549,10 @@ func GenericWedge(mg MinimalGraphics, x, y, ro, ri int, phi, psi, ecc float64, s
 // Precondition:  0 <= beta < alpha < pi/2
 func fillQuarterWedge(mg MinimalGraphics, xi, yi, ri int, alpha, beta, e float64, style Style, quadrant int) {
 	if alpha < beta {
-		// debug.Printf("Swaping alpha and beta")
+		// DebugLogger.Printf("Swaping alpha and beta")
 		alpha, beta = beta, alpha
 	}
-	// debug.Printf("fillQuaterWedge from %.1f to %.1f radius %d in quadrant %d.",	180*alpha/math.Pi, 180*beta/math.Pi, ri, quadrant)
+	// DebugLogger.Printf("fillQuaterWedge from %.1f to %.1f radius %d in quadrant %d.",	180*alpha/math.Pi, 180*beta/math.Pi, ri, quadrant)
 	r := float64(ri)
 
 	ta, tb := math.Tan(alpha), math.Tan(beta)
@@ -561,7 +561,7 @@ func fillQuarterWedge(mg MinimalGraphics, xi, yi, ri int, alpha, beta, e float64
 		x0 := yf / ta
 		x1 := yf / tb
 		x2 := math.Sqrt(r*r - yf*yf)
-		// debug.Printf("y=%d  x0=%.2f    x1=%.2f    x2=%.2f  border=%t", y, x0, x1, x2, (x2<x1))  
+		// DebugLogger.Printf("y=%d  x0=%.2f    x1=%.2f    x2=%.2f  border=%t", y, x0, x1, x2, (x2<x1))  
 		if math.IsNaN(x1) || x2 < x1 {
 			x1 = x2
 		}
@@ -587,7 +587,7 @@ func fillQuarterWedge(mg MinimalGraphics, xi, yi, ri int, alpha, beta, e float64
 		default:
 			panic("No such quadrant.")
 		}
-		// debug.Printf("Line %d,%d to %d,%d", xx0,yy, xx1,yy)
+		// DebugLogger.Printf("Line %d,%d to %d,%d", xx0,yy, xx1,yy)
 		mg.Line(xx0, yy, xx1, yy, style)
 	}
 }
@@ -619,7 +619,7 @@ func fillWedge(mg MinimalGraphics, xi, yi, ro, ri int, phi, psi, epsilon float64
 
 	qPhi := quadrant(phi)
 	qPsi := quadrant(psi)
-	// debug.Printf("fillWedge from %.1f (%d) to %.1f (%d).", 180*phi/math.Pi, qPhi, 180*psi/math.Pi, qPsi)
+	// DebugLogger.Printf("fillWedge from %.1f (%d) to %.1f (%d).", 180*phi/math.Pi, qPhi, 180*psi/math.Pi, qPsi)
 
 	// prepare styles for filling
 	style.LineColor = style.FillColor
@@ -628,7 +628,7 @@ func fillWedge(mg MinimalGraphics, xi, yi, ro, ri int, phi, psi, epsilon float64
 	blank := Style{Symbol: ' ', LineColor: "#ffffff", Alpha: 0}
 
 	for qPhi != qPsi {
-		// debug.Printf("qPhi = %d", qPhi)
+		// DebugLogger.Printf("qPhi = %d", qPhi)
 		w := float64(qPhi+1) * math.Pi / 2
 		if math.Abs(w-phi) > 0.01 {
 			fillQuarterWedge(mg, xi, yi, ro, mapQ(phi, qPhi), mapQ(w, qPhi), epsilon, style, qPhi)
@@ -639,12 +639,12 @@ func fillWedge(mg MinimalGraphics, xi, yi, ro, ri int, phi, psi, epsilon float64
 		phi = w
 		qPhi++
 		if qPhi == 4 {
-			// debug.Printf("Wrapped phi around")
+			// DebugLogger.Printf("Wrapped phi around")
 			phi, qPhi = 0, 0
 		}
 	}
 	if phi != psi {
-		// debug.Printf("Last wedge")
+		// DebugLogger.Printf("Last wedge")
 		fillQuarterWedge(mg, xi, yi, ro, mapQ(phi, qPhi), mapQ(psi, qPhi), epsilon, style, qPhi)
 		if ri > 0 {
 			fillQuarterWedge(mg, xi, yi, ri, mapQ(phi, qPhi), mapQ(psi, qPhi), epsilon, blank, qPhi)
@@ -653,7 +653,7 @@ func fillWedge(mg MinimalGraphics, xi, yi, ro, ri int, phi, psi, epsilon float64
 }
 
 func GenericRings(bg BasicGraphics, wedges []Wedgeinfo, x, y, ro, ri int, eccentricity float64) {
-	// debug.Printf("GenericRings with %d wedges center %d,%d, radii %d/%d,  ecc=%.3f)", len(wedges), x, y, ro, ri, eccentricity)
+	// DebugLogger.Printf("GenericRings with %d wedges center %d,%d, radii %d/%d,  ecc=%.3f)", len(wedges), x, y, ro, ri, eccentricity)
 
 	for _, w := range wedges {
 
@@ -669,7 +669,7 @@ func GenericRings(bg BasicGraphics, wedges []Wedgeinfo, x, y, ro, ri int, eccent
 		shift := float64(w.Shift)
 		kx, ky := (k+shift)*math.Cos(gamma), (k+shift)*math.Sin(gamma)
 
-		debug.Printf("Center adjustment (lw=%d, d=%.2f), for wedge %d°-%d° of (%.1f,%.1f), k=%.1f",
+		DebugLogger.Printf("Center adjustment (lw=%d, d=%.2f), for wedge %d°-%d° of (%.1f,%.1f), k=%.1f",
 			w.Style.LineWidth, d, int(180*w.Phi/math.Pi), int(180*w.Psi/math.Pi), kx, ky, k)
 
 		xi, yi := x+int(kx+0.5), y+int(ky+0.5)
@@ -689,7 +689,7 @@ func GenericRings(bg BasicGraphics, wedges []Wedgeinfo, x, y, ro, ri int, eccent
 					rt = ro - 2*fh
 				}
 			}
-			// debug.Printf("Text %s at %d° r=%d", w.Text, int(180*alpha/math.Pi), rt)
+			// DebugLogger.Printf("Text %s at %d° r=%d", w.Text, int(180*alpha/math.Pi), rt)
 			tx := int(float64(rt)*math.Cos(alpha)*eccentricity+0.5) + x
 			ty := y + int(float64(rt)*math.Sin(alpha)+0.5)
 
