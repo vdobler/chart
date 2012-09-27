@@ -240,8 +240,7 @@ func GenericXAxis(bg BasicGraphics, rng Range, y, ym int, options PlotOptions) {
 
 }
 
-func drawYTics(bg BasicGraphics, rng Range, x, xm, ticLen int) {
-	options := bg.Options()
+func drawYTics(bg BasicGraphics, rng Range, x, xm, ticLen int, options PlotOptions) {
 	ye := rng.Data2Screen(rng.Max)
 
 	// Grid below tics
@@ -336,7 +335,7 @@ func GenericYAxis(bg BasicGraphics, rng Range, x, xm int, options PlotOptions) {
 	}
 
 	if !rng.TicSetting.Hide {
-		drawYTics(bg, rng, x, xm, ticLen)
+		drawYTics(bg, rng, x, xm, ticLen, options)
 	}
 
 	// Axis itself, mirrord axis and zero
