@@ -6,7 +6,6 @@ import (
 	"code.google.com/p/freetype-go/freetype/raster"
 	"code.google.com/p/freetype-go/freetype/truetype"
 	"code.google.com/p/graphics-go/graphics"
-	"fmt"
 	"github.com/vdobler/chart"
 	"image"
 	"image/color"
@@ -134,8 +133,8 @@ func (ig *ImageGraphics) Line(x0, y0, x1, y1 int, style chart.Style) {
 		style.LineWidth = 1
 	}
 	ig.setStyle(style)
-	ig.gc.MoveTo(float64(x0)+0.5, float64(y0)+0.5)
-	ig.gc.LineTo(float64(x1)+0.5, float64(y1)+0.5)
+	ig.gc.MoveTo(float64(x0), float64(y0))
+	ig.gc.LineTo(float64(x1), float64(y1))
 	ig.gc.Stroke()
 }
 
@@ -283,7 +282,6 @@ func (ig *ImageGraphics) textBox(t string, font chart.Font) image.Image {
 	c.SetSrc(fg)
 
 	// Draw the text.
-	fmt.Printf("font.Bounds(%d) = %#v  Height = %d\n", int32(size), bb, dy)
 	pt := freetype.Pt(0, dy+int(bb.YMin)-1)
 	extent, err := c.DrawString(t, pt)
 	if err != nil {
