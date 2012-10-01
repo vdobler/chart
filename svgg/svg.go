@@ -242,7 +242,7 @@ func (sg *SvgGraphics) Rect(x, y, w, h int, style chart.Style) {
 	linecol := style.LineColor
 	if linecol != nil {
 		s = fmt.Sprintf("stroke:%s; ", hexcol(linecol))
-		s += fmt.Sprintf("opacity: %s; ", alpha(linecol))
+		s += fmt.Sprintf("stroke-opacity: %s; ", alpha(linecol))
 	} else {
 		s = "stroke:#808080; "
 	}
@@ -435,8 +435,15 @@ func (sg *SvgGraphics) Rings(wedges []chart.Wedgeinfo, x, y, ro, ri int) {
 }
 
 func hexcol(col color.Color) string {
-	r, g, b, _ := col.RGBA()
-	return fmt.Sprintf("#%.2x%.2x%.2x", r/0xff, g/0xff, b/0xff)
+	r, g, b, a := col.RGBA()
+	if a==0 {
+		return "#000000" // doesn't matter as fully transparent
+	}
+	a = a >> 8
+	r = ((r*0xff)/a) >> 8
+	g = ((g*0xff)/a) >> 8
+	b = ((b*0xff)/a) >> 8
+	return fmt.Sprintf("#%.2x%.2x%.2x", r, g, b)
 }
 
 func alpha(col color.Color) string {
