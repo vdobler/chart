@@ -2,8 +2,8 @@ package chart
 
 import (
 	"fmt"
-	"math"
 	"image/color"
+	"math"
 )
 
 // MinimalGraphics is the interface any graphics driver must implement,
@@ -362,7 +362,7 @@ func GenericScatter(bg BasicGraphics, points []EPoint, plotstyle PlotStyle, styl
 	ebs := style
 	ebs.LineColor, ebs.LineWidth, ebs.LineStyle = ebs.FillColor, 1, SolidLine
 	if ebs.LineColor == nil {
-		ebs.LineColor = color.NRGBA{0x40,0x40,0x40,0xff}
+		ebs.LineColor = color.NRGBA{0x40, 0x40, 0x40, 0xff}
 	}
 	if ebs.LineWidth == 0 {
 		ebs.LineWidth = 1
@@ -627,9 +627,9 @@ func fillWedge(mg MinimalGraphics, xi, yi, ro, ri int, phi, psi, epsilon float64
 	style.LineWidth = 1
 	style.LineStyle = SolidLine
 	blank := Style{
-	Symbol: ' ',
-	LineColor: color.NRGBA{0xff,0xff,0xff,0x00},
-	FillColor: color.NRGBA{0xff,0xff,0xff,0x00},
+		Symbol:    ' ',
+		LineColor: color.NRGBA{0xff, 0xff, 0xff, 0x00},
+		FillColor: color.NRGBA{0xff, 0xff, 0xff, 0x00},
 	}
 
 	for qPhi != qPsi {
@@ -738,7 +738,7 @@ func GenericSymbol(bg BasicGraphics, x, y int, style Style) {
 		if style.SymbolColor == nil {
 			style.SymbolColor = style.FillColor
 			if style.SymbolColor == nil {
-				style.SymbolColor = color.NRGBA{0,0,0,0xff}
+				style.SymbolColor = color.NRGBA{0, 0, 0, 0xff}
 			}
 		}
 	}

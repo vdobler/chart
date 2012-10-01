@@ -164,13 +164,13 @@ func keyStyles() {
 
 	p.Key.Pos = "itl"
 	p.AddFunc("Log", func(x float64) float64 { return math.Log(x) }, chart.PlotStyleLines,
-		chart.Style{LineColor: color.NRGBA{0xff,0x60,0x60,0xff}, LineWidth: 1, LineStyle: 1})
+		chart.Style{LineColor: color.NRGBA{0xff, 0x60, 0x60, 0xff}, LineWidth: 1, LineStyle: 1})
 	p.AddFunc("Exp", func(x float64) float64 { return math.Exp(x) }, chart.PlotStyleLines,
-		chart.Style{LineColor: color.NRGBA{0x60,0xff,0x60,0xff}, LineWidth: 1, LineStyle: 1})
+		chart.Style{LineColor: color.NRGBA{0x60, 0xff, 0x60, 0xff}, LineWidth: 1, LineStyle: 1})
 	p.AddFunc("Atan", func(x float64) float64 { return math.Atan(x) }, chart.PlotStyleLines,
-		chart.Style{LineColor: color.NRGBA{0x60,0x60,0xff,0xff}, LineWidth: 1, LineStyle: 1})
+		chart.Style{LineColor: color.NRGBA{0x60, 0x60, 0xff, 0xff}, LineWidth: 1, LineStyle: 1})
 	p.AddFunc("Y1", func(x float64) float64 { return math.Y1(x) }, chart.PlotStyleLines,
-		chart.Style{LineColor: color.NRGBA{0xd0,0xd0,0x00,0xff}, LineWidth: 1, LineStyle: 1})
+		chart.Style{LineColor: color.NRGBA{0xd0, 0xd0, 0x00, 0xff}, LineWidth: 1, LineStyle: 1})
 
 	for _, cols := range []int{-4, -3, -2, -1, 0, 1, 2, 3, 4} {
 		p.Key.Cols = cols
@@ -212,9 +212,9 @@ func scatterTics() {
 		return fmt.Sprintf("%d°", w)
 	}
 	c.AddFunc("Sin(x)", func(x float64) float64 { return math.Sin(x) }, chart.PlotStyleLines,
-		chart.Style{Symbol: '@', LineWidth: 2, LineColor: color.NRGBA{0x00,0x00,0xcc,0xff}, LineStyle: 0})
+		chart.Style{Symbol: '@', LineWidth: 2, LineColor: color.NRGBA{0x00, 0x00, 0xcc, 0xff}, LineStyle: 0})
 	c.AddFunc("Cos(x)", func(x float64) float64 { return math.Cos(x) }, chart.PlotStyleLines,
-		chart.Style{Symbol: '%', LineWidth: 2, LineColor: color.NRGBA{0x00,0xcc,0x00,0xff}, LineStyle: 0})
+		chart.Style{Symbol: '%', LineWidth: 2, LineColor: color.NRGBA{0x00, 0xcc, 0x00, 0xff}, LineStyle: 0})
 	dumper.Plot(&c)
 
 	c.Title = "Tic Variants"
@@ -246,7 +246,7 @@ func scatterChart() {
 	x := []float64{-4, -3.3, -1.8, -1, 0.2, 0.8, 1.8, 3.1, 4, 5.3, 6, 7, 8, 9}
 	y := []float64{22, 18, -3, 0, 0.5, 2, 45, 12, 16.5, 24, 30, 55, 60, 70}
 	pl.AddDataPair("Data", x, y, chart.PlotStyleLinesPoints,
-		chart.Style{Symbol: '#', SymbolColor: color.NRGBA{0x00,0x00,0xff,0xff}, LineStyle: chart.SolidLine})
+		chart.Style{Symbol: '#', SymbolColor: color.NRGBA{0x00, 0x00, 0xff, 0xff}, LineStyle: chart.SolidLine})
 	last := len(pl.Data) - 1
 	pl.Data[last].Samples[6].DeltaX = 2.5
 	pl.Data[last].Samples[6].OffX = 0.5
@@ -255,7 +255,7 @@ func scatterChart() {
 
 	pl.AddData("Points", []chart.EPoint{chart.EPoint{-4, 40, 0, 0, 0, 0}, chart.EPoint{-3, 45, 0, 0, 0, 0},
 		chart.EPoint{-2, 35, 0, 0, 0, 0}}, chart.PlotStylePoints,
-		chart.Style{Symbol: '0', SymbolColor: color.NRGBA{0xff,0x00,0xff,0xff}})
+		chart.Style{Symbol: '0', SymbolColor: color.NRGBA{0xff, 0x00, 0xff, 0xff}})
 	pl.AddFunc("Theory", func(x float64) float64 {
 		if x > 5.25 && x < 5.75 {
 			return 75
@@ -265,11 +265,11 @@ func scatterChart() {
 		}
 		return x * x
 	}, chart.PlotStyleLines,
-		chart.Style{Symbol: '%', LineWidth: 2, LineColor: color.NRGBA{0xa0,0x00,0x00,0xff}, LineStyle: chart.DashDotDotLine})
+		chart.Style{Symbol: '%', LineWidth: 2, LineColor: color.NRGBA{0xa0, 0x00, 0x00, 0xff}, LineStyle: chart.DashDotDotLine})
 	pl.AddFunc("30", func(x float64) float64 { return 30 }, chart.PlotStyleLines,
-		chart.Style{Symbol: '+', LineWidth: 1, LineColor: color.NRGBA{0x00,0xa0,0x00,0xff}, LineStyle: 1})
+		chart.Style{Symbol: '+', LineWidth: 1, LineColor: color.NRGBA{0x00, 0xa0, 0x00, 0xff}, LineStyle: 1})
 	pl.AddFunc("", func(x float64) float64 { return 7 }, chart.PlotStyleLines,
-		chart.Style{Symbol: '@', LineWidth: 1, LineColor: color.NRGBA{0x00,0x00,0xa0,0xff}, LineStyle: 1})
+		chart.Style{Symbol: '@', LineWidth: 1, LineColor: color.NRGBA{0x00, 0x00, 0xa0, 0xff}, LineStyle: 1})
 
 	pl.XRange.ShowZero = true
 	pl.XRange.TicSetting.Mirror = 1
@@ -313,11 +313,11 @@ func functionPlots() {
 		}
 		return -0.75 * x
 	},
-		chart.PlotStyleLines, chart.Style{Symbol: 'o', LineWidth: 2, LineColor: color.NRGBA{0xa0,0x00,0x00,0xff}, LineStyle: 1})
+		chart.PlotStyleLines, chart.Style{Symbol: 'o', LineWidth: 2, LineColor: color.NRGBA{0xa0, 0x00, 0x00, 0xff}, LineStyle: 1})
 	p.AddFunc("sin", func(x float64) float64 { return 13 * math.Sin(x) }, chart.PlotStyleLines,
-		chart.Style{Symbol: '#', LineWidth: 1, LineColor: color.NRGBA{0x00,0x00,0xa0,0xff}, LineStyle: 1})
+		chart.Style{Symbol: '#', LineWidth: 1, LineColor: color.NRGBA{0x00, 0x00, 0xa0, 0xff}, LineStyle: 1})
 	p.AddFunc("2x", func(x float64) float64 { return 2 * x }, chart.PlotStyleLines,
-		chart.Style{Symbol: 'X', LineWidth: 1, LineColor: color.NRGBA{0x00,0xa0,0x00,0xff}, LineStyle: 1})
+		chart.Style{Symbol: 'X', LineWidth: 1, LineColor: color.NRGBA{0x00, 0xa0, 0x00, 0xff}, LineStyle: 1})
 
 	dumper.Plot(&p)
 
@@ -333,7 +333,7 @@ func functionPlots() {
 	p.YRange.TicSetting.Mirror = 1
 	p.NSamples = 5
 	p.AddFunc("10x", func(x float64) float64 { return 10 * x }, chart.PlotStyleLines,
-		chart.Style{Symbol: 'o', LineWidth: 2, LineColor: color.NRGBA{0x00,0xa0,0x00,0xff}, LineStyle: 1})
+		chart.Style{Symbol: 'o', LineWidth: 2, LineColor: color.NRGBA{0x00, 0xa0, 0x00, 0xff}, LineStyle: 1})
 	dumper.Plot(&p)
 }
 
@@ -363,7 +363,7 @@ func autoscale() {
 	s.Key.Hide = true
 	s.XRange.TicSetting.Mirror = 1
 	s.YRange.TicSetting.Mirror = 1
-	s.AddData("Data", points, chart.PlotStylePoints, chart.Style{Symbol: 'o', SymbolColor: color.NRGBA{0x00,0xee,0x00,0xff}})
+	s.AddData("Data", points, chart.PlotStylePoints, chart.Style{Symbol: 'o', SymbolColor: color.NRGBA{0x00, 0xee, 0x00, 0xff}})
 	dumper.Plot(&s)
 
 	s = chart.ScatterChart{Title: "Xmin: -1850, Xmax clipped to [500:900]"}
@@ -374,7 +374,7 @@ func autoscale() {
 	s.XRange.MaxMode.Constrained = true
 	s.XRange.MaxMode.Lower, s.XRange.MaxMode.Upper = 500, 900
 
-	s.AddData("Data", points, chart.PlotStylePoints, chart.Style{Symbol: '0', SymbolColor: color.NRGBA{0xee,0x00,0x00,0xff}})
+	s.AddData("Data", points, chart.PlotStylePoints, chart.Style{Symbol: '0', SymbolColor: color.NRGBA{0xee, 0x00, 0x00, 0xff}})
 	dumper.Plot(&s)
 
 	s = chart.ScatterChart{Title: "Xmin: -1850, Ymax clipped to [9000:11000]"}
@@ -385,7 +385,7 @@ func autoscale() {
 	s.YRange.MaxMode.Constrained = true
 	s.YRange.MaxMode.Lower, s.YRange.MaxMode.Upper = 9000, 11000
 
-	s.AddData("Data", points, chart.PlotStylePoints, chart.Style{Symbol: '0', SymbolColor: color.NRGBA{0x00,0x00,0xee,0xff}})
+	s.AddData("Data", points, chart.PlotStylePoints, chart.Style{Symbol: '0', SymbolColor: color.NRGBA{0x00, 0x00, 0xee, 0xff}})
 	dumper.Plot(&s)
 
 	s = chart.ScatterChart{Title: "Tiny fraction"}
@@ -403,7 +403,7 @@ func autoscale() {
 	s.XRange.MaxMode.Constrained = true
 	s.XRange.MaxMode.Lower, s.XRange.MaxMode.Upper = -850, -650
 
-	s.AddData("Data", points, chart.PlotStylePoints, chart.Style{Symbol: '0', SymbolColor: color.NRGBA{0xee,0xcc,0x00,0xff}})
+	s.AddData("Data", points, chart.PlotStylePoints, chart.Style{Symbol: '0', SymbolColor: color.NRGBA{0xee, 0xcc, 0x00, 0xff}})
 	dumper.Plot(&s)
 }
 
@@ -427,7 +427,7 @@ func boxChart() {
 		p.AddSet(float64(x), points, true)
 	}
 
-	p.NextDataSet("Sample B", chart.Style{Symbol: 'x', LineColor: color.NRGBA{0x00,0xc0,0x00,0xff}, LineWidth: 1, LineStyle: chart.SolidLine})
+	p.NextDataSet("Sample B", chart.Style{Symbol: 'x', LineColor: color.NRGBA{0x00, 0xc0, 0x00, 0xff}, LineWidth: 1, LineStyle: chart.SolidLine})
 	for x := 12; x <= 50; x += 10 {
 		points := make([]float64, 60)
 		a := rand.Float64()*15 + 30
@@ -445,7 +445,7 @@ func boxChart() {
 	p.XRange.Fixed(-1, 3, 1)
 	p.XRange.Category = []string{"Rural", "Urban", "Island"}
 
-	p.NextDataSet("", chart.Style{Symbol: '%', LineColor: color.NRGBA{0x00,0x00,0xcc,0xff}, LineWidth: 1, LineStyle: chart.SolidLine})
+	p.NextDataSet("", chart.Style{Symbol: '%', LineColor: color.NRGBA{0x00, 0x00, 0xcc, 0xff}, LineWidth: 1, LineStyle: chart.SolidLine})
 	p.AddSet(0, bigauss(100, 0, 5, 10, 0, 0, 0, 50), true)
 	p.AddSet(1, bigauss(100, 25, 5, 5, 2, 25, 0, 50), true)
 	p.AddSet(2, bigauss(50, 50, 4, 8, 4, 16, 0, 50), true)
@@ -505,13 +505,13 @@ func kernels() {
 	p.YRange.TicSetting.Mirror = 1
 
 	p.AddFunc("Bisquare", chart.BisquareKernel,
-		chart.PlotStyleLines, chart.Style{Symbol: 'o', LineWidth: 1, LineColor: color.NRGBA{0xa0,0x00,0x00,0xff}, LineStyle: 1})
+		chart.PlotStyleLines, chart.Style{Symbol: 'o', LineWidth: 1, LineColor: color.NRGBA{0xa0, 0x00, 0x00, 0xff}, LineStyle: 1})
 	p.AddFunc("Epanechnikov", chart.EpanechnikovKernel,
-		chart.PlotStyleLines, chart.Style{Symbol: 'X', LineWidth: 1, LineColor: color.NRGBA{0x00,0xa0,0x00,0xff}, LineStyle: 1})
+		chart.PlotStyleLines, chart.Style{Symbol: 'X', LineWidth: 1, LineColor: color.NRGBA{0x00, 0xa0, 0x00, 0xff}, LineStyle: 1})
 	p.AddFunc("Rectangular", chart.RectangularKernel,
-		chart.PlotStyleLines, chart.Style{Symbol: '=', LineWidth: 1, LineColor: color.NRGBA{0x00,0x00,0xa0,0xff}, LineStyle: 1})
+		chart.PlotStyleLines, chart.Style{Symbol: '=', LineWidth: 1, LineColor: color.NRGBA{0x00, 0x00, 0xa0, 0xff}, LineStyle: 1})
 	p.AddFunc("Gauss", chart.GaussKernel,
-		chart.PlotStyleLines, chart.Style{Symbol: '*', LineWidth: 1, LineColor: color.NRGBA{0xa0,0x00,0xa0,0xff}, LineStyle: 1})
+		chart.PlotStyleLines, chart.Style{Symbol: '*', LineWidth: 1, LineColor: color.NRGBA{0xa0, 0x00, 0xa0, 0xff}, LineStyle: 1})
 
 	dumper.Plot(&p)
 }
@@ -564,11 +564,11 @@ func barChart() {
 	dumper := NewDumper("xbar1", 3, 2, 400, 300)
 	defer dumper.Close()
 
-		red := chart.Style{Symbol: 'o', LineColor: color.NRGBA{0xcc,0x00,0x00,0xff},
-		FillColor: color.NRGBA{0xff,0x80,0x80,0xff},
-	    LineStyle: chart.SolidLine, LineWidth: 2}
-	green := chart.Style{Symbol: '#', LineColor: color.NRGBA{0x00,0xcc,0x00,0xff},
-		FillColor: color.NRGBA{0x80,0xff,0x80,0xff},
+	red := chart.Style{Symbol: 'o', LineColor: color.NRGBA{0xcc, 0x00, 0x00, 0xff},
+		FillColor: color.NRGBA{0xff, 0x80, 0x80, 0xff},
+		LineStyle: chart.SolidLine, LineWidth: 2}
+	green := chart.Style{Symbol: '#', LineColor: color.NRGBA{0x00, 0xcc, 0x00, 0xff},
+		FillColor: color.NRGBA{0x80, 0xff, 0x80, 0xff},
 		LineStyle: chart.SolidLine, LineWidth: 2}
 
 	barc := chart.BarChart{Title: "Simple Bar Chart"}
@@ -618,10 +618,10 @@ func categoricalBarChart() {
 	europe := []float64{10, 15, 25, 20}
 	asia := []float64{15, 30, 10, 20}
 	africa := []float64{20, 5, 5, 5}
-	blue := chart.Style{Symbol: '#', LineColor: color.NRGBA{0x00,0x00,0xff,0xff}, LineWidth: 4, FillColor: color.NRGBA{0x40,0x40,0xff,0xff}}
-	green := chart.Style{Symbol: 'x', LineColor: color.NRGBA{0x00,0xaa,0x00,0xff}, LineWidth: 4, FillColor: color.NRGBA{0x40,0xff,0x40,0xff}}
-	pink := chart.Style{Symbol: '0', LineColor: color.NRGBA{0x99,0x00,0x99,0xff}, LineWidth: 4, FillColor: color.NRGBA{0xaa,0x60,0xaa,0xff}}
-	red := chart.Style{Symbol: '%', LineColor: color.NRGBA{0xcc,0x00,0x00,0xff}, LineWidth: 4, FillColor: color.NRGBA{0xff,0x40,0x40,0xff}}
+	blue := chart.Style{Symbol: '#', LineColor: color.NRGBA{0x00, 0x00, 0xff, 0xff}, LineWidth: 4, FillColor: color.NRGBA{0x40, 0x40, 0xff, 0xff}}
+	green := chart.Style{Symbol: 'x', LineColor: color.NRGBA{0x00, 0xaa, 0x00, 0xff}, LineWidth: 4, FillColor: color.NRGBA{0x40, 0xff, 0x40, 0xff}}
+	pink := chart.Style{Symbol: '0', LineColor: color.NRGBA{0x99, 0x00, 0x99, 0xff}, LineWidth: 4, FillColor: color.NRGBA{0xaa, 0x60, 0xaa, 0xff}}
+	red := chart.Style{Symbol: '%', LineColor: color.NRGBA{0xcc, 0x00, 0x00, 0xff}, LineWidth: 4, FillColor: color.NRGBA{0xff, 0x40, 0x40, 0xff}}
 
 	// Categorized Bar Chart
 	c := chart.BarChart{Title: "Income"}
@@ -718,7 +718,7 @@ func logAxis() {
 	lx := []float64{4e-2, 3e-1, 2e0, 1e1, 8e1, 7e2, 5e3}
 	ly := []float64{10, 30, 90, 270, 3 * 270, 9 * 270, 27 * 270}
 	lc.AddDataPair("Measurement", lx, ly, chart.PlotStylePoints,
-		chart.Style{Symbol: '#', SymbolColor: color.NRGBA{0x99,0x66,0xff,0xff}, SymbolSize: 1.5})
+		chart.Style{Symbol: '#', SymbolColor: color.NRGBA{0x99, 0x66, 0xff, 0xff}, SymbolSize: 1.5})
 	lc.Key.Hide = true
 	lc.XRange.MinMode.Expand, lc.XRange.MaxMode.Expand = chart.ExpandToTic, chart.ExpandToTic
 	lc.YRange.MinMode.Expand, lc.YRange.MaxMode.Expand = chart.ExpandToTic, chart.ExpandToTic
@@ -780,12 +780,12 @@ func pieChart() {
 	pie := chart.PieChart{Title: "Some Pies"}
 	data := []chart.CatValue{{"D", 10, false}, {"GB", 20, true}, {"CH", 30, false}, {"F", 60, false}}
 	lw := 4
-	red := chart.Style{LineColor: color.NRGBA{0xcc,0x00,0x00,0xff}, FillColor: color.NRGBA{0xff,0x80,0x80,0xff},
+	red := chart.Style{LineColor: color.NRGBA{0xcc, 0x00, 0x00, 0xff}, FillColor: color.NRGBA{0xff, 0x80, 0x80, 0xff},
 		LineStyle: chart.SolidLine, LineWidth: lw}
-	green := chart.Style{LineColor: color.NRGBA{0x00,0xcc,0x00,0xff}, FillColor: color.NRGBA{0x80,0xff,0x80,0xff},
+	green := chart.Style{LineColor: color.NRGBA{0x00, 0xcc, 0x00, 0xff}, FillColor: color.NRGBA{0x80, 0xff, 0x80, 0xff},
 		LineStyle: chart.SolidLine, LineWidth: lw}
-	blue := chart.Style{LineColor: color.NRGBA{0x00,0x00,0xcc,0xff}, LineWidth: lw, LineStyle: chart.SolidLine, FillColor: color.NRGBA{0x80,0x80,0xff,0xff}}
-	pink := chart.Style{LineColor: color.NRGBA{0x99,0x00,0x99,0xff}, LineWidth: lw, LineStyle: chart.SolidLine, FillColor: color.NRGBA{0xaa,0x60,0xaa,0xff}}
+	blue := chart.Style{LineColor: color.NRGBA{0x00, 0x00, 0xcc, 0xff}, LineWidth: lw, LineStyle: chart.SolidLine, FillColor: color.NRGBA{0x80, 0x80, 0xff, 0xff}}
+	pink := chart.Style{LineColor: color.NRGBA{0x99, 0x00, 0x99, 0xff}, LineWidth: lw, LineStyle: chart.SolidLine, FillColor: color.NRGBA{0xaa, 0x60, 0xaa, 0xff}}
 
 	styles := []chart.Style{red, green, blue, pink}
 	pie.FmtKey = chart.IntegerValue
@@ -799,13 +799,13 @@ func pieChart() {
 	data2 := []chart.CatValue{{"D", 15, false}, {"GB", 25, false}, {"CH", 30, false}, {"F", 50, false}}
 	data[1].Flag = false
 	lw = 2
-	lightred := chart.Style{LineColor: color.NRGBA{0xcc,0x40,0x40,0xff}, FillColor: color.NRGBA{0xff,0xc0,0xc0,0xff},
+	lightred := chart.Style{LineColor: color.NRGBA{0xcc, 0x40, 0x40, 0xff}, FillColor: color.NRGBA{0xff, 0xc0, 0xc0, 0xff},
 		LineStyle: chart.SolidLine, LineWidth: lw}
-	lightgreen := chart.Style{LineColor: color.NRGBA{0x40,0xcc,0x40,0xff}, FillColor: color.NRGBA{0xc0,0xff,0xc0,0xff},
+	lightgreen := chart.Style{LineColor: color.NRGBA{0x40, 0xcc, 0x40, 0xff}, FillColor: color.NRGBA{0xc0, 0xff, 0xc0, 0xff},
 		LineStyle: chart.SolidLine, LineWidth: lw}
-	lightblue := chart.Style{LineColor: color.NRGBA{0x40,0x40,0xcc,0xff}, FillColor: color.NRGBA{0xc0,0xc0,0xff,0xff},
+	lightblue := chart.Style{LineColor: color.NRGBA{0x40, 0x40, 0xcc, 0xff}, FillColor: color.NRGBA{0xc0, 0xc0, 0xff, 0xff},
 		LineWidth: lw, LineStyle: chart.SolidLine}
-	lightpink := chart.Style{LineColor: color.NRGBA{0xaa,0x00,0xaa,0xff}, FillColor: color.NRGBA{0xff,0x80,0xff,0xff},
+	lightpink := chart.Style{LineColor: color.NRGBA{0xaa, 0x00, 0xaa, 0xff}, FillColor: color.NRGBA{0xff, 0x80, 0xff, 0xff},
 		LineWidth: lw, LineStyle: chart.SolidLine}
 	lightstyles := []chart.Style{lightred, lightgreen, lightblue, lightpink}
 
@@ -833,9 +833,9 @@ func textlen() {
 	texts := []string{"ill", "WWW", "Some normal text.", "Illi, is. illigalli: ill!", "OO WORKSHOOPS OMWWW BMWWMB"}
 	fonts := []string{"Arial", "Helvetica", "Times", "Courier" /* "Calibri", "Palatino" */}
 	sizes := []chart.FontSize{chart.TinyFontSize, chart.SmallFontSize, chart.NormalFontSize, chart.LargeFontSize, chart.HugeFontSize}
-	font := chart.Font{Color: color.NRGBA{0x00,0x00,0x00,0xff}}
+	font := chart.Font{Color: color.NRGBA{0x00, 0x00, 0x00, 0xff}}
 
-	df := chart.Font{Name: "Arial", Color: color.NRGBA{0x20,0x20,0xff,0xff}, Size: -3}
+	df := chart.Font{Name: "Arial", Color: color.NRGBA{0x20, 0x20, 0xff, 0xff}, Size: -3}
 	x, y := 20, 40
 	for _, t := range texts {
 		for _, f := range fonts {
@@ -843,7 +843,7 @@ func textlen() {
 				font.Name, font.Size = f, s
 				tvl := sgr.TextLen(t, font)
 				sgr.Text(x+tvl/2, y-2, t, "cc", 0, font)
-				sgr.Line(x, y, x+tvl, y, chart.Style{LineColor: color.NRGBA{0xff,0x00,0x00,0xff}, LineWidth: 2, LineStyle: chart.SolidLine})
+				sgr.Line(x, y, x+tvl, y, chart.Style{LineColor: color.NRGBA{0xff, 0x00, 0x00, 0xff}, LineWidth: 2, LineStyle: chart.SolidLine})
 				r := fmt.Sprintf("%s (%d)", f, s)
 				sgr.Text(x+tvl+10, y-2, r, "cl", 0, df)
 				y += 30
@@ -871,7 +871,7 @@ func testGraphics() {
 	igr := imgg.AddTo(dumper.I, 0, 0, 1200, 800, color.RGBA{0xff, 0xff, 0xff, 0xff}, nil, nil)
 	sgr := svgg.AddTo(dumper.S, 0, 0, 1200, 800, "", 14, color.RGBA{0xff, 0xff, 0xff, 0xff})
 
-	style := chart.Style{LineWidth: 0, LineColor: color.NRGBA{0x00,0x00,0x00,0xff}, LineStyle: chart.SolidLine}
+	style := chart.Style{LineWidth: 0, LineColor: color.NRGBA{0x00, 0x00, 0x00, 0xff}, LineStyle: chart.SolidLine}
 
 	// Line Width
 	x0, y0 := 10, 10
@@ -883,23 +883,23 @@ func testGraphics() {
 	}
 
 	// Line Color
-	style = chart.Style{LineWidth: 14, LineColor: color.NRGBA{0x80,0x80,0x80,0xff}, LineStyle: chart.SolidLine}
-	igr.Line( x0+25, y0-5, x0+25, y0+174, style)
-	igr.Line( x0+50, y0-5, x0+50, y0+174, style)
-	igr.Line( x0+75, y0-5, x0+75, y0+174, style)
+	style = chart.Style{LineWidth: 14, LineColor: color.NRGBA{0x80, 0x80, 0x80, 0xff}, LineStyle: chart.SolidLine}
+	igr.Line(x0+25, y0-5, x0+25, y0+174, style)
+	igr.Line(x0+50, y0-5, x0+50, y0+174, style)
+	igr.Line(x0+75, y0-5, x0+75, y0+174, style)
 
 	style = chart.Style{LineWidth: 4, LineStyle: chart.SolidLine}
 	for _, col := range []color.NRGBA{
-		color.NRGBA{0x00,0x00,0x00,0xff}, color.NRGBA{0xff,0x00,0x00,0xff},
-		color.NRGBA{0x00,0xff,0x00,0xff}, color.NRGBA{0x00,0x00,0xff,0xff},
-		color.NRGBA{0xff,0xff,0x00,0xff}, color.NRGBA{0xff,0x00,0xff,0xff},
-		color.NRGBA{0x00,0xff,0xff,0xff},
-		color.NRGBA{0x3f,0x3f,0x3f,0xff}, color.NRGBA{0x7f,0x7f,0x7f,0xff},
-		color.NRGBA{0xbf,0xbf,0xbf,0xff}, color.NRGBA{0xff,0xff,0xff,0xff},
-		color.NRGBA{0xcc,0x00,0x00,0xff}, color.NRGBA{0x00,0xbb,0x00,0xff},
-		color.NRGBA{0x00,0x00,0xdd,0xff}, color.NRGBA{0x99,0x66,0x00,0xff},
-		color.NRGBA{0xbb,0x00,0xbb,0xff}, color.NRGBA{0x00,0xaa,0xaa,0xff},
-		color.NRGBA{0xaa,0xaa,0x00,0xff},
+		color.NRGBA{0x00, 0x00, 0x00, 0xff}, color.NRGBA{0xff, 0x00, 0x00, 0xff},
+		color.NRGBA{0x00, 0xff, 0x00, 0xff}, color.NRGBA{0x00, 0x00, 0xff, 0xff},
+		color.NRGBA{0xff, 0xff, 0x00, 0xff}, color.NRGBA{0xff, 0x00, 0xff, 0xff},
+		color.NRGBA{0x00, 0xff, 0xff, 0xff},
+		color.NRGBA{0x3f, 0x3f, 0x3f, 0xff}, color.NRGBA{0x7f, 0x7f, 0x7f, 0xff},
+		color.NRGBA{0xbf, 0xbf, 0xbf, 0xff}, color.NRGBA{0xff, 0xff, 0xff, 0xff},
+		color.NRGBA{0xcc, 0x00, 0x00, 0xff}, color.NRGBA{0x00, 0xbb, 0x00, 0xff},
+		color.NRGBA{0x00, 0x00, 0xdd, 0xff}, color.NRGBA{0x99, 0x66, 0x00, 0xff},
+		color.NRGBA{0xbb, 0x00, 0xbb, 0xff}, color.NRGBA{0x00, 0xaa, 0xaa, 0xff},
+		color.NRGBA{0xaa, 0xaa, 0x00, 0xff},
 	} {
 		d := 0
 		for _, a := range []uint8{0xff, 0xc0, 0x80, 0x40, 0x00} {
@@ -914,7 +914,7 @@ func testGraphics() {
 	}
 
 	// Line Style
-	style.LineColor = color.NRGBA{0x00,0x00,0x00,0xff}
+	style.LineColor = color.NRGBA{0x00, 0x00, 0x00, 0xff}
 	style.LineWidth = 1
 	for _, st := range []chart.LineStyle{
 		chart.SolidLine, chart.DashedLine, chart.DottedLine, chart.DashDotDotLine,
@@ -964,7 +964,7 @@ func testGraphics() {
 func alignedText(g chart.Graphics, text string, font chart.Font, rx, ry, px, py int) {
 	mx, my := (rx+px)/2, (ry+py)/2
 	var style chart.Style
-	style.LineWidth, style.LineColor, style.LineStyle = 1, color.NRGBA{0xff,0x00,0x00,0xff}, chart.SolidLine
+	style.LineWidth, style.LineColor, style.LineStyle = 1, color.NRGBA{0xff, 0x00, 0x00, 0xff}, chart.SolidLine
 	g.Line(rx, ry, px, ry, style)
 	g.Line(px, ry, px, py, style)
 	g.Line(px, py, rx, py, style)
@@ -972,23 +972,23 @@ func alignedText(g chart.Graphics, text string, font chart.Font, rx, ry, px, py 
 	g.Line(mx, ry, mx, py, style)
 	g.Line(rx, my, px, my, style)
 
-	font.Color = color.NRGBA{0x00,0x00,0x00,0xff}
+	font.Color = color.NRGBA{0x00, 0x00, 0x00, 0xff}
 	g.Text(rx, ry, text, "tl", 0, font)
-	font.Color = color.NRGBA{0xff,0x00,0x00,0xff}
+	font.Color = color.NRGBA{0xff, 0x00, 0x00, 0xff}
 	g.Text(mx, ry, text, "tc", 0, font)
-	font.Color = color.NRGBA{0x00,0xff,0x00,0xff}
+	font.Color = color.NRGBA{0x00, 0xff, 0x00, 0xff}
 	g.Text(px, ry, text, "tr", 0, font)
-	font.Color = color.NRGBA{0x00,0x00,0xff,0xff}
+	font.Color = color.NRGBA{0x00, 0x00, 0xff, 0xff}
 	g.Text(rx, my, text, "cl", 0, font)
-	font.Color = color.NRGBA{0xbb,0xbb,0x00,0xff}
+	font.Color = color.NRGBA{0xbb, 0xbb, 0x00, 0xff}
 	g.Text(mx, my, text, "cc", 0, font)
-	font.Color = color.NRGBA{0xff,0x00,0xff,0xff}
+	font.Color = color.NRGBA{0xff, 0x00, 0xff, 0xff}
 	g.Text(px, my, text, "cr", 0, font)
-	font.Color = color.NRGBA{0x00,0xff,0xff,0xff}
+	font.Color = color.NRGBA{0x00, 0xff, 0xff, 0xff}
 	g.Text(rx, py, text, "bl", 0, font)
-	font.Color = color.NRGBA{0x60,0x60,0x60,0xff}
+	font.Color = color.NRGBA{0x60, 0x60, 0x60, 0xff}
 	g.Text(mx, py, text, "bc", 0, font)
-	font.Color = color.NRGBA{0x00,0x00,0x00,0xff}
+	font.Color = color.NRGBA{0x00, 0x00, 0x00, 0xff}
 	g.Text(px, py, text, "br", 0, font)
 }
 
@@ -1030,9 +1030,9 @@ func bestOf() {
 		return fmt.Sprintf("%d°", w)
 	}
 	trigc.AddFunc("Sin(x)", func(x float64) float64 { return math.Sin(x) }, chart.PlotStyleLines,
-		chart.Style{Symbol: '@', LineWidth: 2, LineColor: color.NRGBA{0x00,0x00,0xcc,0xff}, LineStyle: 0})
+		chart.Style{Symbol: '@', LineWidth: 2, LineColor: color.NRGBA{0x00, 0x00, 0xcc, 0xff}, LineStyle: 0})
 	trigc.AddFunc("Cos(x)", func(x float64) float64 { return math.Cos(x) }, chart.PlotStyleLines,
-		chart.Style{Symbol: '%', LineWidth: 2, LineColor: color.NRGBA{0x00,0xcc,0x00,0xff}, LineStyle: 0})
+		chart.Style{Symbol: '%', LineWidth: 2, LineColor: color.NRGBA{0x00, 0xcc, 0x00, 0xff}, LineStyle: 0})
 	trigc.XRange.TicSetting.Tics, trigc.YRange.TicSetting.Tics = 1, 1
 	trigc.XRange.TicSetting.Mirror, trigc.YRange.TicSetting.Mirror = 2, 2
 	trigc.XRange.TicSetting.Grid, trigc.YRange.TicSetting.Grid = 2, 1
@@ -1045,7 +1045,7 @@ func bestOf() {
 	lx := []float64{4e-2, 3e-1, 2e0, 1e1, 8e1, 7e2, 5e3}
 	ly := []float64{10, 30, 90, 270, 3 * 270, 9 * 270, 27 * 270}
 	log.AddDataPair("Electrons", lx, ly, chart.PlotStylePoints,
-		chart.Style{Symbol: '#', SymbolColor: color.NRGBA{0x99,0x66,0xff,0xff}, SymbolSize: 1.5})
+		chart.Style{Symbol: '#', SymbolColor: color.NRGBA{0x99, 0x66, 0xff, 0xff}, SymbolSize: 1.5})
 	log.Data[0].Samples[1].DeltaX = 0.3
 	log.Data[0].Samples[1].DeltaY = 25
 	log.Data[0].Samples[3].DeltaX = 9
@@ -1064,13 +1064,13 @@ func bestOf() {
 	hist.YRange.Label = "Rel. Frequency [%]"
 	points := gauss(150, 10, 20, 0, 50)
 	hist.AddData("Sample 1", points,
-		chart.Style{LineColor: color.NRGBA{0xff,0x00,0x00,0xff}, LineWidth: 1, FillColor: color.NRGBA{0xff,0x80,0x80,0xff}})
+		chart.Style{LineColor: color.NRGBA{0xff, 0x00, 0x00, 0xff}, LineWidth: 1, FillColor: color.NRGBA{0xff, 0x80, 0x80, 0xff}})
 	points2 := gauss(80, 4, 37, 0, 50)
 	hist.AddData("Sample 2", points2,
-		chart.Style{LineColor: color.NRGBA{0x00,0xff,0x00,0xff}, LineWidth: 1, FillColor: color.NRGBA{0x80,0xff,0x80,0xff}})
+		chart.Style{LineColor: color.NRGBA{0x00, 0xff, 0x00, 0xff}, LineWidth: 1, FillColor: color.NRGBA{0x80, 0xff, 0x80, 0xff}})
 	points3 := gauss(60, 15, 0, 0, 50)
 	hist.AddData("Sample 3", points3,
-		chart.Style{LineColor: color.NRGBA{0x00,0x00,0xff,0xff}, LineWidth: 1, FillColor: color.NRGBA{0x80,0x80,0xff,0xff}})
+		chart.Style{LineColor: color.NRGBA{0x00, 0x00, 0xff, 0xff}, LineWidth: 1, FillColor: color.NRGBA{0x80, 0x80, 0xff, 0xff}})
 	charts = append(charts, &hist)
 
 	// Box Plots
@@ -1078,7 +1078,7 @@ func bestOf() {
 	box.XRange.Label, box.YRange.Label = "Number of unit doses applied", "Effect [a.u.]"
 	box.Key.Pos = "orc"
 	box.NextDataSet("Male",
-		chart.Style{Symbol: '#', LineColor: color.NRGBA{0x00,0x00,0xcc,0xff}, LineWidth: 1, LineStyle: chart.SolidLine})
+		chart.Style{Symbol: '#', LineColor: color.NRGBA{0x00, 0x00, 0xcc, 0xff}, LineWidth: 1, LineStyle: chart.SolidLine})
 	for x := 10; x < 50; x += 5 {
 		points := make([]float64, 70)
 		a := rand.Float64() * 10
@@ -1090,7 +1090,7 @@ func bestOf() {
 		box.AddSet(float64(x), points, true)
 	}
 	box.NextDataSet("Female",
-		chart.Style{Symbol: '%', LineColor: color.NRGBA{0xcc,0x00,0x00,0xff}, LineWidth: 1, LineStyle: chart.SolidLine})
+		chart.Style{Symbol: '%', LineColor: color.NRGBA{0xcc, 0x00, 0x00, 0xff}, LineWidth: 1, LineStyle: chart.SolidLine})
 	for x := 12; x <= 50; x += 10 {
 		points := make([]float64, 60)
 		a := rand.Float64()*15 + 30
@@ -1108,9 +1108,9 @@ func bestOf() {
 	europe := []float64{10, 15, 25, 20}
 	asia := []float64{15, 30, 10, 20}
 	africa := []float64{20, 5, 5, 5}
-	blue := chart.Style{Symbol: '#', LineColor: color.NRGBA{0x00,0x00,0xff,0xff}, LineWidth: 3, FillColor: color.NRGBA{0x40,0x40,0xff,0xff}}
-	green := chart.Style{Symbol: 'x', LineColor: color.NRGBA{0x00,0xaa,0x00,0xff}, LineWidth: 3, FillColor: color.NRGBA{0x40,0xff,0x40,0xff}}
-	pink := chart.Style{Symbol: '0', LineColor: color.NRGBA{0x99,0x00,0x99,0xff}, LineWidth: 3, FillColor: color.NRGBA{0xaa,0x60,0xaa,0xff}}
+	blue := chart.Style{Symbol: '#', LineColor: color.NRGBA{0x00, 0x00, 0xff, 0xff}, LineWidth: 3, FillColor: color.NRGBA{0x40, 0x40, 0xff, 0xff}}
+	green := chart.Style{Symbol: 'x', LineColor: color.NRGBA{0x00, 0xaa, 0x00, 0xff}, LineWidth: 3, FillColor: color.NRGBA{0x40, 0xff, 0x40, 0xff}}
+	pink := chart.Style{Symbol: '0', LineColor: color.NRGBA{0x99, 0x00, 0x99, 0xff}, LineWidth: 3, FillColor: color.NRGBA{0xaa, 0x60, 0xaa, 0xff}}
 
 	bar := chart.BarChart{Title: "Income Distribution"}
 	bar.XRange.Category = []string{"none", "low", "average", "high"}
@@ -1164,13 +1164,13 @@ func bestOf() {
 		dt = append(dt, ep)
 	}
 	tdc.Key.Pos = "ibr"
-	tdc.AddData("Data", dt, chart.PlotStylePoints, chart.Style{Symbol: 'o', SymbolColor: color.NRGBA{0xcc,0x00,0x00,0xff}})
+	tdc.AddData("Data", dt, chart.PlotStylePoints, chart.Style{Symbol: 'o', SymbolColor: color.NRGBA{0xcc, 0x00, 0x00, 0xff}})
 	tdc.AddFunc("Low", func(x float64) float64 { return 0.15*(x-1.20525e9) + 1.221e9 },
 		chart.PlotStyleLines,
-		chart.Style{Symbol: 'x', LineColor: color.NRGBA{0x00,0xcc,0x00,0xff}, LineWidth: 2, LineStyle: chart.DashedLine})
+		chart.Style{Symbol: 'x', LineColor: color.NRGBA{0x00, 0xcc, 0x00, 0xff}, LineWidth: 2, LineStyle: chart.DashedLine})
 	tdc.AddFunc("High", func(x float64) float64 { return 0.18*(x-1.20525e9) + 1.2222e9 },
 		chart.PlotStyleLines,
-		chart.Style{Symbol: '+', LineColor: color.NRGBA{0x00,0x00,0xcc,0xff}, LineWidth: 2, LineStyle: chart.LongDotLine})
+		chart.Style{Symbol: '+', LineColor: color.NRGBA{0x00, 0x00, 0xcc, 0xff}, LineWidth: 2, LineStyle: chart.LongDotLine})
 	charts = append(charts, &tdc)
 
 	// Bar charts
@@ -1181,9 +1181,9 @@ func bestOf() {
 	ebit.YRange.ShowZero = true
 	ebit.ShowVal = 0
 	ebit.AddDataPair("Transport", []float64{0, 1, 2, 3}, []float64{1450, 1750, -870, 900},
-		chart.Style{Symbol: '#', LineColor: color.NRGBA{0x30,0x30,0xff,0xff}, LineWidth: 2, FillColor: color.NRGBA{0xcb,0xcb,0xff,0xff}})
+		chart.Style{Symbol: '#', LineColor: color.NRGBA{0x30, 0x30, 0xff, 0xff}, LineWidth: 2, FillColor: color.NRGBA{0xcb, 0xcb, 0xff, 0xff}})
 	ebit.AddDataPair("Energy", []float64{0, 1, 2, 3}, []float64{960, -490, 450, 1230},
-		chart.Style{Symbol: 'O', LineColor: color.NRGBA{0xe0,0x44,0x44,0xff}, LineWidth: 2, FillColor: color.NRGBA{0xf6,0xb5,0xcc,0xff}})
+		chart.Style{Symbol: 'O', LineColor: color.NRGBA{0xe0, 0x44, 0x44, 0xff}, LineWidth: 2, FillColor: color.NRGBA{0xf6, 0xb5, 0xcc, 0xff}})
 	charts = append(charts, &ebit)
 
 	dumper := NewDumper("bestof", N, M, width, height)

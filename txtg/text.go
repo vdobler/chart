@@ -106,10 +106,10 @@ func (g *TextGraphics) Rect(x, y, w, h int, style chart.Style) {
 	if style.FillColor != nil {
 		// TODO: fancier logic
 		var s int
-		_,_,_,a := style.FillColor.RGBA()
-		if  a==0xffff  {
+		_, _, _, a := style.FillColor.RGBA()
+		if a == 0xffff {
 			s = '#' // black
-		} else if a==0 {
+		} else if a == 0 {
 			s = ' ' // white
 		} else {
 			s = style.Symbol

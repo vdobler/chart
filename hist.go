@@ -1,8 +1,8 @@
 package chart
 
 import (
-	"math"
 	"image/color"
+	"math"
 )
 
 type HistChartData struct {
@@ -378,7 +378,7 @@ func (c *HistChart) Plot(g Graphics) {
 				if ws > 25 {
 					lw = 2
 				}
-				white := Style{LineColor: color.NRGBA{0xff,0xff,0xff,0xff}, LineWidth: lw, LineStyle: SolidLine}
+				white := Style{LineColor: color.NRGBA{0xff, 0xff, 0xff, 0xff}, LineWidth: lw, LineStyle: SolidLine}
 				for _, b := range bars {
 					g.Line(b.x, b.y-1, b.x+b.w+1, b.y-1, white)
 					g.Line(b.x+b.w+1, b.y-1, b.x+b.w+1, b.y+b.h, white)

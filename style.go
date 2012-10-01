@@ -209,7 +209,7 @@ func elementStyle(options PlotOptions, element PlotElement) Style {
 	if style, ok := DefaultOptions[element]; ok {
 		return style
 	}
-	return Style{LineColor: color.NRGBA{0x80,0x80,0x80,0xff}, LineWidth: 1, LineStyle: SolidLine}
+	return Style{LineColor: color.NRGBA{0x80, 0x80, 0x80, 0xff}, LineWidth: 1, LineStyle: SolidLine}
 }
 func ElementStyle(options PlotOptions, element PlotElement) Style {
 	return elementStyle(options, element)
@@ -217,17 +217,17 @@ func ElementStyle(options PlotOptions, element PlotElement) Style {
 
 // DefaultStyle maps chart elements to styles.
 var DefaultOptions = map[PlotElement]Style{
-MajorAxisElement: Style{LineColor: color.NRGBA{0,0,0,0xff}, LineWidth: 2, LineStyle: SolidLine}, // axis
-	MinorAxisElement: Style{LineColor: color.NRGBA{0,0,0,0xff}, LineWidth: 2, LineStyle: SolidLine}, // mirrored axis
-	MajorTicElement:  Style{LineColor: color.NRGBA{0,0,0,0xff}, LineWidth: 1, LineStyle: SolidLine},
-	MinorTicElement:  Style{LineColor: color.NRGBA{0,0,0,0xff}, LineWidth: 1, LineStyle: SolidLine},
-	ZeroAxisElement:  Style{LineColor: color.NRGBA{0x40,0x40,0x40, 0xff}, LineWidth: 1, LineStyle: SolidLine},
-	GridLineElement:  Style{LineColor: color.NRGBA{0x80,0x80,0x80, 0xff}, LineWidth: 1, LineStyle: SolidLine},
-	GridBlockElement: Style{LineColor: color.NRGBA{0xe6,0xfc,0xfc, 0xff}, LineWidth: 0, FillColor: color.NRGBA{0xe6,0xfc,0xfc, 0xff}},
-	KeyElement: Style{LineColor: color.NRGBA{0x20,0x20,0x20, 0xff}, LineWidth: 1, LineStyle: SolidLine,
-		FillColor: color.NRGBA{0xf0,0xf0,0xf0, 0xc0}, Font: Font{Size: SmallFontSize}},
-	TitleElement: Style{LineColor: color.NRGBA{0,0,0,0xff}, LineWidth: 1, LineStyle: SolidLine,
-		FillColor: color.NRGBA{0xec,0xc7,0x50,0xff}, Font: Font{Size: LargeFontSize}},
+	MajorAxisElement: Style{LineColor: color.NRGBA{0, 0, 0, 0xff}, LineWidth: 2, LineStyle: SolidLine}, // axis
+	MinorAxisElement: Style{LineColor: color.NRGBA{0, 0, 0, 0xff}, LineWidth: 2, LineStyle: SolidLine}, // mirrored axis
+	MajorTicElement:  Style{LineColor: color.NRGBA{0, 0, 0, 0xff}, LineWidth: 1, LineStyle: SolidLine},
+	MinorTicElement:  Style{LineColor: color.NRGBA{0, 0, 0, 0xff}, LineWidth: 1, LineStyle: SolidLine},
+	ZeroAxisElement:  Style{LineColor: color.NRGBA{0x40, 0x40, 0x40, 0xff}, LineWidth: 1, LineStyle: SolidLine},
+	GridLineElement:  Style{LineColor: color.NRGBA{0x80, 0x80, 0x80, 0xff}, LineWidth: 1, LineStyle: SolidLine},
+	GridBlockElement: Style{LineColor: color.NRGBA{0xe6, 0xfc, 0xfc, 0xff}, LineWidth: 0, FillColor: color.NRGBA{0xe6, 0xfc, 0xfc, 0xff}},
+	KeyElement: Style{LineColor: color.NRGBA{0x20, 0x20, 0x20, 0xff}, LineWidth: 1, LineStyle: SolidLine,
+		FillColor: color.NRGBA{0xf0, 0xf0, 0xf0, 0xc0}, Font: Font{Size: SmallFontSize}},
+	TitleElement: Style{LineColor: color.NRGBA{0, 0, 0, 0xff}, LineWidth: 1, LineStyle: SolidLine,
+		FillColor: color.NRGBA{0xec, 0xc7, 0x50, 0xff}, Font: Font{Size: LargeFontSize}},
 	RangeLimitElement: Style{Font: Font{Size: SmallFontSize}},
 }
 
@@ -322,7 +322,7 @@ func lighter(col color.Color, f float64) color.NRGBA {
 	}
 	rr, gg, bb := hsv2rgb(h, s, v)
 
-	return color.NRGBA{uint8(rr),uint8(gg),uint8(bb),uint8(a/256)}
+	return color.NRGBA{uint8(rr), uint8(gg), uint8(bb), uint8(a / 256)}
 }
 
 func darker(col color.Color, f float64) color.NRGBA {
@@ -336,5 +336,5 @@ func darker(col color.Color, f float64) color.NRGBA {
 	}
 	rr, gg, bb := hsv2rgb(h, s, v)
 
-	return color.NRGBA{uint8(rr),uint8(gg),uint8(bb),uint8(a/256)}
+	return color.NRGBA{uint8(rr), uint8(gg), uint8(bb), uint8(a / 256)}
 }

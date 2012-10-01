@@ -435,7 +435,7 @@ func (sg *SvgGraphics) Rings(wedges []chart.Wedgeinfo, x, y, ro, ri int) {
 }
 
 func hexcol(col color.Color) string {
-	r,g,b, _ := col.RGBA()
+	r, g, b, _ := col.RGBA()
 	return fmt.Sprintf("#%.2x%.2x%.2x", r/0xff, g/0xff, b/0xff)
 }
 
