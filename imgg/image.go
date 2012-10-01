@@ -6,6 +6,7 @@ import (
 	"code.google.com/p/freetype-go/freetype/raster"
 	"code.google.com/p/freetype-go/freetype/truetype"
 	"code.google.com/p/graphics-go/graphics"
+	"fmt"
 	"github.com/vdobler/chart"
 	"image"
 	"image/color"
@@ -15,7 +16,7 @@ import (
 )
 
 var (
-	dpi         = 72
+	dpi         = 72.0
 	defaultFont *truetype.Font
 )
 
@@ -100,16 +101,17 @@ func (ig *ImageGraphics) TextLen(s string, font chart.Font) int {
 	c := freetype.NewContext()
 	c.SetDPI(dpi)
 	c.SetFont(ig.font)
-	c.SetFontSize(ig.relFontsizeToPixel(font.Size))
-
+	fontsize := ig.relFontsizeToPixel(font.Size)
+	c.SetFontSize(fontsize)
+	scale := int32(fontsize * dpi * (64.0 / 72.0))
 	var p raster.Point
 	prev, hasPrev := truetype.Index(0), false
 	for _, rune := range s {
 		index := ig.font.Index(rune)
 		if hasPrev {
-			p.X += c.FUnitToFix32(int(ig.font.Kerning(prev, index)))
+			p.X += raster.Fix32(ig.font.Kerning(scale, prev, index)) << 2
 		}
-		p.X += c.FUnitToFix32(int(ig.font.HMetric(index).AdvanceWidth))
+		p.X += raster.Fix32(ig.font.HMetric(scale, index).AdvanceWidth) << 2
 		prev, hasPrev = index, true
 	}
 	return int((p.X + 127) / 256)
@@ -238,7 +240,7 @@ func (ig *ImageGraphics) Text(x, y int, t string, align string, rot int, f chart
 	if f.Color != nil {
 		col = f.Color
 	} else {
-		col = color.NRGBA{0,0,0,0xff}
+		col = color.NRGBA{0, 0, 0, 0xff}
 	}
 	tcol := image.NewUniform(col)
 
@@ -253,7 +255,23 @@ func (ig *ImageGraphics) textBox(t string, font chart.Font) image.Image {
 	bg := image.NewUniform(color.Alpha{0x00})
 	width := ig.TextLen(t, font)
 	size := ig.relFontsizeToPixel(font.Size)
-	canvas := image.NewAlpha(image.Rect(0, 0, width, int(1.5*size+0.5)))
+	bb := ig.font.Bounds(int32(size))
+	// TODO: Ugly, manual, heuristic hack to get "nicer" text for common latin characters
+	bb.YMin++
+	if size >= 15 {
+		bb.YMin++
+		bb.YMax--
+	}
+	if size >= 20 {
+		bb.YMax--
+	}
+	if size >= 25 {
+		bb.YMin++
+		bb.YMax--
+	}
+
+	dy := int(bb.YMax - bb.YMin)
+	canvas := image.NewAlpha(image.Rect(0, 0, width, dy))
 	draw.Draw(canvas, canvas.Bounds(), bg, image.ZP, draw.Src)
 
 	c := freetype.NewContext()
@@ -265,15 +283,15 @@ func (ig *ImageGraphics) textBox(t string, font chart.Font) image.Image {
 	c.SetSrc(fg)
 
 	// Draw the text.
-	h := c.FUnitToPixelRU(ig.font.UnitsPerEm())
-	pt := freetype.Pt(0, h)
+	fmt.Printf("font.Bounds(%d) = %#v  Height = %d\n", int32(size), bb, dy)
+	pt := freetype.Pt(0, dy+int(bb.YMin)-1)
 	extent, err := c.DrawString(t, pt)
 	if err != nil {
 		log.Println(err)
 		return nil
 	}
 	// log.Printf("text %q, extent: %v", t, extent)
-	return canvas.SubImage(image.Rect(0, 0, int((extent.X+127)/256), h*5/4))
+	return canvas.SubImage(image.Rect(0, 0, int((extent.X+127)/256), dy))
 }
 
 func (ig *ImageGraphics) paint(x, y int, R, G, B uint32, alpha uint32) {
