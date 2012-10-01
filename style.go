@@ -6,7 +6,7 @@ import (
 	"math"
 )
 
-// Symbol is the list of different symbols. 
+// Symbol is the list of different symbols.
 var Symbol = []int{
 	'o', // empty circle
 	'=', // empty square
@@ -33,7 +33,7 @@ func SymbolIndex(s int) (idx int) {
 	return -1
 }
 
-// NextSymbol returns the next symbol of s: Either in the global list Symbol 
+// NextSymbol returns the next symbol of s: Either in the global list Symbol
 // or (if not found there) the next character.
 func NextSymbol(s int) int {
 	if idx := SymbolIndex(s); idx != -1 {
@@ -70,15 +70,14 @@ func init() {
 // All colors are in the form "#rrggbb" with rr/gg/bb hexvalues.
 // Not all elements of a plot use all fields in this struct.
 type Style struct {
-	Symbol      int       // 0: no symbol; any codepoint: this symbol
-	SymbolColor string    // color of symbol
-	SymbolSize  float64   // ccaling factor of symbol
-	LineStyle   LineStyle // SolidLine, DashedLine, DottedLine, .... see below
-	LineColor   string    // color of line
-	LineWidth   int       // 0: no line,  >=1 width of line in pixel
-	Font        Font      // the font to use
-	FillColor   string
-	Alpha       float64 // Alpha of whole stuff.
+	Symbol      int         // 0: no symbol; any codepoint: this symbol
+	SymbolColor color.Color // color of symbol
+	SymbolSize  float64     // ccaling factor of symbol
+	LineStyle   LineStyle   // SolidLine, DashedLine, DottedLine, .... see below
+	LineColor   color.Color // color of line
+	LineWidth   int         // 0: no line,  >=1 width of line in pixel
+	Font        Font        // the font to use
+	FillColor   color.Color
 }
 
 // PlotStyle describes how data and functions are drawn in scatter plots.
@@ -111,12 +110,12 @@ const (
 
 // Font describes a font
 type Font struct {
-	Name  string   // "": default
-	Size  FontSize // relative size of font to default in output graphics
-	Color string   // "": default, other: use this
+	Name  string      // "": default
+	Size  FontSize    // relative size of font to default in output graphics
+	Color color.Color // "": default, other: use this
 }
 
-// RelFontSize is the reletive font size used in chart. Five sizes seem enough.
+// FontSize is the reletive font size used in chart. Five sizes seem enough.
 type FontSize int
 
 const (
@@ -128,11 +127,20 @@ const (
 )
 
 func (d *Style) empty() bool {
-	return d.Symbol == 0 && d.SymbolColor == "" && d.LineStyle == 0 && d.LineColor == "" && d.FillColor == "" && d.SymbolSize == 0
+	return d.Symbol == 0 && d.SymbolColor == nil && d.LineStyle == 0 &&
+		d.LineColor == nil && d.FillColor == nil && d.SymbolSize == 0
 }
 
 // Standard colors used by AutoStyle
-var StandardColors = []string{"#cc0000", "#00bb00", "#0000dd", "#996600", "#bb00bb", "#00aaaa", "#aaaa00"}
+var StandardColors = []color.Color{
+	color.NRGBA{0xcc, 0x00, 0x00, 0xff}, // red
+	color.NRGBA{0x00, 0xbb, 0x00, 0xff}, // green
+	color.NRGBA{0x00, 0x00, 0xdd, 0xff}, // blue
+	color.NRGBA{0x99, 0x66, 0x00, 0xff}, // brown
+	color.NRGBA{0xbb, 0x00, 0xbb, 0xff}, // violet
+	color.NRGBA{0x00, 0xaa, 0xaa, 0xff}, // turquise
+	color.NRGBA{0xbb, 0xbb, 0x00, 0xff}, // yellow
+}
 
 // Standard line styles used by AutoStyle (fill=false)
 var StandardLineStyles = []LineStyle{SolidLine, DashedLine, DottedLine, LongDashLine, LongDotLine}
@@ -156,7 +164,6 @@ func AutoStyle(i int, fill bool) (style Style) {
 	style.SymbolColor = StandardColors[ci]
 	style.LineColor = StandardColors[ci]
 	style.SymbolSize = 1
-	style.Alpha = 0
 
 	if fill {
 		style.LineStyle = SolidLine
@@ -202,7 +209,7 @@ func elementStyle(options PlotOptions, element PlotElement) Style {
 	if style, ok := DefaultOptions[element]; ok {
 		return style
 	}
-	return Style{LineColor: "#808080", LineWidth: 1, LineStyle: SolidLine}
+	return Style{LineColor: color.NRGBA{0x80,0x80,0x80,0xff}, LineWidth: 1, LineStyle: SolidLine}
 }
 func ElementStyle(options PlotOptions, element PlotElement) Style {
 	return elementStyle(options, element)
@@ -210,17 +217,17 @@ func ElementStyle(options PlotOptions, element PlotElement) Style {
 
 // DefaultStyle maps chart elements to styles.
 var DefaultOptions = map[PlotElement]Style{
-	MajorAxisElement: Style{LineColor: "#000000", LineWidth: 2, LineStyle: SolidLine}, // axis
-	MinorAxisElement: Style{LineColor: "#000000", LineWidth: 2, LineStyle: SolidLine}, // mirrored axis
-	MajorTicElement:  Style{LineColor: "#000000", LineWidth: 1, LineStyle: SolidLine},
-	MinorTicElement:  Style{LineColor: "#000000", LineWidth: 1, LineStyle: SolidLine},
-	ZeroAxisElement:  Style{LineColor: "#404040", LineWidth: 1, LineStyle: SolidLine},
-	GridLineElement:  Style{LineColor: "#808080", LineWidth: 1, LineStyle: SolidLine},
-	GridBlockElement: Style{LineColor: "#e6fcfc", LineWidth: 0, FillColor: "#e6fcfc"},
-	KeyElement: Style{LineColor: "#202020", LineWidth: 1, LineStyle: SolidLine,
-		FillColor: "#f0f0f0", Alpha: 0.75, Font: Font{Size: SmallFontSize}},
-	TitleElement: Style{LineColor: "#000000", LineWidth: 1, LineStyle: SolidLine,
-		FillColor: "#ecc750", Alpha: 0, Font: Font{Size: LargeFontSize}},
+MajorAxisElement: Style{LineColor: color.NRGBA{0,0,0,0xff}, LineWidth: 2, LineStyle: SolidLine}, // axis
+	MinorAxisElement: Style{LineColor: color.NRGBA{0,0,0,0xff}, LineWidth: 2, LineStyle: SolidLine}, // mirrored axis
+	MajorTicElement:  Style{LineColor: color.NRGBA{0,0,0,0xff}, LineWidth: 1, LineStyle: SolidLine},
+	MinorTicElement:  Style{LineColor: color.NRGBA{0,0,0,0xff}, LineWidth: 1, LineStyle: SolidLine},
+	ZeroAxisElement:  Style{LineColor: color.NRGBA{0x40,0x40,0x40, 0xff}, LineWidth: 1, LineStyle: SolidLine},
+	GridLineElement:  Style{LineColor: color.NRGBA{0x80,0x80,0x80, 0xff}, LineWidth: 1, LineStyle: SolidLine},
+	GridBlockElement: Style{LineColor: color.NRGBA{0xe6,0xfc,0xfc, 0xff}, LineWidth: 0, FillColor: color.NRGBA{0xe6,0xfc,0xfc, 0xff}},
+	KeyElement: Style{LineColor: color.NRGBA{0x20,0x20,0x20, 0xff}, LineWidth: 1, LineStyle: SolidLine,
+		FillColor: color.NRGBA{0xf0,0xf0,0xf0, 0xc0}, Font: Font{Size: SmallFontSize}},
+	TitleElement: Style{LineColor: color.NRGBA{0,0,0,0xff}, LineWidth: 1, LineStyle: SolidLine,
+		FillColor: color.NRGBA{0xec,0xc7,0x50,0xff}, Font: Font{Size: LargeFontSize}},
 	RangeLimitElement: Style{Font: Font{Size: SmallFontSize}},
 }
 
@@ -304,47 +311,30 @@ func rgb2hsv(r, g, b int) (h, s, v int) {
 	return
 }
 
-func Color2rgb(color string) (r, g, b int) {
-	if color[0] == '#' {
-		color = color[1:]
-	}
-	n, err := fmt.Sscanf(color, "%2x%2x%2x", &r, &g, &b)
-	if n != 3 || err != nil {
-		r, g, b = 127, 127, 127
-	}
-	// fmt.Printf("%s  -->  %d %d %d\n", color,r,g,b)
-	return
-}
-
-func Color2RGBA(col string, a uint8) color.RGBA {
-	r, g, b := Color2rgb(col)
-	return color.RGBA{uint8(r), uint8(g), uint8(b), a}
-}
-
-func lighter(color string, f float64) string {
-	r, g, b := Color2rgb(color)
-	h, s, v := rgb2hsv(r, g, b)
+func lighter(col color.Color, f float64) color.NRGBA {
+	r, g, b, a := col.RGBA()
+	h, s, v := rgb2hsv(int(r/256), int(g/256), int(b/256))
 	f = 1 - f
 	s = int(float64(s) * f)
 	v += int((100 - float64(v)) * f)
 	if v > 100 {
 		v = 100
 	}
-	r, g, b = hsv2rgb(h, s, v)
+	rr, gg, bb := hsv2rgb(h, s, v)
 
-	return fmt.Sprintf("#%02x%02x%02x", r, g, b)
+	return color.NRGBA{uint8(rr),uint8(gg),uint8(bb),uint8(a/256)}
 }
 
-func darker(color string, f float64) string {
-	r, g, b := Color2rgb(color)
-	h, s, v := rgb2hsv(r, g, b)
+func darker(col color.Color, f float64) color.NRGBA {
+	r, g, b, a := col.RGBA()
+	h, s, v := rgb2hsv(int(r), int(g), int(b))
 	f = 1 - f
 	v = int(float64(v) * f)
 	s += int((100 - float64(s)) * f)
 	if s > 100 {
 		s = 100
 	}
-	r, g, b = hsv2rgb(h, s, v)
+	rr, gg, bb := hsv2rgb(h, s, v)
 
-	return fmt.Sprintf("#%02x%02x%02x", r, g, b)
+	return color.NRGBA{uint8(rr),uint8(gg),uint8(bb),uint8(a/256)}
 }

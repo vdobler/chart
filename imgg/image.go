@@ -116,7 +116,7 @@ func (ig *ImageGraphics) TextLen(s string, font chart.Font) int {
 }
 
 func (ig *ImageGraphics) setStyle(style chart.Style) {
-	ig.gc.SetStrokeColor(chart.Color2RGBA(style.LineColor, 0xff))
+	ig.gc.SetStrokeColor(style.LineColor)
 	ig.gc.SetLineWidth(float64(style.LineWidth))
 	orig := dashPattern[style.LineStyle]
 	pattern := make([]float64, len(orig))
@@ -234,12 +234,13 @@ func (ig *ImageGraphics) Text(x, y int, t string, align string, rot int, f chart
 	x += ig.x0
 	y += ig.y0
 
-	col := "#000000"
-	if f.Color != "" {
+	var col color.Color
+	if f.Color != nil {
 		col = f.Color
+	} else {
+		col = color.NRGBA{0,0,0,0xff}
 	}
-	r, g, b := chart.Color2rgb(col)
-	tcol := image.NewUniform(color.RGBA{uint8(r), uint8(g), uint8(b), 255})
+	tcol := image.NewUniform(col)
 
 	draw.DrawMask(ig.Image, image.Rect(x, y, x+w, y+h), tcol, image.ZP,
 		textImage, textImage.Bounds().Min, draw.Over)
@@ -302,8 +303,8 @@ func (ig *ImageGraphics) Symbol(x, y int, style chart.Style) {
 func (ig *ImageGraphics) Rect(x, y, w, h int, style chart.Style) {
 	ig.setStyle(style)
 	stroke := func() { ig.gc.Stroke() }
-	if style.FillColor != "" {
-		ig.gc.SetFillColor(chart.Color2RGBA(style.FillColor, 0x0ff /*uint8(style.Alpha*255)*/))
+	if style.FillColor != nil {
+		ig.gc.SetFillColor(style.FillColor)
 		stroke = func() { ig.gc.FillStroke() }
 	}
 	ig.gc.MoveTo(float64(x), float64(y))
@@ -317,8 +318,8 @@ func (ig *ImageGraphics) Rect(x, y, w, h int, style chart.Style) {
 func (ig *ImageGraphics) Wedge(ix, iy, iro, iri int, phi, psi float64, style chart.Style) {
 	ig.setStyle(style)
 	stroke := func() { ig.gc.Stroke() }
-	if style.FillColor != "" {
-		ig.gc.SetFillColor(chart.Color2RGBA(style.FillColor, 0x0ff /*uint8(style.Alpha*255)*/))
+	if style.FillColor != nil {
+		ig.gc.SetFillColor(style.FillColor)
 		stroke = func() { ig.gc.FillStroke() }
 	}
 

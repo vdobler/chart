@@ -3,6 +3,7 @@ package chart
 import (
 	"fmt"
 	"math"
+	"image/color"
 )
 
 // MinimalGraphics is the interface any graphics driver must implement,
@@ -110,8 +111,8 @@ func SanitizeRect(x, y, w, h, r int) (int, int, int, int) {
 func GenericRect(mg MinimalGraphics, x, y, w, h int, style Style) {
 	x, y, w, h = SanitizeRect(x, y, w, h, style.LineWidth)
 
-	if style.FillColor != "" {
-		fs := Style{LineWidth: 1, LineColor: style.FillColor, LineStyle: SolidLine, Alpha: style.Alpha}
+	if style.FillColor != nil {
+		fs := Style{LineWidth: 1, LineColor: style.FillColor, LineStyle: SolidLine}
 		for i := 1; i < h; i++ {
 			mg.Line(x+1, y+i, x+w-1, y+i, fs)
 		}
@@ -360,8 +361,8 @@ func GenericScatter(bg BasicGraphics, points []EPoint, plotstyle PlotStyle, styl
 	// First pass: Error bars
 	ebs := style
 	ebs.LineColor, ebs.LineWidth, ebs.LineStyle = ebs.FillColor, 1, SolidLine
-	if ebs.LineColor == "" {
-		ebs.LineColor = "#404040"
+	if ebs.LineColor == nil {
+		ebs.LineColor = color.NRGBA{0x40,0x40,0x40,0xff}
 	}
 	if ebs.LineWidth == 0 {
 		ebs.LineWidth = 1
@@ -493,7 +494,7 @@ func GenericWedge(mg MinimalGraphics, x, y, ro, ri int, phi, psi, ecc float64, s
 		panic("ri > ro is not possible")
 	}
 
-	if style.FillColor != "" {
+	if style.FillColor != nil {
 		fillWedge(mg, x, y, ro, ri, phi, psi, ecc, style)
 	}
 
@@ -625,7 +626,11 @@ func fillWedge(mg MinimalGraphics, xi, yi, ro, ri int, phi, psi, epsilon float64
 	style.LineColor = style.FillColor
 	style.LineWidth = 1
 	style.LineStyle = SolidLine
-	blank := Style{Symbol: ' ', LineColor: "#ffffff", Alpha: 0}
+	blank := Style{
+	Symbol: ' ',
+	LineColor: color.NRGBA{0xff,0xff,0xff,0x00},
+	FillColor: color.NRGBA{0xff,0xff,0xff,0x00},
+	}
 
 	for qPhi != qPsi {
 		// DebugLogger.Printf("qPhi = %d", qPhi)
@@ -728,12 +733,12 @@ func GenericSymbol(bg BasicGraphics, x, y int, style Style) {
 		style.LineWidth = 1
 	}
 
-	if style.SymbolColor == "" {
+	if style.SymbolColor == nil {
 		style.SymbolColor = style.LineColor
-		if style.SymbolColor == "" {
+		if style.SymbolColor == nil {
 			style.SymbolColor = style.FillColor
-			if style.SymbolColor == "" {
-				style.SymbolColor = "#000000"
+			if style.SymbolColor == nil {
+				style.SymbolColor = color.NRGBA{0,0,0,0xff}
 			}
 		}
 	}

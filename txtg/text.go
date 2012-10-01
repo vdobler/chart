@@ -103,12 +103,13 @@ func (g *TextGraphics) Rect(x, y, w, h int, style chart.Style) {
 	}
 
 	// Filling
-	if style.FillColor != "" {
+	if style.FillColor != nil {
 		// TODO: fancier logic
 		var s int
-		if style.FillColor == "#000000" {
+		_,_,_,a := style.FillColor.RGBA()
+		if  a==0xffff  {
 			s = '#' // black
-		} else if style.FillColor == "#ffffff" {
+		} else if a==0 {
 			s = ' ' // white
 		} else {
 			s = style.Symbol
@@ -325,7 +326,7 @@ func (g *TextGraphics) Key(x, y int, key chart.Key, options chart.PlotOptions) {
 	tw, th, cw, rh := key.Layout(g, m, chart.ElementStyle(options, chart.KeyElement).Font)
 	// fmt.Printf("Text-Key:  %d x %d\n", tw,th)
 	style := chart.ElementStyle(options, chart.KeyElement)
-	if style.LineWidth > 0 || style.FillColor != "" {
+	if style.LineWidth > 0 || style.FillColor != nil {
 		g.tb.Rect(x, y, tw, th-1, 1, ' ')
 	}
 	x += int(chart.KeyHorSep)

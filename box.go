@@ -2,6 +2,7 @@ package chart
 
 import (
 	"math"
+	"image/color"
 	// "fmt"
 	//	"os"
 	//	"strings"
@@ -52,7 +53,7 @@ func (c *BoxChart) AddSet(x float64, data []float64, outlier bool) {
 
 	if len(c.Data) == 0 {
 		c.Data = make([]BoxChartData, 1)
-		st := Style{LineColor: "#000000", LineWidth: 1, LineStyle: SolidLine}
+		st := Style{LineColor: color.NRGBA{0,0,0,0xff}, LineWidth: 1, LineStyle: SolidLine}
 		c.Data[0] = BoxChartData{Name: "", Style: st}
 	}
 

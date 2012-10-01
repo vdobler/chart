@@ -58,7 +58,7 @@ func (c *ScatterChart) AddData(name string, data []EPoint, plotstyle PlotStyle, 
 		if style.LineWidth <= 0 {
 			style.LineWidth = 1
 		}
-		if style.LineColor == "" {
+		if style.LineColor == nil {
 			style.LineColor = style.SymbolColor
 		}
 	}

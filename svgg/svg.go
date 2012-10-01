@@ -155,8 +155,8 @@ func (sg *SvgGraphics) Text(x, y int, t string, align string, rot int, f chart.F
 	default:
 		s += "middle"
 	}
-	if f.Color != "" {
-		s += "; fill:" + f.Color
+	if f.Color != nil {
+		s += "; fill:" + hexcol(f.Color)
 	}
 	if f.Name != "" {
 		s += "; font-family:" + f.Name
@@ -172,9 +172,9 @@ func (sg *SvgGraphics) Symbol(x, y int, style chart.Style) {
 	st := ""
 	filled := "fill:solid"
 	empty := "fill:none"
-	if style.SymbolColor != "" {
-		st += "stroke:" + style.SymbolColor
-		filled = "fill:" + style.SymbolColor
+	if style.SymbolColor != nil {
+		st += "stroke:" + hexcol(style.SymbolColor)
+		filled = "fill:" + hexcol(style.SymbolColor)
 	}
 	f := style.SymbolSize
 	if f == 0 {
@@ -240,15 +240,15 @@ func (sg *SvgGraphics) Rect(x, y, w, h int, style chart.Style) {
 	var s string
 	x, y, w, h = chart.SanitizeRect(x, y, w, h, style.LineWidth)
 	linecol := style.LineColor
-	if linecol != "" {
-		s = fmt.Sprintf("stroke:%s; ", linecol)
+	if linecol != nil {
+		s = fmt.Sprintf("stroke:%s; ", hexcol(linecol))
+		s += fmt.Sprintf("opacity: %s; ", alpha(linecol))
 	} else {
-		linecol = "#808080"
+		s = "stroke:#808080; "
 	}
 	s += fmt.Sprintf("stroke-width: %d; ", style.LineWidth)
-	s += fmt.Sprintf("opacity: %.2f; ", 1-style.Alpha)
-	if style.FillColor != "" {
-		s += fmt.Sprintf("fill: %s; fill-opacity: %.2f", style.FillColor, 1-style.Alpha)
+	if style.FillColor != nil {
+		s += fmt.Sprintf("fill: %s; fill-opacity: %s", hexcol(style.FillColor), alpha(style.FillColor))
 	} else {
 		s += "fill-opacity: 0"
 	}
@@ -282,11 +282,11 @@ func (sg *SvgGraphics) YAxis(yr chart.Range, xs, xms int, options chart.PlotOpti
 
 func linestyle(style chart.Style) (s string) {
 	lw := style.LineWidth
-	if style.LineColor != "" {
-		s = fmt.Sprintf("stroke:%s; ", style.LineColor)
+	if style.LineColor != nil {
+		s = fmt.Sprintf("stroke:%s; ", hexcol(style.LineColor))
 	}
 	s += fmt.Sprintf("stroke-width: %d; fill:none; ", lw)
-	s += fmt.Sprintf("opacity: %.2f; ", 1-style.Alpha)
+	s += fmt.Sprintf("opacity: %s; ", alpha(style.LineColor))
 	if style.LineStyle != chart.SolidLine {
 		s += fmt.Sprintf("stroke-dasharray:")
 		for _, d := range dashlength[style.LineStyle] {
@@ -356,16 +356,16 @@ func (sg *SvgGraphics) Rings(wedges []chart.Wedgeinfo, x, y, ro, ri int) {
 	for _, w := range wedges {
 		var s string
 		linecol := w.Style.LineColor
-		if linecol != "" {
-			s = fmt.Sprintf("stroke:%s; ", linecol)
+		if linecol != nil {
+			s = fmt.Sprintf("stroke:%s; ", hexcol(linecol))
+			s += fmt.Sprintf("opacity: %s; ", alpha(linecol))
 		} else {
-			linecol = "#808080"
+			s = "stroke:%s; #808080; "
 		}
 		s += fmt.Sprintf("stroke-width: %d; ", w.Style.LineWidth)
-		s += fmt.Sprintf("opacity: %.2f; ", 1-w.Style.Alpha)
 		var sf string
-		if w.Style.FillColor != "" {
-			sf = fmt.Sprintf("fill: %s; fill-opacity: %.2f", w.Style.FillColor, 1-w.Style.Alpha)
+		if w.Style.FillColor != nil {
+			sf = fmt.Sprintf("fill: %s; fill-opacity: %s", hexcol(w.Style.FillColor), alpha(w.Style.FillColor))
 		} else {
 			sf = "fill-opacity: 0"
 		}
@@ -432,6 +432,16 @@ func (sg *SvgGraphics) Rings(wedges []chart.Wedgeinfo, x, y, ro, ri int) {
 			sg.Text(tx, ty, w.Text, "cc", 0, w.Font)
 		}
 	}
+}
+
+func hexcol(col color.Color) string {
+	r,g,b, _ := col.RGBA()
+	return fmt.Sprintf("#%.2x%.2x%.2x", r/0xff, g/0xff, b/0xff)
+}
+
+func alpha(col color.Color) string {
+	_, _, _, a := col.RGBA()
+	return fmt.Sprintf("%.3f", float64(a)/0xffff)
 }
 
 var _ chart.Graphics = &SvgGraphics{}
