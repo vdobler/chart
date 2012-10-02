@@ -18,7 +18,9 @@ var Symbol = []int{
 	'0', // bulls eys
 	'@', // filled circle
 	'#', // filled square
-	'A', // filled tringale up
+	'A', // filled triangle up
+	'W', // filled triangle down
+	'V', // empty triangle down
 	'Z', // filled diamond
 	'.', // tiny dot
 }

@@ -772,47 +772,37 @@ func GenericSymbol(bg BasicGraphics, x, y int, style Style) {
 		GenericCircle(bg, x, y, b, style)
 	case '@':
 		GenericCircle(bg, x, y, a, style)
-		aa := (4 * a) / 5
-		GenericCircle(bg, x, y, aa, style)
-		aa = (3 * a) / 5
-		GenericCircle(bg, x, y, aa, style)
-		aa = (2 * a) / 5
-		GenericCircle(bg, x, y, aa, style)
-		aa = a / 5
-		GenericCircle(bg, x, y, aa, style)
+		for r := 1; r < a; r++ {
+			GenericCircle(bg, x, y, r, style)
+		}
 		bg.Line(x, y, x, y, style)
-	case '=': // TODO check
+	case '=':
 		bg.Rect(x-e, y-e, 2*e, 2*e, style)
-	case '#': // TODO check
+	case '#':
+		style.FillColor = style.LineColor
 		bg.Rect(x-e, y-e, 2*e, 2*e, style)
 	case 'A':
 		polygon(bg, []int{x - a, x + a, x}, []int{y + d, y + d, y - c}, style)
-		aa, dd, cc := (3*a)/4, (3*d)/4, (3*c)/4
-		polygon(bg, []int{x - aa, x + aa, x}, []int{y + dd, y + dd, y - cc}, style)
-		aa, dd, cc = a/2, d/2, c/2
-		polygon(bg, []int{x - aa, x + aa, x}, []int{y + dd, y + dd, y - cc}, style)
-		aa, dd, cc = a/4, d/4, c/4
-		polygon(bg, []int{x - aa, x + aa, x}, []int{y + dd, y + dd, y - cc}, style)
+		for j := 1; j < a; j++ {
+			aa, dd, cc := (j*a)/a, (j*d)/a, (j*c)/a
+			polygon(bg, []int{x - aa, x + aa, x}, []int{y + dd, y + dd, y - cc}, style)
+		}
 	case '%':
 		polygon(bg, []int{x - a, x + a, x}, []int{y + d, y + d, y - c}, style)
 	case 'W':
 		polygon(bg, []int{x - a, x + a, x}, []int{y - c, y - c, y + d}, style)
-		aa, dd, cc := (3*a)/4, (3*d)/4, (3*c)/4
-		polygon(bg, []int{x - aa, x + aa, x}, []int{y - cc, y - cc, y + dd}, style)
-		aa, dd, cc = a/2, d/2, c/2
-		polygon(bg, []int{x - aa, x + aa, x}, []int{y - cc, y - cc, y + dd}, style)
-		aa, dd, cc = a/4, d/4, c/4
-		polygon(bg, []int{x - aa, x + aa, x}, []int{y - cc, y - cc, y + dd}, style)
+		for j := 1; j < a; j++ {
+			aa, dd, cc := (j*a)/a, (j*d)/a, (j*c)/a
+			polygon(bg, []int{x - aa, x + aa, x}, []int{y - cc, y - cc, y + dd}, style)
+		}
 	case 'V':
 		polygon(bg, []int{x - a, x + a, x}, []int{y - c, y - c, y + d}, style)
 	case 'Z':
 		polygon(bg, []int{x - e, x, x + e, x}, []int{y, y + e, y, y - e}, style)
-		ee := (3 * e) / 4
-		polygon(bg, []int{x - ee, x, x + ee, x}, []int{y, y + ee, y, y - ee}, style)
-		ee = e / 2
-		polygon(bg, []int{x - ee, x, x + ee, x}, []int{y, y + ee, y, y - ee}, style)
-		ee = e / 4
-		polygon(bg, []int{x - ee, x, x + ee, x}, []int{y, y + ee, y, y - ee}, style)
+		for j := 1; j < e; j++ {
+			ee := (j * e) / e
+			polygon(bg, []int{x - ee, x, x + ee, x}, []int{y, y + ee, y, y - ee}, style)
+		}
 	case '&':
 		polygon(bg, []int{x - e, x, x + e, x}, []int{y, y + e, y, y - e}, style)
 	default:

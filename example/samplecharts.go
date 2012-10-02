@@ -865,11 +865,11 @@ func textlen() {
 // Test of graphic primitives
 //
 func testGraphics() {
-	dumper := NewDumper("xgraphics", 1, 1, 1200, 800)
+	dumper := NewDumper("xgraphics", 1, 1, 800, 416)
 	defer dumper.Close()
 
-	igr := imgg.AddTo(dumper.I, 0, 0, 1200, 800, color.RGBA{0xff, 0xff, 0xff, 0xff}, nil, nil)
-	sgr := svgg.AddTo(dumper.S, 0, 0, 1200, 800, "", 14, color.RGBA{0xff, 0xff, 0xff, 0xff})
+	igr := imgg.AddTo(dumper.I, 0, 0, 800, 416, color.RGBA{0xff, 0xff, 0xff, 0xff}, nil, nil)
+	sgr := svgg.AddTo(dumper.S, 0, 0, 800, 416, "", 14, color.RGBA{0xff, 0xff, 0xff, 0xff})
 
 	style := chart.Style{LineWidth: 0, LineColor: color.NRGBA{0x00, 0x00, 0x00, 0xff}, LineStyle: chart.SolidLine}
 
@@ -877,18 +877,21 @@ func testGraphics() {
 	x0, y0 := 10, 10
 	for w := 1; w <= 10; w++ {
 		style.LineWidth = w
-		igr.Line(x0, y0, x0+50, y0, style)
-		sgr.Line(x0, y0, x0+50, y0, style)
+		igr.Line(x0, y0, x0+160, y0, style)
+		sgr.Line(x0, y0, x0+160, y0, style)
 		y0 += w + 5
 	}
 
 	// Line Color
-	style = chart.Style{LineWidth: 14, LineColor: color.NRGBA{0x80, 0x80, 0x80, 0xff}, LineStyle: chart.SolidLine}
-	igr.Line(x0+25, y0-5, x0+25, y0+174, style)
-	igr.Line(x0+50, y0-5, x0+50, y0+174, style)
-	igr.Line(x0+75, y0-5, x0+75, y0+174, style)
+	style = chart.Style{LineWidth: 19, LineColor: color.NRGBA{0x80, 0x80, 0x80, 0xff}, LineStyle: chart.SolidLine}
+	igr.Line(x0+40, y0-5, x0+40, y0+174, style)
+	sgr.Line(x0+40, y0-5, x0+40, y0+174, style)
+	igr.Line(x0+80, y0-5, x0+80, y0+174, style)
+	sgr.Line(x0+80, y0-5, x0+80, y0+174, style)
+	igr.Line(x0+120, y0-5, x0+120, y0+174, style)
+	sgr.Line(x0+120, y0-5, x0+120, y0+174, style)
 
-	style = chart.Style{LineWidth: 4, LineStyle: chart.SolidLine}
+	style = chart.Style{LineWidth: 5, LineStyle: chart.SolidLine}
 	for _, col := range []color.NRGBA{
 		color.NRGBA{0x00, 0x00, 0x00, 0xff}, color.NRGBA{0xff, 0x00, 0x00, 0xff},
 		color.NRGBA{0x00, 0xff, 0x00, 0xff}, color.NRGBA{0x00, 0x00, 0xff, 0xff},
@@ -906,9 +909,9 @@ func testGraphics() {
 			c := col
 			c.A = a
 			style.LineColor = c
-			igr.Line(x0+d, y0, x0+d+25, y0, style)
-			sgr.Line(x0+d, y0, x0+d+25, y0, style)
-			d += 25
+			igr.Line(x0+d, y0, x0+d+40, y0, style)
+			sgr.Line(x0+d, y0, x0+d+40, y0, style)
+			d += 40
 		}
 		y0 += 10
 	}
@@ -921,8 +924,8 @@ func testGraphics() {
 		chart.LongDashLine, chart.LongDotLine,
 	} {
 		style.LineStyle = st
-		igr.Line(x0, y0, x0+150, y0, style)
-		sgr.Line(x0, y0, x0+150, y0, style)
+		igr.Line(x0, y0, x0+160, y0, style)
+		sgr.Line(x0, y0, x0+160, y0, style)
 		y0 += 5
 
 	}
@@ -933,31 +936,79 @@ func testGraphics() {
 		chart.LongDashLine, chart.LongDotLine,
 	} {
 		style.LineStyle = st
-		igr.Line(x0, y0, x0+150, y0, style)
-		sgr.Line(x0, y0, x0+150, y0, style)
+		igr.Line(x0, y0, x0+160, y0, style)
+		sgr.Line(x0, y0, x0+160, y0, style)
 		y0 += 12
 
 	}
 
 	// Text Alignment
 	font := chart.Font{}
-	rx, ry := 120, 10
-	px, py := 400, 90
+	rx, ry := 180, 10
+	px, py := 450, 90
 	text := "(JgbXÄj)"
 	alignedText(igr, text, font, rx, ry, px, py)
 	alignedText(sgr, text, font, rx, ry, px, py)
 
 	font.Size = chart.HugeFontSize
-	rx, ry = 120, 100
-	px, py = 400, 180
+	rx, ry = 180, 100
+	px, py = 450, 180
 	alignedText(igr, text, font, rx, ry, px, py)
 	alignedText(sgr, text, font, rx, ry, px, py)
 
 	font.Size = chart.TinyFontSize
-	rx, ry = 120, 190
-	px, py = 400, 270
+	rx, ry = 180, 190
+	px, py = 450, 270
 	alignedText(igr, text, font, rx, ry, px, py)
 	alignedText(sgr, text, font, rx, ry, px, py)
+
+	// Rectangles
+	x0, y0 = 180, 285
+	dx, dy := 40, 30
+	w, h := 30, 20
+	n, m := 7, 4
+
+	// background cross
+	style = chart.Style{LineWidth: 19, LineColor: color.NRGBA{0x80, 0x80, 0x80, 0xff}, LineStyle: chart.SolidLine}
+	igr.Line(x0, y0+2, x0+(n-1)*dx+w, y0+(m-1)*dy+h-2, style)
+	sgr.Line(x0, y0+2, x0+(n-1)*dx+w, y0+(m-1)*dy+h-2, style)
+	style = chart.Style{LineWidth: 19, LineColor: color.NRGBA{0x0, 0xd0, 0x0, 0xff}, LineStyle: chart.SolidLine}
+	igr.Line(x0, y0+(m-1)*dy+h-2, x0+(n-1)*dx+w, y0+2, style)
+	sgr.Line(x0, y0+(m-1)*dy+h-2, x0+(n-1)*dx+w, y0+2, style)
+
+	for i := 1; i <= n*m; i++ {
+		alpha := uint8(i * 256 / (n*m + 1))
+		style := chart.Style{LineWidth: 3, LineColor: color.NRGBA{0xc0, 0x0, 0x0, alpha},
+			LineStyle: chart.SolidLine, FillColor: color.NRGBA{0x0, 0x0, 0xc0, 0xff - alpha}}
+		igr.Rect(x0, y0, w, h, style)
+		sgr.Rect(x0, y0, w, h, style)
+		if i%n == 0 {
+			x0 = 180
+			y0 += dy
+		} else {
+			x0 += dx
+		}
+	}
+
+	// Symbols
+	scols := []color.NRGBA{{0, 0, 0, 0xff}, {0xc0, 0x00, 0x00, 0xff}, {0x00, 0xc0, 0x00, 0xff},
+		{0x00, 0x00, 0xc0, 0xff}, {0x80, 0x80, 0x80, 0xff}}
+
+	dx, dy = 30, 27
+	font = chart.Font{Color: color.NRGBA{0x00, 0x00, 0x00, 0xff}}
+	for i, st := range []int{'o', '=', '%', '&', '+', 'X', '*', '0', '@', '#', 'A', 'W', 'V', 'Z', '.'} {
+		igr.Text(470, 20+i*dy, fmt.Sprintf("%c", st), "cc", 0, font)
+		sgr.Text(470, 20+i*dy, fmt.Sprintf("%c", st), "cc", 0, font)
+	}
+	for si, size := range []float64{0.5, 0.67, 1.0, 1.5, 2.0} {
+		x0, y0 = 500+si*dx, 20
+		for _, st := range []int{'o', '=', '%', '&', '+', 'X', '*', '0', '@', '#', 'A', 'W', 'V', 'Z', '.'} {
+			style := chart.Style{Symbol: st, SymbolColor: scols[si], SymbolSize: size}
+			igr.Symbol(x0, y0, style)
+			sgr.Symbol(x0, y0, style)
+			y0 += dy
+		}
+	}
 
 }
 

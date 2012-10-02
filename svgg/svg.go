@@ -210,7 +210,7 @@ func (sg *SvgGraphics) Symbol(x, y int, style chart.Style) {
 		sg.svg.Circle(x, y, a, empty)
 		sg.svg.Circle(x, y, b, empty)
 	case '.':
-		if b>=4 {
+		if b >= 4 {
 			b /= 2
 		}
 		sg.svg.Circle(x, y, b, empty)
@@ -439,13 +439,13 @@ func (sg *SvgGraphics) Rings(wedges []chart.Wedgeinfo, x, y, ro, ri int) {
 
 func hexcol(col color.Color) string {
 	r, g, b, a := col.RGBA()
-	if a==0 {
+	if a == 0 {
 		return "#000000" // doesn't matter as fully transparent
 	}
 	a = a >> 8
-	r = ((r*0xff)/a) >> 8
-	g = ((g*0xff)/a) >> 8
-	b = ((b*0xff)/a) >> 8
+	r = ((r * 0xff) / a) >> 8
+	g = ((g * 0xff) / a) >> 8
+	b = ((b * 0xff) / a) >> 8
 	return fmt.Sprintf("#%.2x%.2x%.2x", r, g, b)
 }
 
