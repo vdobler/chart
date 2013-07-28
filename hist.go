@@ -271,7 +271,9 @@ func (c *HistChart) Reset() {
 // Plot will output the chart to the graphic device g.
 func (c *HistChart) Plot(g Graphics) {
 	layout := layout(g, c.Title, c.XRange.Label, c.YRange.Label,
-		c.XRange.TicSetting.Hide, c.YRange.TicSetting.Hide, &c.Key)
+		c.XRange.TicSetting.Hide || c.XRange.TicSetting.HideLabels,
+		c.YRange.TicSetting.Hide || c.YRange.TicSetting.HideLabels,
+		&c.Key)
 	fw, fh, _ := g.FontMetrics(elementStyle(c.Options, MajorAxisElement).Font)
 	fw += 0
 
