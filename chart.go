@@ -68,13 +68,14 @@ const (
 
 // TicSettings describes how (if at all) tics are shown on an axis.
 type TicSetting struct {
-	Hide   bool       // dont show tics if true
-	Tics   int        // 0: across axis,  1: inside,  2: outside,  other: off
-	Minor  int        // 0: off,  1: auto,  >1: number of intervalls (not number of tics!)
-	Delta  float64    // wanted step between major tics.  0 means auto 
-	TDelta TimeDelta  // same as Delta, but used for Date/Time axis
-	Grid   GridMode   // GridOff, GridLines, GridBlocks
-	Mirror MirrorAxis // 0: mirror axis and tics, -1: don't mirror anything, 1: mirror axis only (no tics)
+	Hide       bool       // dont show tics if true
+	HideLabels bool       // don't show tic labels if true
+	Tics       int        // 0: across axis,  1: inside,  2: outside,  other: off
+	Minor      int        // 0: off,  1: auto,  >1: number of intervalls (not number of tics!)
+	Delta      float64    // wanted step between major tics.  0 means auto 
+	TDelta     TimeDelta  // same as Delta, but used for Date/Time axis
+	Grid       GridMode   // GridOff, GridLines, GridBlocks
+	Mirror     MirrorAxis // 0: mirror axis and tics, -1: don't mirror anything, 1: mirror axis only (no tics)
 
 	Format  func(float64) string              // User function to format tics.
 	TFormat func(time.Time, TimeDelta) string // User function to format tics for date/time axis

@@ -185,12 +185,14 @@ func drawXTics(bg BasicGraphics, rng Range, y, ym, ticLen int, options PlotOptio
 			}
 		}
 
-		// Tic-Label
-		if rng.Time && tic.Align == -1 {
-			bg.Line(x, y+ticLen, x, y+2*ticLen, ticstyle)
-			bg.Text(lx, y+2*ticLen, tic.Label, "tl", 0, ticfont)
-		} else {
-			bg.Text(lx, y+2*ticLen, tic.Label, "tc", 0, ticfont)
+		if !rng.TicSetting.HideLabels {
+			// Tic-Label
+			if rng.Time && tic.Align == -1 {
+				bg.Line(x, y+ticLen, x, y+2*ticLen, ticstyle)
+				bg.Text(lx, y+2*ticLen, tic.Label, "tl", 0, ticfont)
+			} else {
+				bg.Text(lx, y+2*ticLen, tic.Label, "tc", 0, ticfont)
+			}
 		}
 	}
 }
@@ -295,12 +297,14 @@ func drawYTics(bg BasicGraphics, rng Range, x, xm, ticLen int, options PlotOptio
 			}
 		}
 
-		// Label
-		if rng.Time && tic.Align == 0 { // centered tic
-			bg.Line(x-2*ticLen, y, x+ticLen, y, ticstyle)
-			bg.Text(x-ticLen, ly, tic.Label, "cr", 0, ticfont)
-		} else {
-			bg.Text(x-2*ticLen, ly, tic.Label, "cr", 0, ticfont)
+		if !rng.TicSetting.HideLabels {
+			// Label
+			if rng.Time && tic.Align == 0 { // centered tic
+				bg.Line(x-2*ticLen, y, x+ticLen, y, ticstyle)
+				bg.Text(x-ticLen, ly, tic.Label, "cr", 0, ticfont)
+			} else {
+				bg.Text(x-2*ticLen, ly, tic.Label, "cr", 0, ticfont)
+			}
 		}
 	}
 
