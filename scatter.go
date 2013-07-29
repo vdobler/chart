@@ -128,7 +128,9 @@ func (c *ScatterChart) Reset() {
 // Plot outputs the scatter chart to the graphic output g.
 func (c *ScatterChart) Plot(g Graphics) {
 	layout := layout(g, c.Title, c.XRange.Label, c.YRange.Label,
-		c.XRange.TicSetting.Hide, c.YRange.TicSetting.Hide, &c.Key)
+		c.XRange.TicSetting.Hide || c.XRange.TicSetting.HideLabels,
+		c.YRange.TicSetting.Hide || c.YRange.TicSetting.HideLabels,
+		&c.Key)
 
 	width, height := layout.Width, layout.Height
 	topm, leftm := layout.Top, layout.Left
