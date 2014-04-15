@@ -140,7 +140,7 @@ func drawXTics(bg BasicGraphics, rng Range, y, ym, ticLen int, options PlotOptio
 	if rng.TicSetting.Grid > GridOff {
 		for ticcnt, tic := range rng.Tics {
 			x := rng.Data2Screen(tic.Pos)
-			if ticcnt > 0 && ticcnt < len(rng.Tics)-1 && rng.TicSetting.Grid == GridLines {
+			if ticcnt >= 0 && ticcnt <= len(rng.Tics)-1 && rng.TicSetting.Grid == GridLines {
 				// fmt.Printf("Gridline at x=%d\n", x)
 				bg.Line(x, y-1, x, ym+1, elementStyle(options, GridLineElement))
 			} else if rng.TicSetting.Grid == GridBlocks {
