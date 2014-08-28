@@ -38,7 +38,7 @@ type ImageGraphics struct {
 	fs     map[chart.FontSize]float64
 }
 
-// New creates a new ImageGraphics including an image.RGBA of dimension w x h 
+// New creates a new ImageGraphics including an image.RGBA of dimension w x h
 // with background bgcol. If font is nil it will use a builtin font.
 // If fontsize is empty useful default are used.
 func New(width, height int, bgcol color.RGBA, font *truetype.Font, fontsize map[chart.FontSize]float64) *ImageGraphics {

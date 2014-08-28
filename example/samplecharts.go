@@ -131,7 +131,7 @@ func stripChart() {
 
 //
 // All different key styles
-// 
+//
 func keyStyles() {
 	dumper := NewDumper("xkey", 6, 6, 400, 300)
 	defer dumper.Close()
@@ -533,25 +533,25 @@ func histChart(name, title string, stacked, counts, shifted bool) {
 	hc.Key.Hide = true
 	points := gauss(150, 10, 20, 0, 50)
 	hc.AddData("Sample 1", points,
-		chart.Style{ /*LineColor: color.NRGBA{0xff,0x00,0x00,0xff}, LineWidth: 1, LineStyle: 1, FillColor: color.NRGBA{0xff,0x80,0x80,0xff}*/})
+		chart.Style{ /*LineColor: color.NRGBA{0xff,0x00,0x00,0xff}, LineWidth: 1, LineStyle: 1, FillColor: color.NRGBA{0xff,0x80,0x80,0xff}*/ })
 	hc.Kernel = chart.BisquareKernel //  chart.GaussKernel // chart.EpanechnikovKernel // chart.RectangularKernel // chart.BisquareKernel
 	dumper.Plot(&hc)
 
 	points2 := gauss(80, 4, 37, 0, 50)
 	// hc.Kernel = nil
 	hc.AddData("Sample 2", points2,
-		chart.Style{ /*LineColor: color.NRGBA{0x00,0xff,0x00,0xff}, LineWidth: 1, LineStyle: 1, FillColor: color.NRGBA{0x80,0xff,0x80,0xff}*/})
+		chart.Style{ /*LineColor: color.NRGBA{0x00,0xff,0x00,0xff}, LineWidth: 1, LineStyle: 1, FillColor: color.NRGBA{0x80,0xff,0x80,0xff}*/ })
 	hc.YRange.TicSetting.Delta = 0
 	dumper.Plot(&hc)
 
 	points3 := gauss(60, 15, 0, 0, 50)
 	hc.AddData("Sample 3", points3,
-		chart.Style{ /*LineColor: color.NRGBA{0x00,0x00,0xff,0xff}, LineWidth: 1, LineStyle: 1, FillColor: color.NRGBA{0x80,0x80,0xff,0xff}*/})
+		chart.Style{ /*LineColor: color.NRGBA{0x00,0x00,0xff,0xff}, LineWidth: 1, LineStyle: 1, FillColor: color.NRGBA{0x80,0x80,0xff,0xff}*/ })
 	hc.YRange.TicSetting.Delta = 0
 	dumper.Plot(&hc)
 
 	points4 := gauss(40, 30, 15, 0, 50)
-	hc.AddData("Sample 4", points4, chart.Style{ /*LineColor: color.NRGBA{0x00,0x00,0x00,0xff}, LineWidth: 1, LineStyle: 1*/})
+	hc.AddData("Sample 4", points4, chart.Style{ /*LineColor: color.NRGBA{0x00,0x00,0x00,0xff}, LineWidth: 1, LineStyle: 1*/ })
 	hc.Kernel = nil
 	hc.YRange.TicSetting.Delta = 0
 	dumper.Plot(&hc)

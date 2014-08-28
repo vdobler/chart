@@ -39,7 +39,7 @@ func (tb *TextBuf) Put(x, y int, c rune) {
 }
 
 // Draw rectangle of width w and height h from corner at (x,y).
-// Use one of the corner style defined in Edge. 
+// Use one of the corner style defined in Edge.
 // Interior is filled with charater fill iff != 0.
 func (tb *TextBuf) Rect(x, y, w, h int, style int, fill rune) {
 	style = style % len(Edge)

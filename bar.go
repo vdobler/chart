@@ -166,7 +166,7 @@ func (c *BarChart) Plot(g Graphics) {
 	}
 
 	// TODO: gap between bars.
-	var sbw, fbw int // ScreenBarWidth 
+	var sbw, fbw int // ScreenBarWidth
 
 	var low, high map[float64]float64
 	if c.Stacked {

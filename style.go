@@ -68,7 +68,7 @@ func init() {
 	averageCharacterWidth = 15
 }
 
-// Style contains all information about all graphic elements in a chart. 
+// Style contains all information about all graphic elements in a chart.
 // All colors are in the form "#rrggbb" with rr/gg/bb hexvalues.
 // Not all elements of a plot use all fields in this struct.
 type Style struct {
@@ -104,9 +104,9 @@ type LineStyle int
 const (
 	SolidLine      LineStyle = iota //  ----------------------
 	DashedLine                      //  ----  ----  ----  ----
-	DottedLine                      //  - - - - - - - - - - - 
+	DottedLine                      //  - - - - - - - - - - -
 	DashDotDotLine                  //  ----  -  -  ----  -  -
-	LongDashLine                    // 
+	LongDashLine                    //
 	LongDotLine
 )
 

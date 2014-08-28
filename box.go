@@ -135,7 +135,7 @@ func (c *BoxChart) Plot(g Graphics) {
 		boxes := make([]Box, len(data.Samples))
 		for i, d := range data.Samples {
 			x := float64(c.XRange.Data2Screen(d.X))
-			// DebugLogger.Printf("Q1=%.2f  Q3=%.3f", d.Q1, d.Q3) 
+			// DebugLogger.Printf("Q1=%.2f  Q3=%.3f", d.Q1, d.Q3)
 			q1, q3 := float64(yf(d.Q1)), float64(yf(d.Q3))
 			med, avg := nan, nan
 			high, low := nan, nan

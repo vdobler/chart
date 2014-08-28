@@ -24,8 +24,8 @@ type ScatterChartData struct {
 	Func      func(float64) float64 // The function to draw.
 }
 
-// AddFunc adds a function f to this chart. A key/legend entry is produced 
-// if name is not empty. 
+// AddFunc adds a function f to this chart. A key/legend entry is produced
+// if name is not empty.
 func (c *ScatterChart) AddFunc(name string, f func(float64) float64, plotstyle PlotStyle, style Style) {
 	if plotstyle.undefined() {
 		plotstyle = PlotStyleLines
@@ -42,8 +42,8 @@ func (c *ScatterChart) AddFunc(name string, f func(float64) float64, plotstyle P
 	}
 }
 
-// AddData adds points in data to chart. A key/legend entry is produced 
-// if name is not empty. 
+// AddData adds points in data to chart. A key/legend entry is produced
+// if name is not empty.
 func (c *ScatterChart) AddData(name string, data []EPoint, plotstyle PlotStyle, style Style) {
 
 	// Update styles if non given
@@ -299,7 +299,7 @@ func (c *ScatterChart) clip2Point(a, b EPoint, min, max float64) []EPoint {
 	return pc
 }
 
-// Set up function which handles mappig data->screen coordinates and does 
+// Set up function which handles mappig data->screen coordinates and does
 // proper clipping on the error bars.
 func screenPointFunc(xf, yf func(float64) int, xmin, xmax, ymin, ymax float64) (spf func(EPoint) EPoint) {
 	spf = func(d EPoint) (p EPoint) {

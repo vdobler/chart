@@ -25,14 +25,14 @@ type PieChart struct {
 }
 
 // IntegerValue will format value (ignoring sum) as an integer.
-// It is a convenience function which can be assigned to the 
+// It is a convenience function which can be assigned to the
 // PieChart.FmtVal or PieChart.FmtKey field.
 func IntegerValue(value, sum float64) (s string) {
 	return fmt.Sprintf("%d", int64(value+0.5))
 }
 
-// AbsoluteValue will format value (ignoring sum).  
-// It is a convenience function which can be assigned to the 
+// AbsoluteValue will format value (ignoring sum).
+// It is a convenience function which can be assigned to the
 // PieChart.FmtVal or PieChart.FmtKey field.
 func AbsoluteValue(value, sum float64) (s string) {
 	fv := math.Abs(value)
@@ -52,7 +52,7 @@ func AbsoluteValue(value, sum float64) (s string) {
 }
 
 // PercentValue formats value as percentage of sum.
-// It is a convenience function which can be assigned to the 
+// It is a convenience function which can be assigned to the
 // PieChart.FmtVal or PieChart.FmtKey field.
 func PercentValue(value, sum float64) (s string) {
 	value *= 100 / sum
@@ -112,7 +112,7 @@ func (c *PieChart) AddIntDataPair(name string, cat []string, val []int) {
 }
 
 var PieChartShrinkage = 0.66 // Scaling factor of radius of next data set.
-var PieChartHighlight = 0.15 // How much are flaged segments offset. 
+var PieChartHighlight = 0.15 // How much are flaged segments offset.
 
 // Reset chart to state before plotting.
 func (c *PieChart) Reset() {}

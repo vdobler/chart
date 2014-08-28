@@ -11,7 +11,7 @@ import (
 // StripChart represents very simple strip charts.
 type StripChart struct {
 	Jitter       bool // Add jitter to help distinguish overlapping values
-	ScatterChart      // The embeded ScatterChart is responsible for all drawing 
+	ScatterChart      // The embeded ScatterChart is responsible for all drawing
 }
 
 // AddData adds data to the strip chart.

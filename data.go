@@ -5,7 +5,7 @@ import (
 )
 
 // Values is an interface for any type of data representable by a real.
-// Its standard implementation here is Real (float64). 
+// Its standard implementation here is Real (float64).
 type Value interface {
 	XVal() float64
 }
@@ -92,7 +92,7 @@ func (c CatValue) Flaged() bool     { return c.Flag }
 // Box represents a box in an boxplot.
 type Box struct {
 	X           float64   // x-position of the box
-	Avg         float64   // "average" value (uncommon in std. box plots, but sometimes useful)  
+	Avg         float64   // "average" value (uncommon in std. box plots, but sometimes useful)
 	Q1, Med, Q3 float64   // lower quartil, median and upper quartil
 	Low, High   float64   // low and hig end of whiskers (normaly last point in the 1.5*IQR range of Q1/3)
 	Outliers    []float64 // list of y-values of outliers

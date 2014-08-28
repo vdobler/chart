@@ -7,14 +7,14 @@ import (
 // Key encapsulates settings for keys/legends in a chart.
 //
 // Key placement os governed by Pos which may take the following values:
-//          otl  otc  otr      
-//         +-------------+ 
+//          otl  otc  otr
+//         +-------------+
 //     olt |itl  itc  itr| ort
 //         |             |
 //     olc |icl  icc  icr| orc
 //         |             |
 //     olb |ibl  ibc  ibr| orb
-//         +-------------+ 
+//         +-------------+
 //          obl  obc  obr
 //
 type Key struct {
@@ -29,7 +29,7 @@ type Key struct {
 // KeyEntry encapsulates an antry in the key/legend.
 type KeyEntry struct {
 	Text      string    // Text to display
-	PlotStyle PlotStyle // What to show: symbol, line, bar, combi thereof 
+	PlotStyle PlotStyle // What to show: symbol, line, bar, combi thereof
 	Style     Style     // How to show
 
 }
@@ -127,7 +127,7 @@ func textDim(t string) (w float32, h int) {
 var (
 	KeyHorSep      float32 = 1.5  // Horizontal spacing between key box and content
 	KeyVertSep     float32 = 0.5  // Vertical spacing between key box and content
-	KeyColSep      float32 = 2.0  // Horizontal spacing between two columns in key 
+	KeyColSep      float32 = 2.0  // Horizontal spacing between two columns in key
 	KeySymbolWidth float32 = 5    // Horizontal length/space reserved for symbol
 	KeySymbolSep   float32 = 2    // Horizontal spacing bewteen symbol and text
 	KeyRowSep      float32 = 0.75 // Vertical spacing between individual rows.

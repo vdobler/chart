@@ -12,7 +12,7 @@ import (
 type MinimalGraphics interface {
 	Background() (r, g, b, a uint8)                         // Color of background
 	FontMetrics(font Font) (fw float32, fh int, mono bool)  // Return fontwidth and -height in pixel
-	TextLen(t string, font Font) int                        // Length=width of t in screen units if set on font 
+	TextLen(t string, font Font) int                        // Length=width of t in screen units if set on font
 	Line(x0, y0, x1, y1 int, style Style)                   // Draw line from (x0,y0) to (x1,y1)
 	Text(x, y int, t string, align string, rot int, f Font) // Put t at (x,y) rotated by rot aligned [[tcb]][lcr]
 }
@@ -52,7 +52,7 @@ type Graphics interface {
 }
 
 type Barinfo struct {
-	x, y  int    // (x,y) of top left corner; 
+	x, y  int    // (x,y) of top left corner;
 	w, h  int    // width and heigt
 	t, tp string // label text and text position '[oi][tblr]' or 'c'
 	f     Font   // font of text
@@ -63,7 +63,7 @@ type Wedgeinfo struct {
 	Text, Tp string  // label text and text position: [ico]
 	Style    Style   // style of this wedge
 	Font     Font    // font of text
-	Shift    int     // Highlighting of wedge 
+	Shift    int     // Highlighting of wedge
 }
 
 func GenericTextLen(mg MinimalGraphics, t string, font Font) (width int) {
@@ -358,7 +358,7 @@ func GenericYAxis(bg BasicGraphics, rng Range, x, xm int, options PlotOptions) {
 // GenericScatter draws the given points according to style.
 // style.FillColor is used as color of error bars and style.FontSize is used
 // as the length of the endmarks of the error bars. Both have suitable defaults
-// if the FontXyz are not set. Point coordinates and errors must be provided 
+// if the FontXyz are not set. Point coordinates and errors must be provided
 // in screen coordinates.
 func GenericScatter(bg BasicGraphics, points []EPoint, plotstyle PlotStyle, style Style) {
 
@@ -566,7 +566,7 @@ func fillQuarterWedge(mg MinimalGraphics, xi, yi, ri int, alpha, beta, e float64
 		x0 := yf / ta
 		x1 := yf / tb
 		x2 := math.Sqrt(r*r - yf*yf)
-		// DebugLogger.Printf("y=%d  x0=%.2f    x1=%.2f    x2=%.2f  border=%t", y, x0, x1, x2, (x2<x1))  
+		// DebugLogger.Printf("y=%d  x0=%.2f    x1=%.2f    x2=%.2f  border=%t", y, x0, x1, x2, (x2<x1))
 		if math.IsNaN(x1) || x2 < x1 {
 			x1 = x2
 		}

@@ -11,7 +11,7 @@ type HistChartData struct {
 	Samples []float64
 }
 
-// HistChart represents histogram charts. 
+// HistChart represents histogram charts.
 //
 // Histograms should not be mixed up with bar charts produced by BarChart:
 // Histograms are computed (binified) automatically from the raw
@@ -39,7 +39,7 @@ const sqrt2piinv = 0.39894228 // 1.0 / math.Sqrt(2.0*math.Pi)
 
 // Some common smoothing kernels. All are identical 0 outside [-1,1[.
 var (
-	// 1/2 
+	// 1/2
 	RectangularKernel = func(x float64) float64 {
 		if x >= -1 && x < 1 {
 			return 0.5
@@ -109,7 +109,7 @@ func (c *HistChart) AddData(name string, data []float64, style Style) {
 	}
 }
 
-// AddDataInt is a convenience method to add integer data (a simple wrapper 
+// AddDataInt is a convenience method to add integer data (a simple wrapper
 // around AddData).
 func (c *HistChart) AddDataInt(name string, data []int, style Style) {
 	fdata := make([]float64, len(data))

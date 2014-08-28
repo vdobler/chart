@@ -14,7 +14,7 @@ type Chart interface {
 	Reset()          // Reset any setting made during last plot
 }
 
-// Expansion determines the way an axis range is expanded to align 
+// Expansion determines the way an axis range is expanded to align
 // nicely with the tics on the axis.
 type Expansion int
 
@@ -22,7 +22,7 @@ type Expansion int
 const (
 	ExpandNextTic Expansion = iota // Set min/max to next tic really below/above min/max of data
 	ExpandToTic                    // Set to next tic below/above or equal to min/max of data
-	ExpandTight                    // Use data min/max as limit 
+	ExpandTight                    // Use data min/max as limit
 	ExpandABit                     // Like ExpandToTic and add/subtract ExpandABitFraction of tic distance.
 )
 
@@ -30,7 +30,7 @@ var ExpandABitFraction = 0.5 // Fraction of tic spacing added in ExpandABit Rang
 
 // RangeMode describes how one end of an axis is set up. There are basically three different main modes:
 //   o Fixed: Fixed==true.
-//     Use Value/TValue as fixed value ignoring data. 
+//     Use Value/TValue as fixed value ignoring data.
 //   o Unconstrained autoscaling: Fixed==false && Constrained==false.
 //     Set range to whatever data requires.
 //   o Constrained autoscaling: Fixed==false && Constrained==true.
@@ -72,7 +72,7 @@ type TicSetting struct {
 	HideLabels bool       // don't show tic labels if true
 	Tics       int        // 0: across axis,  1: inside,  2: outside,  other: off
 	Minor      int        // 0: off,  1: auto,  >1: number of intervalls (not number of tics!)
-	Delta      float64    // wanted step between major tics.  0 means auto 
+	Delta      float64    // wanted step between major tics.  0 means auto
 	TDelta     TimeDelta  // same as Delta, but used for Date/Time axis
 	Grid       GridMode   // GridOff, GridLines, GridBlocks
 	Mirror     MirrorAxis // 0: mirror axis and tics, -1: don't mirror anything, 1: mirror axis only (no tics)
@@ -115,8 +115,8 @@ type Range struct {
 	Screen2Data func(int) float64     // Inverse of Data2Screen
 }
 
-// Fixed is a helper (just reduces typing) functions which turns of autoscaling 
-// and sets the axis range to [min,max] and the tic distance to delta. 
+// Fixed is a helper (just reduces typing) functions which turns of autoscaling
+// and sets the axis range to [min,max] and the tic distance to delta.
 func (r *Range) Fixed(min, max, delta float64) {
 	r.MinMode.Fixed, r.MaxMode.Fixed = true, true
 	r.MinMode.Value, r.MaxMode.Value = min, max
@@ -618,7 +618,7 @@ func (r *Range) Setup(desiredNumberOfTics, maxNumberOfTics, sWidth, sOffset int,
 
 	if r.Time {
 		r.tSetup(desiredNumberOfTics, maxNumberOfTics, delta, mindelta)
-	} else { // simple, not a date range 
+	} else { // simple, not a date range
 		r.fSetup(desiredNumberOfTics, maxNumberOfTics, delta, mindelta)
 	}
 
