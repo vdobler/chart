@@ -6,3 +6,5 @@ example/example
 example/bestof.svg
 example/bestof.txt
 
+.idea
+*.iml
