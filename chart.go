@@ -79,7 +79,7 @@ type TicSetting struct {
 	
 	Format  func(float64) string              // User function to format tics.
 	TFormat func(time.Time, TimeDelta) string // User function to format tics for date/time axis
-	TLocaiton *time.Location
+	TLocation *time.Location
 
 	UserDelta bool // true if Delta or TDelta was input
 }
@@ -419,9 +419,9 @@ func (r *Range) tSetup(desiredNumberOfTics, maxNumberOfTics int, delta, mindelta
 	mint := time.Unix(int64(r.DataMin), 0)
 	maxt := time.Unix(int64(r.DataMax), 0)
 	
-	if TLocation != nil {
-		mint = mint.In(r.TLocation)
-		maxt = maxt.In(r.TLocation)
+	if r.TicSetting.TLocation != nil {
+		mint = mint.In(r.TicSetting.TLocation)
+		maxt = maxt.In(r.TicSetting.TLocation)
 	}
 
 	var ftic, ltic time.Time
@@ -473,8 +473,8 @@ func (r *Range) tSetup(desiredNumberOfTics, maxNumberOfTics int, delta, mindelta
 		t := Tic{Pos: x, LabelPos: labelPos, Label: label, Align: align}
 		r.Tics = append(r.Tics, t)
 		z := time.Unix(ftic.Unix()+step+step/5, 0)
-		if TLocation != nil {
-			z = z.In(r.TLocation)
+		if r.TicSetting.TLocation != nil {
+			z = z.In(r.TicSetting.TLocation)
 		}
 		ftic = RoundDown(z, td)
 	}
