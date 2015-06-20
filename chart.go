@@ -76,9 +76,9 @@ type TicSetting struct {
 	TDelta     TimeDelta  // same as Delta, but used for Date/Time axis
 	Grid       GridMode   // GridOff, GridLines, GridBlocks
 	Mirror     MirrorAxis // 0: mirror axis and tics, -1: don't mirror anything, 1: mirror axis only (no tics)
-	
-	Format  func(float64) string              // User function to format tics.
-	TFormat func(time.Time, TimeDelta) string // User function to format tics for date/time axis
+
+	Format    func(float64) string              // User function to format tics.
+	TFormat   func(time.Time, TimeDelta) string // User function to format tics for date/time axis
 	TLocation *time.Location
 
 	UserDelta bool // true if Delta or TDelta was input
@@ -418,7 +418,7 @@ func (r *Range) tSetup(desiredNumberOfTics, maxNumberOfTics int, delta, mindelta
 	// Set up time tic delta
 	mint := time.Unix(int64(r.DataMin), 0)
 	maxt := time.Unix(int64(r.DataMax), 0)
-	
+
 	if r.TicSetting.TLocation != nil {
 		mint = mint.In(r.TicSetting.TLocation)
 		maxt = maxt.In(r.TicSetting.TLocation)
