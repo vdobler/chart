@@ -76,9 +76,10 @@ type TicSetting struct {
 	TDelta     TimeDelta  // same as Delta, but used for Date/Time axis
 	Grid       GridMode   // GridOff, GridLines, GridBlocks
 	Mirror     MirrorAxis // 0: mirror axis and tics, -1: don't mirror anything, 1: mirror axis only (no tics)
-
+	
 	Format  func(float64) string              // User function to format tics.
 	TFormat func(time.Time, TimeDelta) string // User function to format tics for date/time axis
+	TLocation *time.Location
 
 	UserDelta bool // true if Delta or TDelta was input
 }
@@ -351,7 +352,7 @@ func tApplyRangeMode(mode RangeMode, val time.Time, step TimeDelta, upper bool) 
 		} else if sval > int64(mode.Upper) {
 			sval = int64(mode.Upper)
 		}
-		val = time.Unix(sval, 0)
+		val = time.Unix(sval, 0).In(val.Location())
 	}
 
 	switch mode.Expand {
@@ -371,9 +372,9 @@ func tApplyRangeMode(mode RangeMode, val time.Time, step TimeDelta, upper bool) 
 		s := tic.Unix()
 		if math.Abs(float64(s-val.Unix())/float64(step.Seconds())) < 0.15 {
 			if upper {
-				val = RoundUp(time.Unix(s+step.Seconds()/2, 0), step)
+				val = RoundUp(time.Unix(s+step.Seconds()/2, 0).In(val.Location()), step)
 			} else {
-				val = RoundDown(time.Unix(s-step.Seconds()/2, 0), step)
+				val = RoundDown(time.Unix(s-step.Seconds()/2, 0).In(val.Location()), step)
 			}
 		} else {
 			val = tic
@@ -382,10 +383,10 @@ func tApplyRangeMode(mode RangeMode, val time.Time, step TimeDelta, upper bool) 
 	case ExpandABit:
 		if upper {
 			tic = RoundDown(val, step)
-			val = time.Unix(tic.Unix()+step.Seconds()/2, 0)
+			val = time.Unix(tic.Unix()+step.Seconds()/2, 0).In(val.Location())
 		} else {
 			tic = RoundUp(val, step)
-			val = time.Unix(tic.Unix()-step.Seconds()/2, 0)
+			val = time.Unix(tic.Unix()-step.Seconds()/2, 0).In(val.Location())
 		}
 		return
 
@@ -417,6 +418,11 @@ func (r *Range) tSetup(desiredNumberOfTics, maxNumberOfTics int, delta, mindelta
 	// Set up time tic delta
 	mint := time.Unix(int64(r.DataMin), 0)
 	maxt := time.Unix(int64(r.DataMax), 0)
+	
+	if r.TicSetting.TLocation != nil {
+		mint = mint.In(r.TicSetting.TLocation)
+		maxt = maxt.In(r.TicSetting.TLocation)
+	}
 
 	var ftic, ltic time.Time
 	r.TMin, ftic = tApplyRangeMode(r.MinMode, mint, td, false)
@@ -466,7 +472,11 @@ func (r *Range) tSetup(desiredNumberOfTics, maxNumberOfTics int, delta, mindelta
 		}
 		t := Tic{Pos: x, LabelPos: labelPos, Label: label, Align: align}
 		r.Tics = append(r.Tics, t)
-		ftic = RoundDown(time.Unix(ftic.Unix()+step+step/5, 0), td)
+		z := time.Unix(ftic.Unix()+step+step/5, 0)
+		if r.TicSetting.TLocation != nil {
+			z = z.In(r.TicSetting.TLocation)
+		}
+		ftic = RoundDown(z, td)
 	}
 	// last tic might not get label if period
 	if td.Period() {
