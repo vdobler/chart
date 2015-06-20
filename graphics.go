@@ -614,7 +614,6 @@ func mapQ(w float64, q int) float64 {
 	default:
 		panic("No such quadrant")
 	}
-	return w
 }
 
 // Fill wedge with center (xi,yi), radius ri from alpha to beta with style.

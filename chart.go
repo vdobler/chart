@@ -243,16 +243,14 @@ func FmtFloat(f float64) string {
 			p--
 		}
 		return FmtFloat(f) + Units[p]
-	} else {
-		var p = 7
-		for math.Abs(f) > 1000 && p < 16 {
-			f /= 1000
-			p++
-		}
-		return FmtFloat(f) + Units[p]
-
 	}
-	return "xxx"
+
+	var p = 7
+	for math.Abs(f) > 1000 && p < 16 {
+		f /= 1000
+		p++
+	}
+	return FmtFloat(f) + Units[p]
 }
 
 func almostEqual(a, b, d float64) bool {
