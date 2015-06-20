@@ -5,12 +5,6 @@ import (
 	"math"
 )
 
-type HistChartData struct {
-	Name    string
-	Style   Style
-	Samples []float64
-}
-
 // HistChart represents histogram charts.
 //
 // Histograms should not be mixed up with bar charts produced by BarChart:
@@ -33,6 +27,14 @@ type HistChart struct {
 	Data           []HistChartData
 }
 
+// HistChartData encapsulates one data set in a histogram chart.
+type HistChartData struct {
+	Name    string
+	Style   Style
+	Samples []float64
+}
+
+// Kernel is a smoothing kernel for histograms.
 type Kernel func(x float64) float64
 
 const sqrt2piinv = 0.39894228 // 1.0 / math.Sqrt(2.0*math.Pi)
