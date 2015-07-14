@@ -1,7 +1,7 @@
 package imgg
 
 import (
-	"code.google.com/p/draw2d/draw2d"
+	"github.com/llgcode/draw2d"
 	"code.google.com/p/freetype-go/freetype"
 	"code.google.com/p/freetype-go/freetype/raster"
 	"code.google.com/p/freetype-go/freetype/truetype"
