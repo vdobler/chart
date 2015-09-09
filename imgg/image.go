@@ -1,17 +1,19 @@
 package imgg
 
 import (
-	"code.google.com/p/draw2d/draw2d"
-	"code.google.com/p/freetype-go/freetype"
-	"code.google.com/p/freetype-go/freetype/raster"
-	"code.google.com/p/freetype-go/freetype/truetype"
-	"code.google.com/p/graphics-go/graphics"
-	"github.com/vdobler/chart"
 	"image"
 	"image/color"
 	"image/draw"
 	"log"
 	"math"
+
+	"code.google.com/p/graphics-go/graphics"
+	"github.com/golang/freetype"
+	"github.com/golang/freetype/truetype"
+	"github.com/llgcode/draw2d"
+	"github.com/llgcode/draw2d/draw2dimg"
+	"github.com/vdobler/chart"
+	"golang.org/x/image/math/fixed"
 )
 
 var (
@@ -43,7 +45,7 @@ type ImageGraphics struct {
 // If fontsize is empty useful default are used.
 func New(width, height int, bgcol color.RGBA, font *truetype.Font, fontsize map[chart.FontSize]float64) *ImageGraphics {
 	img := image.NewRGBA(image.Rect(0, 0, width, height))
-	gc := draw2d.NewGraphicContext(img)
+	gc := draw2dimg.NewGraphicContext(img)
 	gc.SetLineJoin(draw2d.BevelJoin)
 	gc.SetLineCap(draw2d.SquareCap)
 	gc.SetStrokeColor(image.Black)
@@ -64,7 +66,7 @@ func New(width, height int, bgcol color.RGBA, font *truetype.Font, fontsize map[
 // area starting at (x,y) on the provided image img. The rest of the parameters
 // are the same as in New().
 func AddTo(img *image.RGBA, x, y, width, height int, bgcol color.RGBA, font *truetype.Font, fontsize map[chart.FontSize]float64) *ImageGraphics {
-	gc := draw2d.NewGraphicContext(img)
+	gc := draw2dimg.NewGraphicContext(img)
 	gc.SetLineJoin(draw2d.BevelJoin)
 	gc.SetLineCap(draw2d.SquareCap)
 	gc.SetStrokeColor(image.Black)
@@ -102,18 +104,13 @@ func (ig *ImageGraphics) TextLen(s string, font chart.Font) int {
 	c.SetFont(ig.font)
 	fontsize := ig.relFontsizeToPixel(font.Size)
 	c.SetFontSize(fontsize)
-	scale := int32(fontsize * dpi * (64.0 / 72.0))
-	var p raster.Point
-	prev, hasPrev := truetype.Index(0), false
-	for _, rune := range s {
-		index := ig.font.Index(rune)
-		if hasPrev {
-			p.X += raster.Fix32(ig.font.Kerning(scale, prev, index)) << 2
-		}
-		p.X += raster.Fix32(ig.font.HMetric(scale, index).AdvanceWidth) << 2
-		prev, hasPrev = index, true
+
+	// really draw it
+	width, err := c.DrawString(s, freetype.Pt(0, 0))
+	if err != nil {
+		return 10 * len(s) // BUG
 	}
-	return int((p.X + 127) / 256)
+	return int(width.X+32)>>6 + 1
 }
 
 func (ig *ImageGraphics) setStyle(style chart.Style) {
@@ -254,42 +251,42 @@ func (ig *ImageGraphics) textBox(t string, font chart.Font) image.Image {
 	bg := image.NewUniform(color.Alpha{0x00})
 	width := ig.TextLen(t, font)
 	size := ig.relFontsizeToPixel(font.Size)
-	bb := ig.font.Bounds(int32(size))
-	// TODO: Ugly, manual, heuristic hack to get "nicer" text for common latin characters
-	bb.YMin++
-	if size >= 15 {
-		bb.YMin++
-		bb.YMax--
-	}
-	if size >= 20 {
-		bb.YMax--
-	}
-	if size >= 25 {
-		bb.YMin++
-		bb.YMax--
-	}
-
-	dy := int(bb.YMax - bb.YMin)
-	canvas := image.NewAlpha(image.Rect(0, 0, width, dy))
-	draw.Draw(canvas, canvas.Bounds(), bg, image.ZP, draw.Src)
 
 	c := freetype.NewContext()
 	c.SetDPI(dpi)
 	c.SetFont(ig.font)
 	c.SetFontSize(size)
-	c.SetClip(canvas.Bounds())
+	bb := ig.font.Bounds(c.PointToFixed(float64(size)))
+	bbDelta := bb.Max.Sub(bb.Min)
+
+	// TODO: Ugly, manual, heuristic hack to get "nicer" text for common latin characters
+	/*
+		bb.YMin++
+		if size >= 15 {
+			bb.YMin++
+			bb.YMax--
+		}
+		if size >= 20 {
+			bb.YMax--
+		}
+		if size >= 25 {
+			bb.YMin++
+			bb.YMax--
+		}
+	*/
+	height := int(bbDelta.Y+32) >> 6
+	canvas := image.NewAlpha(image.Rect(0, 0, width, height))
+	draw.Draw(canvas, canvas.Bounds(), bg, image.ZP, draw.Src)
 	c.SetDst(canvas)
 	c.SetSrc(fg)
-
+	c.SetClip(canvas.Bounds())
 	// Draw the text.
-	pt := freetype.Pt(0, dy+int(bb.YMin)-1)
-	extent, err := c.DrawString(t, pt)
+	extent, err := c.DrawString(t, fixed.Point26_6{X: 0, Y: bb.Max.Y})
 	if err != nil {
 		log.Println(err)
 		return nil
 	}
-	// log.Printf("text %q, extent: %v", t, extent)
-	return canvas.SubImage(image.Rect(0, 0, int((extent.X+127)/256), dy))
+	return canvas.SubImage(image.Rect(0, 0, int(extent.X)>>6, height))
 }
 
 func (ig *ImageGraphics) paint(x, y int, R, G, B uint32, alpha uint32) {
