@@ -3,11 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/ajstarks/svgo"
-	"github.com/vdobler/chart"
-	"github.com/vdobler/chart/imgg"
-	"github.com/vdobler/chart/svgg"
-	"github.com/vdobler/chart/txtg"
 	"image"
 	"image/color"
 	"image/draw"
@@ -18,6 +13,12 @@ import (
 	"os"
 	"sort"
 	"time"
+
+	"github.com/ajstarks/svgo"
+	"github.com/vdobler/chart"
+	"github.com/vdobler/chart/imgg"
+	"github.com/vdobler/chart/svgg"
+	"github.com/vdobler/chart/txtg"
 )
 
 var (
@@ -865,11 +866,11 @@ func textlen() {
 // Test of graphic primitives
 //
 func testGraphics() {
-	dumper := NewDumper("xgraphics", 1, 1, 800, 416)
+	dumper := NewDumper("xgraphics", 1, 1, 900, 416)
 	defer dumper.Close()
 
-	igr := imgg.AddTo(dumper.I, 0, 0, 800, 416, color.RGBA{0xff, 0xff, 0xff, 0xff}, nil, nil)
-	sgr := svgg.AddTo(dumper.S, 0, 0, 800, 416, "", 14, color.RGBA{0xff, 0xff, 0xff, 0xff})
+	igr := imgg.AddTo(dumper.I, 0, 0, 900, 416, color.RGBA{0xff, 0xff, 0xff, 0xff}, nil, nil)
+	sgr := svgg.AddTo(dumper.S, 0, 0, 900, 416, "", 14, color.RGBA{0xff, 0xff, 0xff, 0xff})
 
 	style := chart.Style{LineWidth: 0, LineColor: color.NRGBA{0x00, 0x00, 0x00, 0xff}, LineStyle: chart.SolidLine}
 
@@ -947,20 +948,20 @@ func testGraphics() {
 	rx, ry := 180, 10
 	px, py := 450, 90
 	text := "(JgbXÄj)"
-	alignedText(igr, text, font, rx, ry, px, py)
-	alignedText(sgr, text, font, rx, ry, px, py)
+	alignedText(igr, text, font, rx, ry, px, py, 0, 0)
+	alignedText(sgr, text, font, rx, ry, px, py, 0, 0)
 
 	font.Size = chart.HugeFontSize
 	rx, ry = 180, 100
 	px, py = 450, 180
-	alignedText(igr, text, font, rx, ry, px, py)
-	alignedText(sgr, text, font, rx, ry, px, py)
+	alignedText(igr, text, font, rx, ry, px, py, 0, 0)
+	alignedText(sgr, text, font, rx, ry, px, py, 0, 0)
 
 	font.Size = chart.TinyFontSize
 	rx, ry = 180, 190
 	px, py = 450, 270
-	alignedText(igr, text, font, rx, ry, px, py)
-	alignedText(sgr, text, font, rx, ry, px, py)
+	alignedText(igr, text, font, rx, ry, px, py, 0, 0)
+	alignedText(sgr, text, font, rx, ry, px, py, 0, 0)
 
 	// Rectangles
 	x0, y0 = 180, 285
@@ -1010,9 +1011,43 @@ func testGraphics() {
 		}
 	}
 
+	// Rotated text
+	gray := color.NRGBA{0x80, 0x80, 0x80, 0xff}
+	style = chart.Style{LineColor: gray, FillColor: gray}
+	rx, ry = 675, 50
+	px, py = 875, 200
+	// igr.Rect(rx, ry, px-rx, py-ry, style)
+	// sgr.Rect(rx, ry, px-rx, py-ry, style)
+	text = "[##X##]"
+	alignedText(igr, text, font, rx, ry, px, py, 20, 5)
+	alignedText(sgr, text, font, rx, ry, px, py, 20, 5)
+
+	x0, y0 = 775, 325
+	black := color.NRGBA{0x00, 0x00, 0x00, 0xff}
+	font.Color = black
+	style.LineWidth, style.LineColor, style.LineStyle = 1, black, chart.SolidLine
+	igr.Line(x0-100, y0, x0+100, y0, style)
+	igr.Line(x0, y0-100, x0, y0+100, style)
+	igr.Text(x0, y0, "abcABCxyz", "cc", 1, font)
+	igr.Text(x0, y0, "abcABCxyz", "cc", 30, font)
+	igr.Text(x0, y0, "abcABCxyz", "cc", 60, font)
+	igr.Text(x0, y0, "abcABCxyz", "cc", 90, font)
+
+	/*
+		font.Color = color.NRGBA{0xee, 0x00, 0x00, 0xff}
+		igr.Text(x0, y0, "abcABCxyz", "tl", 1, font)
+		igr.Text(x0, y0, "abcABCxyz", "tl", 30, font)
+		igr.Text(x0, y0, "abcABCxyz", "tl", 60, font)
+		igr.Text(x0, y0, "abcABCxyz", "tl", 90, font)
+		font.Color = color.NRGBA{0x11, 0xee, 0x11, 0xff}
+		igr.Text(x0, y0, "abcABCxyz", "br", 1, font)
+		igr.Text(x0, y0, "abcABCxyz", "br", 30, font)
+		igr.Text(x0, y0, "abcABCxyz", "br", 60, font)
+		igr.Text(x0, y0, "abcABCxyz", "br", 90, font)
+	*/
 }
 
-func alignedText(g chart.Graphics, text string, font chart.Font, rx, ry, px, py int) {
+func alignedText(g chart.Graphics, text string, font chart.Font, rx, ry, px, py int, rot int, drot int) {
 	mx, my := (rx+px)/2, (ry+py)/2
 	var style chart.Style
 	style.LineWidth, style.LineColor, style.LineStyle = 1, color.NRGBA{0xff, 0x00, 0x00, 0xff}, chart.SolidLine
@@ -1024,23 +1059,31 @@ func alignedText(g chart.Graphics, text string, font chart.Font, rx, ry, px, py 
 	g.Line(rx, my, px, my, style)
 
 	font.Color = color.NRGBA{0x00, 0x00, 0x00, 0xff}
-	g.Text(rx, ry, text, "tl", 0, font)
+	g.Text(rx, ry, text, "tl", rot, font)
 	font.Color = color.NRGBA{0xff, 0x00, 0x00, 0xff}
-	g.Text(mx, ry, text, "tc", 0, font)
+	rot += drot
+	g.Text(mx, ry, text, "tc", rot, font)
 	font.Color = color.NRGBA{0x00, 0xff, 0x00, 0xff}
-	g.Text(px, ry, text, "tr", 0, font)
+	rot += drot
+	g.Text(px, ry, text, "tr", rot, font)
 	font.Color = color.NRGBA{0x00, 0x00, 0xff, 0xff}
-	g.Text(rx, my, text, "cl", 0, font)
+	rot += drot
+	g.Text(rx, my, text, "cl", rot, font)
 	font.Color = color.NRGBA{0xbb, 0xbb, 0x00, 0xff}
-	g.Text(mx, my, text, "cc", 0, font)
+	rot += drot
+	g.Text(mx, my, text, "cc", rot, font)
 	font.Color = color.NRGBA{0xff, 0x00, 0xff, 0xff}
-	g.Text(px, my, text, "cr", 0, font)
+	rot += drot
+	g.Text(px, my, text, "cr", rot, font)
 	font.Color = color.NRGBA{0x00, 0xff, 0xff, 0xff}
-	g.Text(rx, py, text, "bl", 0, font)
+	rot += drot
+	g.Text(rx, py, text, "bl", rot, font)
 	font.Color = color.NRGBA{0x60, 0x60, 0x60, 0xff}
-	g.Text(mx, py, text, "bc", 0, font)
+	rot += drot
+	g.Text(mx, py, text, "bc", rot, font)
 	font.Color = color.NRGBA{0x00, 0x00, 0x00, 0xff}
-	g.Text(px, py, text, "br", 0, font)
+	rot += drot
+	g.Text(px, py, text, "br", rot, font)
 }
 
 func bestOf() {
