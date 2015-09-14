@@ -208,8 +208,8 @@ func (ig *ImageGraphics) Text(x, y int, t string, align string, rot int, f chart
 		dx := float64(ax)*cos + float64(ay)*sin
 		dy := -float64(ax)*sin + float64(ay)*cos
 		trans := f64.Aff3{
-			+cos, +sin, float64(x) - dx,
-			-sin, +cos, float64(y) - dy,
+			+cos, +sin, float64(x+ig.x0) - dx,
+			-sin, +cos, float64(y+ig.y0) - dy,
 		}
 		draw.BiLinear.Transform(ig.Image, trans,
 			textImage, textImage.Bounds(), draw.Over, nil)

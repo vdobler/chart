@@ -1202,9 +1202,12 @@ func bestOf() {
 	europe := []float64{10, 15, 25, 20}
 	asia := []float64{15, 30, 10, 20}
 	africa := []float64{20, 5, 5, 5}
-	blue := chart.Style{Symbol: '#', LineColor: color.NRGBA{0x00, 0x00, 0xff, 0xff}, LineWidth: 3, FillColor: color.NRGBA{0x40, 0x40, 0xff, 0xff}}
-	green := chart.Style{Symbol: 'x', LineColor: color.NRGBA{0x00, 0xaa, 0x00, 0xff}, LineWidth: 3, FillColor: color.NRGBA{0x40, 0xff, 0x40, 0xff}}
-	pink := chart.Style{Symbol: '0', LineColor: color.NRGBA{0x99, 0x00, 0x99, 0xff}, LineWidth: 3, FillColor: color.NRGBA{0xaa, 0x60, 0xaa, 0xff}}
+	blue := chart.Style{Symbol: '#', LineColor: color.NRGBA{0x00, 0x00, 0xff, 0xff},
+		LineWidth: 3, FillColor: color.NRGBA{0x40, 0x40, 0xff, 0xff}}
+	green := chart.Style{Symbol: 'x', LineColor: color.NRGBA{0x00, 0xaa, 0x00, 0xff},
+		LineWidth: 3, FillColor: color.NRGBA{0x40, 0xff, 0x40, 0xff}}
+	pink := chart.Style{Symbol: '0', LineColor: color.NRGBA{0x99, 0x00, 0x99, 0xff},
+		LineWidth: 3, FillColor: color.NRGBA{0xaa, 0x60, 0xaa, 0xff}}
 
 	bar := chart.BarChart{Title: "Income Distribution"}
 	bar.XRange.Category = []string{"none", "low", "average", "high"}
@@ -1220,7 +1223,6 @@ func bestOf() {
 	bar.AddDataPair("Africa", x, africa, green)
 	bar.ShowVal = 3
 	charts = append(charts, &bar)
-
 	// Time axis
 	tdc := chart.ScatterChart{Title: "Crop Growth"}
 	tdc.XRange.Time, tdc.YRange.Time = true, true
