@@ -456,6 +456,8 @@ func boxChart() {
 
 // gaussian distribution with n samples, stddev of s, offset of a, forced to [l,u]
 func gauss(n int, s, a, l, u float64) []float64 {
+	// Make output of gauss deterministic by seeding with a fixed value.
+	rand.Seed(12345)
 	points := make([]float64, n)
 	for i := 0; i < len(points); i++ {
 		x := rand.NormFloat64()*s + a
