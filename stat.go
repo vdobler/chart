@@ -5,7 +5,7 @@ import (
 	"sort"
 )
 
-// Return p percentil of pre-sorted integer data. 0 <= p <= 100.
+// PercentilInt returns p percentil of pre-sorted integer data. 0 <= p <= 100.
 func PercentilInt(data []int, p int) int {
 	n := len(data)
 	if n == 0 {
@@ -57,7 +57,7 @@ func percentilFloat64(data []float64, p int) float64 {
 	return val
 }
 
-// Compute minimum, p percentil, median, average, 100-p percentil and maximum of values in data.
+// SixvalInt: Compute minimum, p percentil, median, average, 100-p percentil and maximum of values in data.
 func SixvalInt(data []int, p int) (min, lq, med, avg, uq, max int) {
 	min, max = math.MaxInt32, math.MinInt32
 	sum, n := 0, len(data)
@@ -98,7 +98,7 @@ func SixvalInt(data []int, p int) (min, lq, med, avg, uq, max int) {
 	return
 }
 
-// Compute minimum, p percentil, median, average, 100-p percentil and maximum of values in data.
+// SixvalFloat64: Compute minimum, p percentil, median, average, 100-p percentil and maximum of values in data.
 func SixvalFloat64(data []float64, p int) (min, lq, med, avg, uq, max float64) {
 	n := len(data)
 
