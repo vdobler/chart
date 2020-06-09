@@ -2,7 +2,7 @@ package txtg
 
 import (
 	"fmt"
-	"github.com/vdobler/chart"
+	"github.com/yyonghe/chart"
 	"math"
 )
 

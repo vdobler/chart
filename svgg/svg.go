@@ -6,7 +6,7 @@ import (
 	"math"
 
 	"github.com/ajstarks/svgo"
-	"github.com/vdobler/chart"
+	"github.com/yyonghe/chart"
 )
 
 // SvgGraphics implements BasicGraphics and uses the generic implementations
@@ -399,9 +399,11 @@ func (sg *SvgGraphics) Rings(wedges []chart.Wedgeinfo, x, y, ro, ri int) {
 			d += fmt.Sprintf("L %d,%d ", int(rf*cphi+0.5+dx)+x, int(rf*sphi+0.5+dy)+y)
 
 			dx, dy = p*math.Cos(w.Psi-math.Pi/2), p*math.Sin(w.Psi-math.Pi/2)
-			if math.Abs(w.Phi-w.Psi)>math.Pi {
-				d += fmt.Sprintf("A %d,%d 0 1 1 %d,%d ", ro, ro, int(rf*cpsi+0.5+dx)+x, int(rf*spsi+0.5+dy)+y) } else {
-				d += fmt.Sprintf("A %d,%d 0 0 1 %d,%d ", ro, ro, int(rf*cpsi+0.5+dx)+x, int(rf*spsi+0.5+dy)+y) } 
+			if math.Abs(w.Phi-w.Psi) > math.Pi {
+				d += fmt.Sprintf("A %d,%d 0 1 1 %d,%d ", ro, ro, int(rf*cpsi+0.5+dx)+x, int(rf*spsi+0.5+dy)+y)
+			} else {
+				d += fmt.Sprintf("A %d,%d 0 0 1 %d,%d ", ro, ro, int(rf*cpsi+0.5+dx)+x, int(rf*spsi+0.5+dy)+y)
+			}
 			d += fmt.Sprintf("z")
 		} else {
 			// ring drawn as inner radius -> outer radius -> outer arc -> inner radius -> inner arc
@@ -412,13 +414,17 @@ func (sg *SvgGraphics) Rings(wedges []chart.Wedgeinfo, x, y, ro, ri int) {
 			d += fmt.Sprintf("L %d,%d ", int(rof*cphi+0.5+dx)+x, int(rof*sphi+0.5+dy)+y)
 
 			dx, dy = p*math.Cos(w.Psi-math.Pi/2), p*math.Sin(w.Psi-math.Pi/2)
-			if math.Abs(w.Phi-w.Psi)>math.Pi {
-				d += fmt.Sprintf("A %d,%d 0 1 1 %d,%d ", ro, ro, int(rof*cpsi+0.5+dx)+x, int(rof*spsi+0.5+dy)+y) } else {
-				d += fmt.Sprintf("A %d,%d 0 0 1 %d,%d ", ro, ro, int(rof*cpsi+0.5+dx)+x, int(rof*spsi+0.5+dy)+y) } 
+			if math.Abs(w.Phi-w.Psi) > math.Pi {
+				d += fmt.Sprintf("A %d,%d 0 1 1 %d,%d ", ro, ro, int(rof*cpsi+0.5+dx)+x, int(rof*spsi+0.5+dy)+y)
+			} else {
+				d += fmt.Sprintf("A %d,%d 0 0 1 %d,%d ", ro, ro, int(rof*cpsi+0.5+dx)+x, int(rof*spsi+0.5+dy)+y)
+			}
 			d += fmt.Sprintf("L %d,%d ", int(rif*cpsi+0.5+dx)+x, int(rif*spsi+0.5+dy)+y)
-			if math.Abs(w.Phi-w.Psi)>math.Pi {
-				d += fmt.Sprintf("A %d,%d 0 1 0 %d,%d ", ri, ri, a, b) } else {
-				d += fmt.Sprintf("A %d,%d 0 0 0 %d,%d ", ri, ri, a, b) }
+			if math.Abs(w.Phi-w.Psi) > math.Pi {
+				d += fmt.Sprintf("A %d,%d 0 1 0 %d,%d ", ri, ri, a, b)
+			} else {
+				d += fmt.Sprintf("A %d,%d 0 0 0 %d,%d ", ri, ri, a, b)
+			}
 			d += fmt.Sprintf("z")
 
 		}
