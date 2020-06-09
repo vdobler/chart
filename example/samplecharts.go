@@ -278,6 +278,7 @@ func scatterChart() {
 	pl.XRange.TicSetting.Grid = 1
 	pl.XRange.Label = "X-Range"
 	pl.YRange.Label = "Y-Range"
+	pl.YRange.AlignTrans = true
 	pl.Key.Cols = 2
 	pl.Key.Pos = "orb"
 

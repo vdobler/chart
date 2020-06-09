@@ -278,14 +278,28 @@ func drawYTics(bg BasicGraphics, rng Range, x, xm, ticLen int, options PlotOptio
 		y := rng.Data2Screen(tic.Pos)
 		ly := rng.Data2Screen(tic.LabelPos)
 
+		ox := x
+		oxm := xm
+		if rng.AlignTrans {
+			ox = xm // origin to right
+			oxm = x // mirror to right
+		}
 		// Tics
 		switch rng.TicSetting.Tics {
 		case 0:
-			bg.Line(x-ticLen, y, x+ticLen, y, ticstyle)
+			bg.Line(ox-ticLen, y, ox+ticLen, y, ticstyle)
 		case 1:
-			bg.Line(x, y, x+ticLen, y, ticstyle)
+			if rng.AlignTrans {
+				bg.Line(ox, y, ox-ticLen, y, ticstyle)
+			} else {
+				bg.Line(ox, y, ox+ticLen, y, ticstyle)
+			}
 		case 2:
-			bg.Line(x-ticLen, y, x, y, ticstyle)
+			if rng.AlignTrans {
+				bg.Line(ox+ticLen, y, ox, y, ticstyle)
+			} else {
+				bg.Line(ox-ticLen, y, ox, y, ticstyle)
+			}
 		default:
 		}
 
@@ -293,11 +307,19 @@ func drawYTics(bg BasicGraphics, rng Range, x, xm, ticLen int, options PlotOptio
 		if rng.TicSetting.Mirror >= 2 {
 			switch rng.TicSetting.Tics {
 			case 0:
-				bg.Line(xm-ticLen, y, xm+ticLen, y, ticstyle)
+				bg.Line(oxm-ticLen, y, oxm+ticLen, y, ticstyle)
 			case 1:
-				bg.Line(xm-ticLen, y, xm, y, ticstyle)
+				if rng.AlignTrans {
+					bg.Line(oxm+ticLen, y, oxm, y, ticstyle)
+				} else {
+					bg.Line(oxm-ticLen, y, oxm, y, ticstyle)
+				}
 			case 2:
-				bg.Line(xm, y, xm+ticLen, y, ticstyle)
+				if rng.AlignTrans {
+					bg.Line(oxm, y, oxm-ticLen, y, ticstyle)
+				} else {
+					bg.Line(oxm, y, oxm+ticLen, y, ticstyle)
+				}
 			default:
 			}
 		}
@@ -305,10 +327,14 @@ func drawYTics(bg BasicGraphics, rng Range, x, xm, ticLen int, options PlotOptio
 		if !rng.TicSetting.HideLabels {
 			// Label
 			if rng.Time && tic.Align == 0 { // centered tic
-				bg.Line(x-2*ticLen, y, x+ticLen, y, ticstyle)
-				bg.Text(x-ticLen, ly, tic.Label, "cr", 0, ticfont)
+				bg.Line(ox-2*ticLen, y, ox+ticLen, y, ticstyle)
+				bg.Text(ox-ticLen, ly, tic.Label, "cr", 0, ticfont)
 			} else {
-				bg.Text(x-2*ticLen, ly, tic.Label, "cr", 0, ticfont)
+				if rng.AlignTrans {
+					bg.Text(ox+2*ticLen, ly, tic.Label, "cl", 0, ticfont)
+				} else {
+					bg.Text(ox-2*ticLen, ly, tic.Label, "cr", 0, ticfont)
+				}
 			}
 		}
 	}
@@ -319,7 +345,7 @@ func drawYTics(bg BasicGraphics, rng Range, x, xm, ticLen int, options PlotOptio
 // The y.axis and the mirrord y-axis are drawn at x and ym respectively.
 func GenericYAxis(bg BasicGraphics, rng Range, x, xm int, options PlotOptions) {
 	font := elementStyle(options, MajorAxisElement).Font
-	_, fontheight, _ := bg.FontMetrics(font)
+	fw, fontheight, _ := bg.FontMetrics(font)
 	var ticLen int = 0
 	if !rng.TicSetting.Hide {
 		ticLen = imin(10, imax(4, fontheight/2))
@@ -342,7 +368,11 @@ func GenericYAxis(bg BasicGraphics, rng Range, x, xm int, options PlotOptions) {
 	}
 	if rng.Label != "" {
 		y := (ya + ye) / 2
-		bg.Text(alx, y, rng.Label, "bc", 90, font)
+		if rng.AlignTrans {
+			bg.Text(xm+alx+int(6*fw), y, rng.Label, "bc", 90, font)
+		} else {
+			bg.Text(alx, y, rng.Label, "bc", 90, font)
+		}
 	}
 
 	if !rng.TicSetting.Hide {
@@ -350,9 +380,15 @@ func GenericYAxis(bg BasicGraphics, rng Range, x, xm int, options PlotOptions) {
 	}
 
 	// Axis itself, mirrord axis and zero
-	bg.Line(x, ya, x, ye, elementStyle(options, MajorAxisElement))
+	ox := x
+	oxm := xm
+	if rng.AlignTrans {
+		ox = xm
+		oxm = x
+	}
+	bg.Line(ox, ya, ox, ye, elementStyle(options, MajorAxisElement))
 	if rng.TicSetting.Mirror >= 1 {
-		bg.Line(xm, ya, xm, ye, elementStyle(options, MinorAxisElement))
+		bg.Line(oxm, ya, oxm, ye, elementStyle(options, MinorAxisElement))
 	}
 	if rng.ShowZero && rng.Min < 0 && rng.Max > 0 {
 		z := rng.Data2Screen(0)
