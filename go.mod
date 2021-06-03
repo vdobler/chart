@@ -1,4 +1,4 @@
-module github.com/vdobler/chart
+module github.com/yyonghe/chart
 
 require (
 	github.com/ajstarks/svgo v0.0.0-20181006003313-6ce6a3bcf6cd

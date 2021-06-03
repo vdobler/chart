@@ -122,6 +122,8 @@ type Range struct {
 	InvNorm     func(float64) float64 // Inverse of Norm()
 	Data2Screen func(float64) int     // Function to map data value to screen position
 	Screen2Data func(int) float64     // Inverse of Data2Screen
+
+	AlignTrans bool // alignment translation of the axis: false: axis location left/bottom, true: axis location right/top
 }
 
 // Fixed is a helper (just reduces typing) functions which turns of autoscaling
@@ -674,8 +676,12 @@ type LayoutData struct {
 	NumXtics, NumYtics int // suggested numer of tics for both axis
 }
 
-// Layout graph data area on screen and place key.
 func layout(g Graphics, title, xlabel, ylabel string, hidextics, hideytics bool, key *Key) (ld LayoutData) {
+	return layoutWithAlign(g, title, xlabel, ylabel, hidextics, hideytics, key, false, false)
+}
+
+// Layout graph data area on screen and place key.
+func layoutWithAlign(g Graphics, title, xlabel, ylabel string, hidextics, hideytics bool, key *Key, xalign bool, yalign bool) (ld LayoutData) {
 	fw, fh, _ := g.FontMetrics(Font{})
 	w, h := g.Dimensions()
 
@@ -684,6 +690,9 @@ func layout(g Graphics, title, xlabel, ylabel string, hidextics, hideytics bool,
 	}
 
 	width, leftm, height, topm := w-int(6*fw), int(2*fw), h-2*fh, fh
+	if yalign {
+		leftm = int(4 * fw)
+	}
 	xlabsep, ylabsep := fh, int(3*fw)
 	if title != "" {
 		topm += (5 * fh) / 2
@@ -697,11 +706,15 @@ func layout(g Graphics, title, xlabel, ylabel string, hidextics, hideytics bool,
 		xlabsep += (3 * fh) / 2
 	}
 	if ylabel != "" {
-		leftm += 2 * fh
+		if !yalign {
+			leftm += 2 * fh
+		}
 		width -= 2 * fh
 	}
 	if !hideytics {
-		leftm += int(6 * fw)
+		if !yalign {
+			leftm += int(6 * fw)
+		}
 		width -= int(6 * fw)
 		ylabsep += int(6 * fw)
 	}

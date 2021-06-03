@@ -15,10 +15,10 @@ import (
 	"time"
 
 	"github.com/ajstarks/svgo"
-	"github.com/vdobler/chart"
-	"github.com/vdobler/chart/imgg"
-	"github.com/vdobler/chart/svgg"
-	"github.com/vdobler/chart/txtg"
+	"github.com/yyonghe/chart"
+	"github.com/yyonghe/chart/imgg"
+	"github.com/yyonghe/chart/svgg"
+	"github.com/yyonghe/chart/txtg"
 )
 
 var (
@@ -278,6 +278,7 @@ func scatterChart() {
 	pl.XRange.TicSetting.Grid = 1
 	pl.XRange.Label = "X-Range"
 	pl.YRange.Label = "Y-Range"
+	pl.YRange.AlignTrans = true
 	pl.Key.Cols = 2
 	pl.Key.Pos = "orb"
 
