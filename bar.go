@@ -319,6 +319,9 @@ func (c *BarChart) Plot(g Graphics) {
 
 func (c *BarChart) minimumSampleSep(d int) (min float64) {
 	n := len(c.Data[d].Samples) - 1
+	if n == 0 {
+		return 1
+	}
 	min = math.MaxFloat64
 
 	for i := 0; i < n; i++ {
