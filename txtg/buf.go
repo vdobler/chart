@@ -13,7 +13,7 @@ type TextBuf struct {
 	W, H int    // Width and Height
 }
 
-// Set up a new TextBuf with width w and height h.
+// NewTextBuf: Set up a new TextBuf with width w and height h.
 func NewTextBuf(w, h int) (tb *TextBuf) {
 	tb = new(TextBuf)
 	tb.W, tb.H = w, h
@@ -38,7 +38,7 @@ func (tb *TextBuf) Put(x, y int, c rune) {
 	tb.Buf[i] = c
 }
 
-// Draw rectangle of width w and height h from corner at (x,y).
+// Rect: Draw rectangle of width w and height h from corner at (x,y).
 // Use one of the corner style defined in Edge.
 // Interior is filled with charater fill iff != 0.
 func (tb *TextBuf) Rect(x, y, w, h int, style int, fill rune) {
@@ -88,7 +88,7 @@ func (tb *TextBuf) Block(x, y, w, h int, fill rune) {
 	}
 }
 
-// Return real character len of s (rune count).
+// StrLen returns real character len of s (rune count).
 func StrLen(s string) (n int) {
 	for _, _ = range s {
 		n++
@@ -96,7 +96,7 @@ func StrLen(s string) (n int) {
 	return
 }
 
-// Print text txt at (x,y). Horizontal display for align in [-1,1],
+// Text: Print text txt at (x,y). Horizontal display for align in [-1,1],
 // vasrtical alignment for align in [2,4]
 // align: -1: left; 0: centered; 1: right; 2: top, 3: center, 4: bottom
 func (tb *TextBuf) Text(x, y int, txt string, align int) {
@@ -178,7 +178,7 @@ func (tb *TextBuf) Line(x0, y0, x1, y1 int, symbol rune) {
 	}
 }
 
-// Convert to plain (utf8) string.
+// String: Convert to plain (utf8) string.
 func (tb *TextBuf) String() string {
 	return string(tb.Buf)
 }

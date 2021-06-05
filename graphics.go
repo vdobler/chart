@@ -667,7 +667,7 @@ func fillWedge(mg MinimalGraphics, xi, yi, ro, ri int, phi, psi, epsilon float64
 	}
 }
 
-// GeenricRings draws wedges for pie/ring charts charts. The pie's/ring's center is at (x,y)
+// GenericRings: draws wedges for pie/ring charts charts. The pie's/ring's center is at (x,y)
 // with ri and ro the inner and outer diameter. Eccentricity allows to correct for non-square
 // pixels (e.g. in text mode).
 func GenericRings(bg BasicGraphics, wedges []Wedgeinfo, x, y, ro, ri int, eccentricity float64) {
